@@ -1,0 +1,48 @@
+
+> lift-fitness-backend@1.0.0 dev
+> ts-node-dev --respawn --transpile-only src/index.ts
+
+[INFO] 20:08:22 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+LIFT Backend corriendo en http://localhost:3000
+[INFO] 22:07:19 Restarting: C:\Users\Tomas\Desktop\PROYECTO CLAUDE CODE\lift-backend\src\routes\staff.ts has been modified
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:2008:16)
+    at listenInCluster (node:net:2065:12)
+    at Server.listen (node:net:2170:7)
+    at app.listen (C:\Users\Tomas\Desktop\PROYECTO CLAUDE CODE\lift-backend\node_modules\express\lib\application.js:635:24)
+    at Object.<anonymous> (C:\Users\Tomas\Desktop\PROYECTO CLAUDE CODE\lift-backend\src\index.ts:23:5)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1830:14)
+    at Module._compile (C:\Users\Tomas\Desktop\PROYECTO CLAUDE CODE\lift-backend\node_modules\source-map-support\source-map-support.js:568:25)
+    at Module.m._compile (C:\Users\Tomas\AppData\Local\Temp\ts-node-dev-hook-6605941105041309.js:69:33)
+    at node:internal/modules/cjs/loader:1961:10
+    at require.extensions..jsx.require.extensions..js (C:\Users\Tomas\AppData\Local\Temp\ts-node-dev-hook-6605941105041309.js:114:20)
+[ERROR] 22:07:19 Error: listen EADDRINUSE: address already in use :::3000
+[INFO] 23:15:46 Restarting: C:\Users\Tomas\Desktop\PROYECTO CLAUDE CODE\lift-backend\src\routes\payments.ts has been modified
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:2008:16)
+    at listenInCluster (node:net:2065:12)
+    at Server.listen (node:net:2170:7)
+    at app.listen (C:\Users\Tomas\Desktop\PROYECTO CLAUDE CODE\lift-backend\node_modules\express\lib\application.js:635:24)
+    at Object.<anonymous> (C:\Users\Tomas\Desktop\PROYECTO CLAUDE CODE\lift-backend\src\index.ts:23:5)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1830:14)
+    at Module._compile (C:\Users\Tomas\Desktop\PROYECTO CLAUDE CODE\lift-backend\node_modules\source-map-support\source-map-support.js:568:25)
+    at Module.m._compile (C:\Users\Tomas\AppData\Local\Temp\ts-node-dev-hook-6605941105041309.js:69:33)
+    at node:internal/modules/cjs/loader:1961:10
+    at require.extensions..jsx.require.extensions..js (C:\Users\Tomas\AppData\Local\Temp\ts-node-dev-hook-6605941105041309.js:114:20)
+[ERROR] 23:15:47 Error: listen EADDRINUSE: address already in use :::3000
+[INFO] 00:01:08 Restarting: C:\Users\Tomas\Desktop\PROYECTO CLAUDE CODE\lift-backend\src\index.ts has been modified
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:2008:16)
+    at listenInCluster (node:net:2065:12)
+    at Server.listen (node:net:2170:7)
+    at app.listen (C:\Users\Tomas\Desktop\PROYECTO CLAUDE CODE\lift-backend\node_modules\express\lib\application.js:635:24)
+    at Object.<anonymous> (C:\Users\Tomas\Desktop\PROYECTO CLAUDE CODE\lift-backend\src\index.ts:23:5)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1830:14)
+    at Module._compile (C:\Users\Tomas\Desktop\PROYECTO CLAUDE CODE\lift-backend\node_modules\source-map-support\source-map-support.js:568:25)
+    at Module.m._compile (C:\Users\Tomas\AppData\Local\Temp\ts-node-dev-hook-6605941105041309.js:69:33)
+    at node:internal/modules/cjs/loader:1961:10
+    at require.extensions..jsx.require.extensions..js (C:\Users\Tomas\AppData\Local\Temp\ts-node-dev-hook-6605941105041309.js:114:20)
+[ERROR] 00:01:09 Error: listen EADDRINUSE: address already in use :::3000
+[INFO] 00:06:28 Restarting: C:\Users\Tomas\Desktop\PROYECTO CLAUDE CODE\lift-backend\src\index.ts has been modified
+LIFT Backend corriendo en http://localhost:3000
+LIFT Frontend servido desde C:\Users\Tomas\Desktop\PROYECTO CLAUDE CODE\lift-frontend

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "lift-frontend",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "lift-frontend", "--port", "5173", "--host"],
+      "port": 5173
+    }
+  ]
+}

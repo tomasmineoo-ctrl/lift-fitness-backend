@@ -1,0 +1,42 @@
+import { Express } from 'express';
+import authRouter         from './auth';
+import membersRouter      from './members';
+import staffRouter        from './staff';
+import paymentsRouter     from './payments';
+import classesRouter      from './classes';
+import accessRouter       from './access';
+import expensesRouter     from './expenses';
+import announcementsRouter from './announcements';
+import messagesRouter     from './messages';
+import machinesRouter     from './machines';
+import cafeteriaRouter    from './cafeteria';
+import shopRouter         from './shop';
+import communityRouter    from './community';
+import trainerRouter      from './trainer';
+import notificationsRouter from './notifications';
+import pointsRouter       from './points';
+import reportsRouter      from './reports';
+import nutriRouter        from './nutri';
+import backupRouter       from './backup';
+
+export function registerRoutes(app: Express) {
+  app.use('/api/auth',          authRouter);
+  app.use('/api/members',       membersRouter);
+  app.use('/api/staff',         staffRouter);
+  app.use('/api/payments',      paymentsRouter);
+  app.use('/api/classes',       classesRouter);
+  app.use('/api/access',        accessRouter);
+  app.use('/api/expenses',      expensesRouter);
+  app.use('/api/announcements', announcementsRouter);
+  app.use('/api/messages',      messagesRouter);
+  app.use('/api/machines',      machinesRouter);
+  app.use('/api/cafeteria',     cafeteriaRouter);
+  app.use('/api/shop',          shopRouter);
+  app.use('/api/community',     communityRouter);
+  app.use('/api/trainer',       trainerRouter);
+  app.use('/api/notifications', notificationsRouter);
+  app.use('/api/points',        pointsRouter);
+  app.use('/api/reports',       reportsRouter);
+  app.use('/api/nutri',         nutriRouter);
+  app.use('/api/admin/backup',  backupRouter);
+}
