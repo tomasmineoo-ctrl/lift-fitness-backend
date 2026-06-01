@@ -117,7 +117,8 @@
       "Bash(curl -s -X POST https://ctrlgym.org/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"admin@lift.com\",\"password\":\"Lift2025#\"}' -u SEBASTIAN:TOMASYSEBASTIAN)",
       "Bash(git config *)",
       "Bash(git add *)",
-      "Bash(git commit -m 'Fix: Update seed.ts with correct @lift.com emails and add hash_password RPC function *)"
+      "Bash(git commit -m 'Fix: Update seed.ts with correct @lift.com emails and add hash_password RPC function *)",
+      "Bash(railway up *)"
     ]
   }
 }
