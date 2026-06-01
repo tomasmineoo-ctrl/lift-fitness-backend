@@ -118,7 +118,15 @@
       "Bash(git config *)",
       "Bash(git add *)",
       "Bash(git commit -m 'Fix: Update seed.ts with correct @lift.com emails and add hash_password RPC function *)",
-      "Bash(railway up *)"
+      "Bash(railway up *)",
+      "Bash(curl -s -X GET \"https://ctrlgym.org/health\" -u \"SEBASTIAN:TOMASYSEBASTIAN\")",
+      "Bash(curl -I https://ctrlgym.org/ -u \"SEBASTIAN:TOMASYSEBASTIAN\")",
+      "Bash(git commit -m 'Add test script for demo credentials *)",
+      "Bash(curl -s -X POST https://ctrlgym.org/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"admin@lift.com\",\"password\":\"Lift2025#\"}' -u SEBASTIAN:TOMASYSEBASTIAN -w '\\\\nHTTP Status: %{http_code}\\\\n')",
+      "mcp__d2a97f30-e169-401c-af7b-cb20f80d992e__get_logs",
+      "Bash(railway logs *)",
+      "Bash(railway variables *)",
+      "Bash(bash \"C:\\\\Users\\\\Tomas\\\\Desktop\\\\PROYECTO CLAUDE CODE\\\\test-credentials.sh\")"
     ]
   }
 }
