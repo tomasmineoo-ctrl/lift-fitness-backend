@@ -70,10 +70,20 @@ const FRONTEND_DIR = process.env.FRONTEND_PATH
   ? path.resolve(process.env.FRONTEND_PATH)
   : path.join(__dirname, '../../lift-frontend');
 
-app.use(express.static(FRONTEND_DIR));
+// Servir archivos estáticos sin cache para que Cloudflare no cachee versiones viejas
+app.use(express.static(FRONTEND_DIR, {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html') || filePath.endsWith('.js')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }
+}));
 
 // SPA catch-all
 app.get('*', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(path.join(FRONTEND_DIR, 'index.html'));
 });
 
