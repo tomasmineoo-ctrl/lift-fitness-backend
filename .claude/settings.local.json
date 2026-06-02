@@ -126,7 +126,16 @@
       "mcp__d2a97f30-e169-401c-af7b-cb20f80d992e__get_logs",
       "Bash(railway logs *)",
       "Bash(railway variables *)",
-      "Bash(bash \"C:\\\\Users\\\\Tomas\\\\Desktop\\\\PROYECTO CLAUDE CODE\\\\test-credentials.sh\")"
+      "Bash(bash \"C:\\\\Users\\\\Tomas\\\\Desktop\\\\PROYECTO CLAUDE CODE\\\\test-credentials.sh\")",
+      "mcp__Claude_in_Chrome__read_page",
+      "Bash(git remote *)",
+      "Bash(git branch *)",
+      "Bash(git push *)",
+      "Bash(railway service *)",
+      "Bash(git commit *)",
+      "Bash(python create_pdf_guide.py)",
+      "Bash(pip install *)",
+      "PowerShell(python -m pip install reportlab)"
     ]
   }
 }

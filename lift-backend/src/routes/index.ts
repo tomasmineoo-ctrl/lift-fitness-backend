@@ -18,6 +18,7 @@ import pointsRouter       from './points';
 import reportsRouter      from './reports';
 import nutriRouter        from './nutri';
 import backupRouter       from './backup';
+import auditlogRouter     from './auditlog';
 
 export function registerRoutes(app: Express) {
   app.use('/api/auth',          authRouter);
@@ -39,4 +40,5 @@ export function registerRoutes(app: Express) {
   app.use('/api/reports',       reportsRouter);
   app.use('/api/nutri',         nutriRouter);
   app.use('/api/admin/backup',  backupRouter);
+  app.use('/api/admin',         auditlogRouter);
 }
