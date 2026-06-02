@@ -135,7 +135,10 @@
       "Bash(git commit *)",
       "Bash(python create_pdf_guide.py)",
       "Bash(pip install *)",
-      "PowerShell(python -m pip install reportlab)"
+      "PowerShell(python -m pip install reportlab)",
+      "Bash(curl -s \"https://ctrlgym.org/api/admin/log\" -u \"SEBASTIAN:TOMASYSEBASTIAN\")",
+      "Bash(curl -s \"https://ctrlgym.org/health\" -u \"SEBASTIAN:TOMASYSEBASTIAN\")",
+      "Bash(pkill -f \"curl.*api/admin/log\")"
     ]
   }
 }
