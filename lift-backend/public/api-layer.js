@@ -317,6 +317,33 @@
         } catch (_) {}
       }
 
+      // Audit log (admin/reception) — sincronizar desde backend
+      if (currentUser && ['admin', 'reception'].includes(currentUser.role)) {
+        try {
+          const logRes = await apiFetch('/api/admin/log?limit=200');
+          if (logRes && logRes.data) {
+            const backendLogs = logRes.data.map(l => ({
+              id:     l.id,
+              user:   l.admin_email || 'Sistema',
+              action: l.action || '',
+              detail: l.details || '',
+              date:   l.log_timestamp ? new Date(l.log_timestamp).toISOString().slice(0, 10) : '',
+              time:   l.log_timestamp ? new Date(l.log_timestamp).toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit' }) : '',
+              log_timestamp: l.log_timestamp,
+            }));
+            if (typeof adminLog !== 'undefined') {
+              // Combinar: agregar los del backend que no estén ya en adminLog local
+              const existingIds = new Set(adminLog.map(l => l.id).filter(id => id > 1000000)); // IDs locales son timestamps grandes
+              const newLogs = backendLogs.filter(l => !existingIds.has(l.id));
+              adminLog = [...backendLogs, ...adminLog.filter(l => !l.log_timestamp)];
+            }
+            console.log('[LIFT] Audit log sincronizado:', logRes.total, 'registros');
+          }
+        } catch (e) {
+          console.warn('[LIFT] No se pudo sincronizar audit log:', e.message);
+        }
+      }
+
       console.log('[LIFT] Sync OK —', users.length, 'socios,', classes.length, 'clases,', machines.length, 'máquinas');
     } catch (err) {
       console.warn('[LIFT] syncFromBackend error:', err.message);
@@ -1009,6 +1036,51 @@
       localStorage.setItem('gp_cardDB',    JSON.stringify(typeof cardDatabase !== 'undefined' ? cardDatabase : []));
       localStorage.setItem('gp_discounts', JSON.stringify(typeof discounts !== 'undefined' ? discounts : []));
     } catch (_) {}
+  };
+
+  /* ══════════════════════════════════════════════════════
+     RENDER LOG — override para usar apiFetch con JWT
+  ══════════════════════════════════════════════════════ */
+  window.renderLog = async function () {
+    const q = (document.getElementById('logSearch') || {}).value || '';
+    const el = document.getElementById('logContainer');
+    if (!el) return;
+    el.innerHTML = '<div style="color:var(--text3);padding:12px">Cargando historial del servidor…</div>';
+    try {
+      const logRes = await apiFetch('/api/admin/log?limit=200');
+      const backendLogs = (logRes.data || []).map(l => ({
+        id:     l.id,
+        user:   l.admin_email || 'Sistema',
+        action: l.action || '',
+        detail: l.details || '',
+        date:   l.log_timestamp ? new Date(l.log_timestamp).toISOString().slice(0, 10) : '',
+        time:   l.log_timestamp ? new Date(l.log_timestamp).toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit' }) : '',
+        log_timestamp: l.log_timestamp,
+      }));
+      // Actualizar variable global adminLog
+      if (typeof adminLog !== 'undefined') {
+        adminLog = backendLogs;
+      }
+      let filtered = backendLogs;
+      if (q) {
+        filtered = backendLogs.filter(l =>
+          l.action.toLowerCase().includes(q.toLowerCase()) ||
+          l.user.toLowerCase().includes(q.toLowerCase()) ||
+          l.detail.toLowerCase().includes(q.toLowerCase())
+        );
+      }
+      if (filtered.length === 0) {
+        el.innerHTML = '<div style="color:var(--text2);padding:12px;text-align:center">Sin registros de auditoría</div>';
+      } else {
+        el.innerHTML = filtered.slice(0, 100).map(l =>
+          `<div class="logItem"><span style="width:22px;text-align:center">📝</span><div style="flex:1"><strong>${l.action}</strong> — ${l.detail}<div style="color:var(--text3);font-size:.68rem">${l.user} · ${l.date} ${l.time}</div></div></div>`
+        ).join('');
+      }
+      console.log('[LIFT] Audit log renderizado:', filtered.length, 'registros');
+    } catch (err) {
+      console.error('[LIFT] renderLog error:', err.message);
+      el.innerHTML = '<div style="color:var(--red);padding:10px;font-size:.8rem">Error al cargar historial: ' + err.message + '</div>';
+    }
   };
 
   /* ══════════════════════════════════════════════════════
