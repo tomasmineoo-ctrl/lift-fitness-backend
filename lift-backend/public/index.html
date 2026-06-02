@@ -198,6 +198,18 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
 .cardBrandBadge{font-size:1.5rem;position:absolute;top:16px;right:18px}
 .luhnOk{color:var(--green);font-size:.72rem;margin-top:4px}
 .luhnFail{color:var(--red);font-size:.72rem;margin-top:4px}
+/* Dashboard hero & quick actions */
+.dashHero{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:20px 24px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;border-left:4px solid var(--accent);position:relative;overflow:hidden}
+.dashHero::before{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(229,8,126,.06) 0%,transparent 70%);pointer-events:none}
+.dashHeroIncome{font-family:'Barlow Condensed',sans-serif;font-size:2.6rem;font-weight:900;line-height:1;color:var(--accent)}
+.quickActions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.quickAction{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border:1px solid var(--border2);border-radius:4px;cursor:pointer;transition:all .15s}
+.quickAction:hover{border-color:var(--accent);background:var(--surface2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(229,8,126,.1)}
+.quickAction.qa-danger:hover{border-color:var(--red);box-shadow:0 4px 16px rgba(255,59,48,.1)}
+.quickAction.qa-urgent{border-color:rgba(255,59,48,.3);background:rgba(255,59,48,.04)}
+.qaIcon{font-size:1.3rem;flex-shrink:0}
+.qaText strong{display:block;font-family:'Barlow Condensed',sans-serif;font-size:.9rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--white);line-height:1.2}
+.qaText span{font-size:.65rem;color:var(--text3)}
 .exportBar{display:flex;gap:7px;margin-bottom:14px;justify-content:flex-end}
 .calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px}
 .calHeader{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px}
@@ -719,7 +731,96 @@ if(currentUser.role==='reception'){
   </div>
 </div>`;}
 // ── Dashboard admin normal ──
-return`<div class="pageTitle">Dashboard</div><div class="statsGrid"><div class="statCard" style="cursor:pointer;border-top:2px solid var(--accent);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:5px;padding:18px 10px" onclick="navigate('gestionPagos')"><div style="font-size:1.3rem">💰</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);line-height:1.2">Gestión de<br>Planes & Pagos</div><div style="font-size:.6rem;color:var(--text3);margin-top:2px">→ abrir</div></div><div class="statCard" style="cursor:pointer;border-top:2px solid var(--green);text-align:center;padding:14px 10px" onclick="navigate('panelSocios')"><div style="font-size:1.5rem;line-height:1;margin-bottom:4px">👤</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:.8rem;font-weight:800;letter-spacing:.14em;color:var(--green)">SOCIOS</div><div style="font-size:.62rem;color:var(--text3);margin:4px 0 10px">${sociosAdentro} en gym · ${staffAccounts.length} staff</div><div style="border-top:1px solid var(--border);padding-top:8px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px"><div><div style="font-size:1rem;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--green)">${active}</div><div style="font-size:.55rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;line-height:1.3">Activos</div></div><div><div style="font-size:1rem;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--orange)">${users.filter(u=>getQuotaStatus(u)==='inactive'||getQuotaStatus(u)==='grace').length}</div><div style="font-size:.55rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;line-height:1.3">Pendientes</div></div><div><div style="font-size:1rem;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--red)">${blocked}</div><div style="font-size:.55rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;line-height:1.3">Bloqueados</div></div></div></div><div class="statCard"><div class="num" style="color:var(--red)">${blocked}</div><div class="lbl">Bloqueados</div></div><div class="statCard"><div class="num" style="color:var(--accent)">$${(income/1000).toFixed(0)}k <span style="font-size:.65rem;color:${incDiff>=0?'var(--green)':'var(--red)'}">${incDiff>=0?'+':''}${incDiff}%</span></div><div class="lbl">Ingresos mayo</div></div><div class="statCard"><div class="num" style="color:var(--purple)">${todayEntries}</div><div class="lbl">Ingresos hoy</div></div><div class="statCard"><div class="num" style="color:var(--teal)">${classes.filter(c=>c.active).length}</div><div class="lbl">Clases activas</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px"><div class="card"><h3>Ingresos 2025</h3><div class="barChart">${months.map((m,i)=>`<div class="barWrap"><div class="barVal" style="color:var(--accent)">$${(mIncome[i]/1000).toFixed(0)}k</div><div class="bar" style="height:${(mIncome[i]/maxI*75)+4}px;background:var(--accent)"></div><div class="barLbl">${m}</div></div>`).join('')}</div></div><div class="card"><h3>Alertas (${notifications.length})</h3><div style="max-height:130px;overflow-y:auto">${notifications.slice(0,5).map(n=>`<div class="notifItem" style="padding:7px"><div class="notifDot" style="background:${n.type==='danger'?'var(--red)':n.type==='warn'?'var(--accent)':'var(--blue)'}"></div><div style="font-size:.75rem">${n.msg}</div></div>`).join('')||'<p style="color:var(--text2);font-size:.78rem">Sin alertas ✓</p>'}</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px"><div class="card"><h3>Clases hoy — ${DAYS_FULL[today().getDay()]}</h3>${getClassesForDay(DAYS_FULL[today().getDay()]).map(c=>`<div class="classCard" style="padding:10px;margin-bottom:6px"><div class="classTime" style="font-size:.9rem">${c.time}</div><div class="classInfo"><h4 style="font-size:.82rem">${c.type}</h4><div style="font-size:.72rem;color:var(--text3)">${c.trainer}</div></div><div style="font-size:.78rem;color:${c.enrolled.length>=c.capacity?'var(--red)':'var(--green)'}">${c.enrolled.length}/${c.capacity}</div></div>`).join('')||'<p style="color:var(--text2);font-size:.78rem">Sin clases hoy</p>'}</div><div class="card"><h3>Por plan</h3>${Object.entries(PLANS).map(([n,p])=>{const c=users.filter(u=>u.plan===n).length;const pct=Math.round(c/users.length*100)||0;return`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:3px"><span class="badge ${p.color}">${n}</span><span style="color:var(--text3)">${c} · ${pct}%</span></div><div class="progressBar"><div class="progressFill" style="width:${pct}%;background:var(--${p.color})"></div></div></div>`;}).join('')}</div></div>`;},
+const dangerCount=notifications.filter(n=>n.type==='danger').length;
+const pendientes=users.filter(u=>getQuotaStatus(u)==='inactive'||getQuotaStatus(u)==='grace').length;
+return`
+<div class="dashHero">
+  <div>
+    <div style="font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">${today().toLocaleDateString('es-SV',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+    <div style="display:flex;align-items:baseline;gap:14px">
+      <div class="dashHeroIncome">$${income>0?(income/1000).toFixed(1)+'k':'—'}</div>
+      <div>
+        <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text3)">Ingresos este mes</div>
+        <div style="font-size:.76rem;font-weight:700;margin-top:2px;color:${incDiff>=0?'var(--green)':'var(--red)'}">${incDiff>=0?'↑ +':'↓ '}${Math.abs(incDiff)}% vs mes anterior</div>
+      </div>
+    </div>
+  </div>
+  <div style="text-align:right">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.9rem;font-weight:900;letter-spacing:-.02em;color:var(--white)">LIFT<span style="color:var(--accent)">.</span></div>
+    <div style="font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-top:2px">Panel Admin</div>
+    <div style="font-size:.64rem;color:var(--text3);margin-top:6px">${sociosAdentro} socio${sociosAdentro!==1?'s':''} en gym ahora</div>
+  </div>
+</div>
+
+<div class="quickActions">
+  <div class="quickAction" onclick="navigate('gestionPagos')">
+    <div class="qaIcon">💳</div>
+    <div class="qaText"><strong>Cobrar cuota</strong><span>Gestión de planes & pagos</span></div>
+  </div>
+  <div class="quickAction" onclick="openNewUser()">
+    <div class="qaIcon">➕</div>
+    <div class="qaText"><strong>Nuevo socio</strong><span>Registrar miembro</span></div>
+  </div>
+  <div class="quickAction ${dangerCount>0?'qa-urgent qa-danger':'qa-danger'}" onclick="navigate('notificaciones')">
+    <div class="qaIcon">${dangerCount>0?'🚨':'🔔'}</div>
+    <div class="qaText"><strong style="color:${dangerCount>0?'var(--red)':'var(--white)'}">${dangerCount>0?dangerCount+' Urgentes':'Alertas'}</strong><span>${notifications.length} notificacion${notifications.length!==1?'es':''} activas</span></div>
+  </div>
+</div>
+
+<div class="statsGrid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
+  <div class="statCard" style="border-left-color:var(--green);cursor:pointer" onclick="navigate('panelSocios')">
+    <div class="num" style="color:var(--green)">${active}</div>
+    <div class="lbl">Socios activos</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${pendientes} pendientes · ${users.length} total</div>
+  </div>
+  <div class="statCard" style="border-left-color:${blocked>0?'var(--red)':'var(--border2)'}">
+    <div class="num" style="color:${blocked>0?'var(--red)':'var(--text2)'}">${blocked}</div>
+    <div class="lbl">Bloqueados</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${users.filter(u=>getQuotaStatus(u)==='grace').length} en período de gracia</div>
+  </div>
+  <div class="statCard" style="border-left-color:var(--purple)">
+    <div class="num" style="color:var(--purple)">${todayEntries}</div>
+    <div class="lbl">Ingresos hoy</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${totalAdentro} personas adentro</div>
+  </div>
+  <div class="statCard" style="border-left-color:var(--teal)">
+    <div class="num" style="color:var(--teal)">${classes.filter(c=>c.active).length}</div>
+    <div class="lbl">Clases activas</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${getClassesForDay(DAYS_FULL[today().getDay()]).length} programadas hoy</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+  <div class="card" style="${dangerCount>0?'border-left:3px solid var(--red)':''}">
+    <h3 style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span>Alertas</span>
+      ${notifications.length>0?`<span style="background:${dangerCount>0?'var(--red)':'var(--accent)'};color:#fff;border-radius:3px;padding:2px 8px;font-size:.65rem;font-family:'Barlow Condensed',sans-serif;font-weight:700">${notifications.length}</span>`:''}
+    </h3>
+    <div style="display:flex;flex-direction:column;gap:5px;max-height:140px;overflow-y:auto">
+      ${notifications.length===0
+        ?'<p style="color:var(--text2);font-size:.78rem">Sin alertas activas ✓</p>'
+        :notifications.slice(0,6).map(n=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border-radius:2px;border:1px solid ${n.type==='danger'?'rgba(255,59,48,.25)':n.type==='warn'?'rgba(229,8,126,.2)':'var(--border)'}"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:${n.type==='danger'?'var(--red)':n.type==='warn'?'var(--accent)':'var(--blue)'}"></div><div style="font-size:.74rem">${n.msg}</div></div>`).join('')}
+    </div>
+  </div>
+  <div class="card">
+    <h3>Ingresos 2025</h3>
+    <div class="barChart">${months.map((m,i)=>`<div class="barWrap"><div class="barVal" style="color:${mIncome[i]>0?'var(--accent)':'var(--text3)'}">${mIncome[i]>0?'$'+(mIncome[i]/1000).toFixed(0)+'k':'—'}</div><div class="bar" style="height:${(mIncome[i]/maxI*72)+4}px;background:${mIncome[i]>0?'var(--accent)':'var(--border2)'}"></div><div class="barLbl">${m}</div></div>`).join('')}</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+  <div class="card">
+    <h3>Clases hoy — ${DAYS_FULL[today().getDay()]}</h3>
+    ${getClassesForDay(DAYS_FULL[today().getDay()]).length===0
+      ?'<p style="color:var(--text2);font-size:.78rem">Sin clases programadas hoy</p>'
+      :getClassesForDay(DAYS_FULL[today().getDay()]).map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;color:var(--white);min-width:44px">${c.time}</div><div style="flex:1"><div style="font-size:.8rem;font-weight:600">${c.type}</div><div style="font-size:.68rem;color:var(--text3)">${c.trainer}</div></div><div style="font-size:.78rem;font-weight:700;color:${c.enrolled.length>=c.capacity?'var(--red)':'var(--green)'}">${c.enrolled.length}/${c.capacity}</div></div>`).join('')}
+  </div>
+  <div class="card">
+    <h3>Por plan</h3>
+    ${Object.entries(PLANS).map(([n,p])=>{const c=users.filter(u=>u.plan===n).length;const pct=users.length?Math.round(c/users.length*100):0;return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;font-size:.75rem;margin-bottom:4px"><span class="badge ${p.color}">${n}</span><span style="color:var(--text3)">${c} socios · <strong style="color:var(--white)">${pct}%</strong></span></div><div class="progressBar" style="height:5px"><div class="progressFill" style="width:${pct}%;background:var(--${p.color})"></div></div></div>`;}).join('')}
+  </div>
+</div>
+`;},
 
 reportes:()=>{const income=getMonthlyIncome();const prevIncome=getMonthlyIncome(1);const totalDebt=users.reduce((s,u)=>s+(u.debt||0),0);const retention=getRetentionRate();const atRisk=getAtRisk();const projected=getProjectedIncome();const totalExp=expenses.reduce((s,e)=>s+e.amount,0);const net=income-totalExp;const months=['Ene','Feb','Mar','Abr','May'];const mIncome=months.map((_,i)=>paymentsDB.filter(p=>p.status==='approved'&&new Date(p.date).getMonth()===i).reduce((s,p)=>s+p.amount,0));const mExp=months.map((_,i)=>expenses.filter(e=>new Date(e.date).getMonth()===i).reduce((s,e)=>s+e.amount,0));const maxVal=Math.max(...mIncome,...mExp,1);const atRiskUsers=users.filter(u=>['inactive','grace','warning'].includes(getQuotaStatus(u))||u.debt>0);return`<div class="pageTitle">Análisis & Reportes</div><div class="kpiGrid"><div class="kpiCard green"><div class="kpiNum" style="color:var(--green)">$${(income/1000).toFixed(1)}k</div><div class="kpiLbl">Ingresos mayo</div><div class="kpiSub" style="color:${income>=prevIncome?'var(--green)':'var(--red)'}">vs $${(prevIncome/1000).toFixed(1)}k abril ${income>=prevIncome?'↑':'↓'}</div></div><div class="kpiCard accent"><div class="kpiNum" style="color:var(--accent)">$${(projected/1000).toFixed(1)}k</div><div class="kpiLbl">Proyección junio</div><div class="kpiSub" style="color:var(--text3)">Socios activos</div></div><div class="kpiCard blue"><div class="kpiNum" style="color:var(--blue)">${retention}%</div><div class="kpiLbl">Retención</div><div class="kpiSub" style="color:var(--text3)">${users.filter(u=>u.payHistory.length>=2).length} renuevan</div></div><div class="kpiCard red"><div class="kpiNum" style="color:var(--red)">${atRisk}</div><div class="kpiLbl">En riesgo</div><div class="kpiSub" style="color:var(--text3)">Deuda o inactividad</div></div><div class="kpiCard purple"><div class="kpiNum" style="color:var(--purple)">$${(net/1000).toFixed(1)}k</div><div class="kpiLbl">Balance neto</div><div class="kpiSub" style="color:${net>=0?'var(--green)':'var(--red)'}">${income?Math.round(net/income*100):0}% margen</div></div><div class="kpiCard red"><div class="kpiNum" style="color:var(--red)">$${(totalDebt/1000).toFixed(1)}k</div><div class="kpiLbl">Deuda total</div><div class="kpiSub" style="color:var(--text3)">${users.filter(u=>(u.debt||0)>0).length} socios</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px"><div class="card"><h3>Ingresos vs Gastos</h3><div style="display:flex;gap:12px;margin-bottom:6px;font-size:.68rem"><span style="color:var(--accent)">■ Ingresos</span><span style="color:var(--red)">■ Gastos</span></div><div class="barChart" style="height:100px">${months.map((m,i)=>`<div class="barWrap"><div style="display:flex;gap:2px;align-items:flex-end;height:80px"><div class="bar" style="height:${(mIncome[i]/maxVal*76)+4}px;background:var(--accent);flex:1"></div><div class="bar" style="height:${(mExp[i]/maxVal*76)+4}px;background:var(--red);flex:1"></div></div><div class="barLbl">${m}</div></div>`).join('')}</div></div><div class="card"><h3>Socios en riesgo</h3>${atRiskUsers.length===0?'<p style="color:var(--text2);font-size:.78rem">Sin socios en riesgo ✓</p>':atRiskUsers.map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.77rem"><div><strong>${u.name}</strong><div style="color:var(--text3);font-size:.7rem">Plan ${u.plan}${u.debt>0?' · Deuda $'+u.debt.toLocaleString():''}</div></div><span class="badge ${getQuotaStatus(u)}">${statusLabel(getQuotaStatus(u))}</span></div>`).join('')}</div></div><div style="text-align:right;margin-top:4px"><button class="btn btnPurple btnSm" onclick="exportUsersCSV()">📥 CSV Socios</button><button class="btn btnInfo btnSm" style="margin-left:6px" onclick="exportPaymentsCSV()">📥 CSV Pagos</button></div>`;},
 
