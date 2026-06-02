@@ -141,7 +141,9 @@
       "Bash(pkill -f \"curl.*api/admin/log\")",
       "Bash(curl -s -w \"\\\\nStatus: %{http_code}\\\\n\" \"https://ctrlgym.org/\" -u \"SEBASTIAN:TOMASYSEBASTIAN\")",
       "mcp__Claude_in_Chrome__find",
-      "Bash(curl -s https://ctrlgym.org/api/admin/log?limit=10 -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGxpZnQuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNjc3MzQ2NDAwLCJleHAiOjk5OTk5OTk5OTl9.test' -u SEBASTIAN:TOMASYSEBASTIAN)"
+      "Bash(curl -s https://ctrlgym.org/api/admin/log?limit=10 -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGxpZnQuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNjc3MzQ2NDAwLCJleHAiOjk5OTk5OTk5OTl9.test' -u SEBASTIAN:TOMASYSEBASTIAN)",
+      "Bash(curl -s https://ctrlgym.org/api/admin/log?limit=5 -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGxpZnQuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNjc3MzQ2NDAwLCJleHAiOjk5OTk5OTk5OTl9.test' -u SEBASTIAN:TOMASYSEBASTIAN)",
+      "Bash(curl -s https://ctrlgym.org/api/admin/log?limit=5 -u SEBASTIAN:TOMASYSEBASTIAN)"
     ]
   }
 }
