@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+﻿import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
@@ -8,15 +8,14 @@ import { JWTPayload } from '../types';
 
 const router = Router();
 
-// Máximo 5 intentos fallidos de login por IP cada 15 minutos
+// MÃ¡ximo 5 intentos fallidos de login por IP cada 15 minutos
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
-  skipSuccessfulRequests: true,   // solo cuenta intentos fallidos
+  skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiados intentos incorrectos. Esperá 15 minutos antes de volver a intentar.' },
-  keyGenerator: (req) => req.ip || 'unknown',
 });
 
 function signToken(payload: JWTPayload): string {
@@ -25,7 +24,7 @@ function signToken(payload: JWTPayload): string {
   } as jwt.SignOptions);
 }
 
-// POST /api/auth/login — protegido con rate limit
+// POST /api/auth/login â€” protegido con rate limit
 router.post('/login', loginLimiter, async (req: Request, res: Response) => {
   const { email, password } = z.object({
     email:    z.string().email(),
@@ -41,7 +40,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
   if (staffRow) {
     if (!staffRow.active) return res.status(403).json({ error: 'Cuenta desactivada' });
-    // Verificar con pgcrypto — consultamos si el hash coincide
+    // Verificar con pgcrypto â€” consultamos si el hash coincide
     const { data: check } = await supabase
       .rpc('verify_password', { plain: password, hashed: staffRow.password_hash })
       .single();
@@ -125,14 +124,14 @@ router.post('/change-password', authenticate, async (req: Request, res: Response
     const { data: row } = await supabase.from('users').select('pass').eq('id', Number(user.id)).single();
     if (!row) return res.status(404).json({ error: 'Usuario no encontrado' });
     const { data: ok } = await supabase.rpc('verify_password', { plain: currentPassword, hashed: row.pass }).single();
-    if (!ok) return res.status(401).json({ error: 'Contraseña actual incorrecta' });
+    if (!ok) return res.status(401).json({ error: 'ContraseÃ±a actual incorrecta' });
     const { data: newHash } = await supabase.rpc('hash_password', { plain: newPassword }).single();
     await supabase.from('users').update({ pass: newHash }).eq('id', Number(user.id));
   } else {
     const { data: row } = await supabase.from('staff').select('password_hash').eq('id', user.id).single();
     if (!row) return res.status(404).json({ error: 'Usuario no encontrado' });
     const { data: ok } = await supabase.rpc('verify_password', { plain: currentPassword, hashed: row.password_hash }).single();
-    if (!ok) return res.status(401).json({ error: 'Contraseña actual incorrecta' });
+    if (!ok) return res.status(401).json({ error: 'ContraseÃ±a actual incorrecta' });
     const { data: newHash } = await supabase.rpc('hash_password', { plain: newPassword }).single();
     await supabase.from('staff').update({ password_hash: newHash }).eq('id', user.id);
   }
@@ -141,3 +140,5 @@ router.post('/change-password', authenticate, async (req: Request, res: Response
 });
 
 export default router;
+
+
