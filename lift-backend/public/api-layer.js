@@ -14,6 +14,15 @@
   const JWT_KEY  = '_lift_jwt';
   const USR_KEY  = '_lift_user';
 
+  // Detectar gym_slug desde el subdominio o usar 'lift' por defecto
+  // Ejemplos: lift.ctrlgym.org → 'lift' | alpha.ctrlgym.org → 'alpha'
+  function detectGymSlug() {
+    const parts = window.location.hostname.split('.');
+    if (parts.length >= 3) return parts[0]; // subdomain
+    return 'lift'; // fallback para ctrlgym.org directo o localhost
+  }
+  const GYM_SLUG = detectGymSlug();
+
   // Mapa de credenciales demo: los botones del HTML usan @lift.com,
   // el backend usa @gym.com
   const DEMO_CREDS = {
@@ -359,7 +368,7 @@
     if (!em || !pw) { alert('Ingresá email y contraseña'); return; }
 
     try {
-      const res = await apiFetch('/api/auth/login', 'POST', { email: em, password: pw });
+      const res = await apiFetch('/api/auth/login', 'POST', { email: em, password: pw, gym_slug: GYM_SLUG });
       setToken(res.token);
       sessionStorage.setItem(USR_KEY, JSON.stringify(res.user));
 
@@ -386,7 +395,7 @@
       if (pinBuf.length !== 4) { pinBuf = ''; }
       else {
         try {
-          const res = await apiFetch('/api/auth/login/pin', 'POST', { pin: pinBuf });
+          const res = await apiFetch('/api/auth/login/pin', 'POST', { pin: pinBuf, gym_slug: GYM_SLUG });
           setToken(res.token);
           sessionStorage.setItem(USR_KEY, JSON.stringify(res.user));
 

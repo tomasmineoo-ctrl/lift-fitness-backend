@@ -1,4 +1,4 @@
-// Usa "chat_messages" (nueva tabla peer-to-peer)
+// Usa "chat_messages" (peer-to-peer dentro del mismo gym)
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { supabase } from '../config/supabase';
@@ -10,7 +10,8 @@ router.use(authenticate);
 // GET /api/messages/conversations
 router.get('/conversations', async (req: Request, res: Response) => {
   const userId = req.user!.id;
-  const { data } = await supabase.from('chat_messages').select('*').or(`from_id.eq.${userId},to_id.eq.${userId}`).order('created_at', { ascending: false });
+  const gymId  = req.user!.gym_id;
+  const { data } = await supabase.from('chat_messages').select('*').eq('gym_id', gymId).or(`from_id.eq.${userId},to_id.eq.${userId}`).order('created_at', { ascending: false });
   if (!data) return res.json([]);
 
   const convMap = new Map<string, { other_id: string; other_name: string; last_message: string; unread: number; updated_at: string }>();
@@ -25,13 +26,14 @@ router.get('/conversations', async (req: Request, res: Response) => {
   return res.json(Array.from(convMap.values()));
 });
 
-// GET /api/messages/user/:userId — admin: todos los mensajes de un socio (cualquier dirección)
-// IMPORTANTE: debe ir ANTES de /:withUserId para no ser capturado por el catch-all
+// GET /api/messages/user/:userId — todos los mensajes de un socio (admin)
 router.get('/user/:userId', async (req: Request, res: Response) => {
-  const uid = String(req.params.userId);
+  const uid   = String(req.params.userId);
+  const gymId = req.user!.gym_id;
   const { data, error } = await supabase
     .from('chat_messages')
     .select('*')
+    .eq('gym_id', gymId)
     .or(`from_id.eq.${uid},to_id.eq.${uid}`)
     .order('created_at');
   if (error) throw error;
@@ -40,16 +42,17 @@ router.get('/user/:userId', async (req: Request, res: Response) => {
 
 // GET /api/messages/:withUserId
 router.get('/:withUserId', async (req: Request, res: Response) => {
-  const userId = req.user!.id;
+  const userId     = req.user!.id;
+  const gymId      = req.user!.gym_id;
   const { withUserId } = req.params;
 
   const { data, error } = await supabase.from('chat_messages').select('*')
+    .eq('gym_id', gymId)
     .or(`and(from_id.eq.${userId},to_id.eq.${withUserId}),and(from_id.eq.${withUserId},to_id.eq.${userId})`)
     .order('created_at');
   if (error) throw error;
 
-  // Marcar como leídos
-  await supabase.from('chat_messages').update({ read: true }).eq('to_id', userId).eq('from_id', withUserId).eq('read', false);
+  await supabase.from('chat_messages').update({ read: true }).eq('gym_id', gymId).eq('to_id', userId).eq('from_id', withUserId).eq('read', false);
 
   return res.json(data || []);
 });
@@ -68,6 +71,7 @@ router.post('/', async (req: Request, res: Response) => {
     to_id:     body.to_id,
     to_name:   body.to_name,
     content:   body.content,
+    gym_id:    req.user!.gym_id,
   }).select().single();
   if (error) throw error;
   return res.status(201).json(data);
@@ -75,7 +79,7 @@ router.post('/', async (req: Request, res: Response) => {
 
 // PUT /api/messages/:id/read
 router.put('/:id/read', async (req: Request, res: Response) => {
-  await supabase.from('chat_messages').update({ read: true }).eq('id', Number(req.params.id)).eq('to_id', req.user!.id);
+  await supabase.from('chat_messages').update({ read: true }).eq('id', Number(req.params.id)).eq('gym_id', req.user!.gym_id).eq('to_id', req.user!.id);
   return res.json({ ok: true });
 });
 

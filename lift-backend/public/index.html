@@ -4568,7 +4568,8 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){if(
       const _mapped = DEMO_CREDS[em.toLowerCase()];
       const loginEmail = _mapped ? _mapped[0] : em;
       const loginPass  = _mapped ? _mapped[1] : pw;
-      const res = await apiFetch('/api/auth/login', 'POST', { email: loginEmail, password: loginPass });
+      const gymSlug = (()=>{ const p=window.location.hostname.split('.'); return p.length>=3?p[0]:'lift'; })();
+      const res = await apiFetch('/api/auth/login', 'POST', { email: loginEmail, password: loginPass, gym_slug: gymSlug });
       setToken(res.token);
       sessionStorage.setItem(USR_KEY, JSON.stringify(res.user));
 
@@ -4604,7 +4605,8 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){if(
       if (pinBuf.length !== 4) { pinBuf = ''; }
       else {
         try {
-          const res = await apiFetch('/api/auth/login/pin', 'POST', { pin: pinBuf });
+          const gymSlug = (()=>{ const p=window.location.hostname.split('.'); return p.length>=3?p[0]:'lift'; })();
+          const res = await apiFetch('/api/auth/login/pin', 'POST', { pin: pinBuf, gym_slug: gymSlug });
           setToken(res.token);
           sessionStorage.setItem(USR_KEY, JSON.stringify(res.user));
 

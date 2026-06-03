@@ -32,8 +32,9 @@ function getQuotaStatus(u: { frozen: boolean; status: string; last_payment: stri
 
 // GET /api/members
 router.get('/', authorize('admin', 'reception', 'trainer', 'nutritionist'), async (req: Request, res: Response) => {
+  const gymId = req.user!.gym_id;
   const { search, plan, status, page = '1', limit = '50' } = req.query as Record<string, string>;
-  let query = supabase.from('users').select('*', { count: 'exact' });
+  let query = supabase.from('users').select('*', { count: 'exact' }).eq('gym_id', gymId);
 
   if (search) query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,dni.ilike.%${search}%`);
   if (plan)   query = query.eq('plan', plan);
@@ -48,7 +49,7 @@ router.get('/', authorize('admin', 'reception', 'trainer', 'nutritionist'), asyn
 
   const result = (data || []).map((u) => ({
     ...u,
-    pass: undefined, // no exponer contraseña
+    pass: undefined,
     quotaStatus: getQuotaStatus(u),
     planPrice: PLAN_PRICES[u.plan] ?? 0,
   }));
@@ -57,7 +58,7 @@ router.get('/', authorize('admin', 'reception', 'trainer', 'nutritionist'), asyn
 
 // GET /api/members/:id
 router.get('/:id', authorizeOwnerOrRoles((r) => r.params.id, 'admin', 'reception', 'trainer', 'nutritionist'), async (req: Request, res: Response) => {
-  const { data } = await supabase.from('users').select('*').eq('id', Number(req.params.id)).single();
+  const { data } = await supabase.from('users').select('*').eq('id', Number(req.params.id)).eq('gym_id', req.user!.gym_id).single();
   if (!data) return res.status(404).json({ error: 'Socio no encontrado' });
   return res.json({ ...data, pass: undefined, quotaStatus: getQuotaStatus(data), planPrice: PLAN_PRICES[data.plan] ?? 0 });
 });
@@ -85,12 +86,11 @@ router.post('/', authorize('admin', 'reception'), async (req: Request, res: Resp
   });
   const { password, ...rest } = schema.parse(req.body);
 
-  // Hash usando pgcrypto
   const { data: hashedPass } = await supabase.rpc('hash_password', { plain: password }).single();
 
   const { data, error } = await supabase
     .from('users')
-    .insert({ ...rest, pass: hashedPass })
+    .insert({ ...rest, pass: hashedPass, gym_id: req.user!.gym_id })
     .select()
     .single();
 
@@ -103,6 +103,7 @@ router.post('/', authorize('admin', 'reception'), async (req: Request, res: Resp
     action: 'Socio creado',
     admin_email: req.user!.email,
     details: `${data.name} — Plan ${data.plan}`,
+    gym_id: req.user!.gym_id,
   });
 
   return res.status(201).json({ ...data, pass: undefined });
@@ -137,51 +138,51 @@ router.put('/:id', authorizeOwnerOrRoles((r) => r.params.id, 'admin', 'reception
     updates.pass = h;
   }
 
-  const { data, error } = await supabase.from('users').update(updates).eq('id', Number(req.params.id)).select().single();
+  const { data, error } = await supabase.from('users').update(updates).eq('id', Number(req.params.id)).eq('gym_id', req.user!.gym_id).select().single();
   if (error || !data) return res.status(404).json({ error: 'Socio no encontrado' });
   return res.json({ ...data, pass: undefined });
 });
 
 // DELETE /api/members/:id
 router.delete('/:id', authorize('admin'), async (req: Request, res: Response) => {
-  const { error } = await supabase.from('users').delete().eq('id', Number(req.params.id));
+  const { error } = await supabase.from('users').delete().eq('id', Number(req.params.id)).eq('gym_id', req.user!.gym_id);
   if (error) throw error;
   return res.json({ ok: true });
 });
 
 // GET /api/members/:id/quota-status
 router.get('/:id/quota-status', authorizeOwnerOrRoles((r) => r.params.id, 'admin', 'reception'), async (req: Request, res: Response) => {
-  const { data } = await supabase.from('users').select('frozen, status, last_payment').eq('id', Number(req.params.id)).single();
+  const { data } = await supabase.from('users').select('frozen, status, last_payment').eq('id', Number(req.params.id)).eq('gym_id', req.user!.gym_id).single();
   if (!data) return res.status(404).json({ error: 'Socio no encontrado' });
   return res.json(getQuotaStatus(data));
 });
 
 // POST /api/members/:id/freeze
 router.post('/:id/freeze', authorize('admin', 'reception'), async (req: Request, res: Response) => {
-  const { data } = await supabase.from('users').update({ frozen: true, status: 'frozen' }).eq('id', Number(req.params.id)).select('name').single();
-  await supabase.from('admin_log').insert({ action: 'Membresía congelada', admin_email: req.user!.email, details: data?.name });
+  const { data } = await supabase.from('users').update({ frozen: true, status: 'frozen' }).eq('id', Number(req.params.id)).eq('gym_id', req.user!.gym_id).select('name').single();
+  await supabase.from('admin_log').insert({ action: 'Membresía congelada', admin_email: req.user!.email, details: data?.name, gym_id: req.user!.gym_id });
   return res.json({ ok: true });
 });
 
 // POST /api/members/:id/unfreeze
 router.post('/:id/unfreeze', authorize('admin', 'reception'), async (req: Request, res: Response) => {
-  const { data } = await supabase.from('users').update({ frozen: false, status: 'inactive' }).eq('id', Number(req.params.id)).select('name').single();
-  await supabase.from('admin_log').insert({ action: 'Membresía descongelada', admin_email: req.user!.email, details: data?.name });
+  const { data } = await supabase.from('users').update({ frozen: false, status: 'inactive' }).eq('id', Number(req.params.id)).eq('gym_id', req.user!.gym_id).select('name').single();
+  await supabase.from('admin_log').insert({ action: 'Membresía descongelada', admin_email: req.user!.email, details: data?.name, gym_id: req.user!.gym_id });
   return res.json({ ok: true });
 });
 
 // GET /api/members/:id/qr
 router.get('/:id/qr', authorizeOwnerOrRoles((r) => r.params.id, 'admin', 'reception'), async (req: Request, res: Response) => {
-  const { data } = await supabase.from('users').select('id, name').eq('id', Number(req.params.id)).single();
+  const { data } = await supabase.from('users').select('id, name').eq('id', Number(req.params.id)).eq('gym_id', req.user!.gym_id).single();
   if (!data) return res.status(404).json({ error: 'Socio no encontrado' });
-  const payload = JSON.stringify({ userId: data.id, ts: Date.now() });
+  const payload = JSON.stringify({ userId: data.id, gymId: req.user!.gym_id, ts: Date.now() });
   const qr = await QRCode.toDataURL(payload);
   return res.json({ qr, userId: data.id, name: data.name });
 });
 
 // GET /api/members/:id/pay-history
 router.get('/:id/pay-history', authorizeOwnerOrRoles((r) => r.params.id, 'admin', 'reception'), async (req: Request, res: Response) => {
-  const { data } = await supabase.from('pay_history').select('*').eq('user_id', Number(req.params.id)).order('pay_date', { ascending: false });
+  const { data } = await supabase.from('pay_history').select('*').eq('user_id', Number(req.params.id)).eq('gym_id', req.user!.gym_id).order('pay_date', { ascending: false });
   return res.json(data || []);
 });
 

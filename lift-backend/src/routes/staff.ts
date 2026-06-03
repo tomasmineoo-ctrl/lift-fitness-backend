@@ -7,24 +7,24 @@ import { authenticate, authorize } from '../middleware/auth';
 const router = Router();
 router.use(authenticate);
 
-// GET /api/staff/me — cualquier staff puede ver su propio registro (para obtener su PIN)
+// GET /api/staff/me
 router.get('/me', async (req: Request, res: Response) => {
   const user = req.user!;
-  const { data } = await supabase.from('staff').select('id, email, name, role, active, pin').eq('email', user.email).single();
+  const { data } = await supabase.from('staff').select('id, email, name, role, active, pin').eq('email', user.email).eq('gym_id', user.gym_id).single();
   if (!data) return res.status(404).json({ error: 'Staff no encontrado' });
   return res.json(data);
 });
 
 // GET /api/staff
-router.get('/', authorize('admin'), async (_req: Request, res: Response) => {
-  const { data, error } = await supabase.from('staff').select('id, email, name, role, active, pin, created_at').order('name');
+router.get('/', authorize('admin'), async (req: Request, res: Response) => {
+  const { data, error } = await supabase.from('staff').select('id, email, name, role, active, pin, created_at').eq('gym_id', req.user!.gym_id).order('name');
   if (error) throw error;
   return res.json(data || []);
 });
 
 // GET /api/staff/:id
 router.get('/:id', authorize('admin'), async (req: Request, res: Response) => {
-  const { data } = await supabase.from('staff').select('id, email, name, role, active, pin, created_at').eq('id', req.params.id).single();
+  const { data } = await supabase.from('staff').select('id, email, name, role, active, pin, created_at').eq('id', req.params.id).eq('gym_id', req.user!.gym_id).single();
   if (!data) return res.status(404).json({ error: 'Staff no encontrado' });
   return res.json(data);
 });
@@ -44,7 +44,7 @@ router.post('/', authorize('admin'), async (req: Request, res: Response) => {
   const { data: hashed } = await supabase.rpc('hash_password', { plain: password }).single();
   const { data, error } = await supabase
     .from('staff')
-    .insert({ ...rest, password_hash: hashed })
+    .insert({ ...rest, password_hash: hashed, gym_id: req.user!.gym_id })
     .select('id, email, name, role, active')
     .single();
 
@@ -52,7 +52,7 @@ router.post('/', authorize('admin'), async (req: Request, res: Response) => {
     if (error.code === '23505') return res.status(409).json({ error: 'Email ya registrado' });
     throw error;
   }
-  await supabase.from('admin_log').insert({ action: 'Staff creado', admin_email: req.user!.email, details: `${data.name} — ${data.role}` });
+  await supabase.from('admin_log').insert({ action: 'Staff creado', admin_email: req.user!.email, details: `${data.name} — ${data.role}`, gym_id: req.user!.gym_id });
   return res.status(201).json(data);
 });
 
@@ -64,14 +64,14 @@ router.put('/:id', authorize('admin'), async (req: Request, res: Response) => {
     const { data: h } = await supabase.rpc('hash_password', { plain: password }).single();
     updates.password_hash = h;
   }
-  const { data, error } = await supabase.from('staff').update(updates).eq('id', req.params.id).select('id, email, name, role, active').single();
+  const { data, error } = await supabase.from('staff').update(updates).eq('id', req.params.id).eq('gym_id', req.user!.gym_id).select('id, email, name, role, active').single();
   if (error || !data) return res.status(404).json({ error: 'Staff no encontrado' });
   return res.json(data);
 });
 
 // DELETE /api/staff/:id — soft delete
 router.delete('/:id', authorize('admin'), async (req: Request, res: Response) => {
-  const { error } = await supabase.from('staff').update({ active: false }).eq('id', req.params.id);
+  const { error } = await supabase.from('staff').update({ active: false }).eq('id', req.params.id).eq('gym_id', req.user!.gym_id);
   if (error) throw error;
   return res.json({ ok: true });
 });

@@ -5,6 +5,8 @@ export interface JWTPayload {
   role: Role;
   name: string;
   email: string;
+  gym_id: string;
+  gym_slug: string;
 }
 
 declare global {

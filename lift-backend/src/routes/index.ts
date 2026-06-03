@@ -19,8 +19,10 @@ import reportsRouter      from './reports';
 import nutriRouter        from './nutri';
 import backupRouter       from './backup';
 import auditlogRouter     from './auditlog';
+import gymsRouter         from './gyms';
 
 export function registerRoutes(app: Express) {
+  app.use('/api/gyms', gymsRouter);
   app.use('/api/auth',          authRouter);
   app.use('/api/members',       membersRouter);
   app.use('/api/staff',         staffRouter);
