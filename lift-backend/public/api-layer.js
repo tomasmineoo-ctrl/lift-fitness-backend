@@ -23,15 +23,7 @@
   }
   const GYM_SLUG = detectGymSlug();
 
-  // Mapa de credenciales demo: los botones del HTML usan @lift.com,
-  // el backend usa @gym.com
-  const DEMO_CREDS = {
-    'admin@lift.com':     ['admin@gym.com',    'Lift2025#'],
-    'recep@lift.com':     ['recep@gym.com',     'recep2025'],
-    'recep2@lift.com':    ['recep2@gym.com',    'recep2025'],
-    'trainer@lift.com':   ['trainer@gym.com',   'trainer2025'],
-    'nutricion@lift.com': ['nutricion@gym.com', 'nutri2025'],
-  };
+  const DEMO_CREDS = {}; // sin mapeo — los emails son @lift.com directamente
 
   /* ══════════════════════════════════════════════════════
      HELPERS — HTTP
