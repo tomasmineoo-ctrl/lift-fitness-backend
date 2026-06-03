@@ -129,6 +129,7 @@ router.put('/:id', authorizeOwnerOrRoles((r) => r.params.id, 'admin', 'reception
     debt:          z.number().min(0).optional(),
     last_payment:  z.string().optional().nullable(),
     password:      z.string().min(4).optional(),
+    pin:           z.string().length(4).optional(),
   });
   const { password, ...rest } = schema.parse(req.body);
   const updates: Record<string, unknown> = { ...rest };
