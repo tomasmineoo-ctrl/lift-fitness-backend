@@ -1621,6 +1621,9 @@ function showMachineQR(id){const m=machines.find(x=>x.id===id);openModal(`<h3>QR
 // ============================================================
 // AGENDA UNIFICADA — FUNCIONES
 // ============================================================
+function actualizarFormActividad(){
+  // Reservado para ajustes futuros del formulario según tipo de actividad
+}
 function openNuevaActividad(preDate){
   const role=currentUser.role;
   const isAdmin=role==='admin';
@@ -1722,11 +1725,9 @@ function guardarNuevaActividad(){
   saveAgenda();
   logAction('Nueva actividad',`${act.type} — ${act.title} — ${act.date} ${act.time}`);
   // Notificación interna
-  if(typeof userNotifications!=='undefined'){
+  if(act.visibleAll && typeof pushUserNotif==='function'){
     users.forEach(u=>{
-      if(act.visibleAll||(act.enrolledUsers||[]).includes(u.id)){
-        userNotifications.push({id:Date.now()+Math.random(),userId:u.id,type:'agenda',msg:`Nueva actividad: ${act.title} — ${act.date} ${act.time}`,date:new Date().toISOString().slice(0,10),read:false});
-      }
+      pushUserNotif(u.id,{type:'agenda',titulo:'Nueva actividad',mensaje:`${act.title} — ${act.date} a las ${act.time}`});
     });
     saveDB();
   }
