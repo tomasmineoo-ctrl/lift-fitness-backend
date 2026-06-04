@@ -816,7 +816,7 @@ function logAction(action,detail){adminLog.unshift({id:Date.now(),user:currentUs
 function fillDemo(e,p){document.getElementById('loginEmail').value=e;document.getElementById('loginPass').value=p;}
 function doLogin(){const em=document.getElementById('loginEmail').value.trim();const pw=document.getElementById('loginPass').value.trim();const staff=staffAccounts.find(s=>s.email===em&&s.pass===pw);if(staff)currentUser={role:staff.role,name:staff.name,email:staff.email};else{const u=users.find(x=>x.email===em&&x.pass===pw);if(!u){alert('Credenciales incorrectas');return;}currentUser={role:'user',name:u.name,data:u,email:u.email};}startApp();}
 function doLogout(){currentUser=null;document.getElementById('loginScreen').style.display='flex';document.getElementById('app').style.display='none';}
-function startApp(){genNotifications();document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('roleLabel').textContent=ROLES[currentUser.role]||currentUser.role;buildSidebar();navigate(currentUser.role==='user'?'miPerfil':currentUser.role==='trainer'?'trainerDashboard':currentUser.role==='reception'?'cobroDiario':currentUser.role==='nutritionist'?'nutriDashboard':'dashboard');}
+function startApp(){genNotifications();document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('roleLabel').textContent=ROLES[currentUser.role]||currentUser.role;buildSidebar();navigate(currentUser.role==='user'?'miPerfil':currentUser.role==='trainer'?'trainerDashboard':currentUser.role==='reception'?'dashboard':currentUser.role==='nutritionist'?'nutriDashboard':'dashboard');}
 let pinBuf='';
 function showPinLogin(){openModal(`<h3>Ingreso con PIN</h3><p style="font-size:.78rem;color:var(--text2);margin-bottom:12px;text-align:center">Ingresá tu PIN (hasta 10 dígitos)</p><div class="pinDisplay" id="pinDisplay">—</div><div class="pinGrid">${[1,2,3,4,5,6,7,8,9,'⌫',0,'✓'].map(k=>`<div class="pinBtn" onclick="pinPress('${k}')">${k}</div>`).join('')}</div><div id="pinMsg" style="text-align:center;font-size:.78rem;margin-top:10px;color:var(--red)"></div>`);pinBuf='';}
 function pinPress(k){if(k==='⌫')pinBuf=pinBuf.slice(0,-1);else if(k==='✓'){const u=users.find(x=>x.pin===pinBuf);if(u){currentUser={role:'user',name:u.name,data:u,email:u.email};closeModal();startApp();}else{document.getElementById('pinMsg').textContent='PIN incorrecto';pinBuf='';}}else if(pinBuf.length<10)pinBuf+=k;const d=document.getElementById('pinDisplay');if(d)d.textContent=pinBuf?'●'.repeat(pinBuf.length):'—';}
@@ -960,10 +960,11 @@ function saveTrainerProfile(tp){const idx=trainerProfiles.findIndex(x=>x.trainer
 
 const views={
 dashboard:()=>{genNotifications();if(!Array.isArray(users))users=[];if(!Array.isArray(paymentsDB))paymentsDB=[];if(!Array.isArray(classes))classes=[];const active=users.filter(u=>getQuotaStatus(u)==='active').length;const blocked=users.filter(u=>getQuotaStatus(u)==='blocked').length;const income=getMonthlyIncome();const prevIncome=getMonthlyIncome(1);const incDiff=prevIncome?Math.round((income-prevIncome)/prevIncome*100):0;const todayEntries=accessLog.filter(l=>l.date===today().toISOString().slice(0,10)&&l.allowed&&l.type==='entry').length;const months=['Ene','Feb','Mar','Abr','May'];const mIncome=months.map((_,i)=>paymentsDB.filter(p=>p.status==='approved'&&new Date(p.date).getMonth()===i).reduce((s,p)=>s+p.amount,0));const maxI=Math.max(...mIncome,1);const _hoyStr=today().toISOString().slice(0,10);const sociosAdentro=new Set(accessLog.filter(l=>l.date===_hoyStr&&l.type==='entry'&&!l.exitTime).map(l=>l.userId)).size;const totalAdentro=sociosAdentro+staffAccounts.length;
-// ── PANEL CUOTAS para recepción ──
+// ── Dashboard Recepción ──
 if(currentUser.role==='reception'){
   const curDay=today().getDate();
   const curMonth=today().getMonth();const curYear=today().getFullYear();
+  const todayStr=today().toISOString().slice(0,10);
   const paid=users.filter(u=>{if(!u.lastPayment)return false;const lp=new Date(u.lastPayment);return lp.getMonth()===curMonth&&lp.getFullYear()===curYear;});
   const pending=users.filter(u=>!paid.includes(u)&&!u.frozen);
   const warning=users.filter(u=>getQuotaStatus(u)==='warning');
@@ -972,75 +973,137 @@ if(currentUser.role==='reception'){
   const frozen=users.filter(u=>u.frozen);
   const withDebt=users.filter(u=>(u.debt||0)>0);
   const totalDebt=users.reduce((s,u)=>s+(u.debt||0),0);
-  const totalCobrado=paid.reduce((s,u)=>s+safePlan(u.plan).price,0);
-  const totalEsperado=users.filter(u=>!u.frozen).reduce((s,u)=>s+safePlan(u.plan).price,0);
-  const pctCobrado=totalEsperado?Math.round(totalCobrado/totalEsperado*100):0;
-  const daysLeft=curDay<=7?7-curDay:curDay<=10?10-curDay:0;
+  const pctCobrado=users.filter(u=>!u.frozen).length?Math.round(paid.length/users.filter(u=>!u.frozen).length*100):0;
   const proxVencer=users.filter(u=>getQuotaStatus(u)==='inactive'||getQuotaStatus(u)==='warning');
-  return`<div class="pageTitle">Panel de Cuotas <span style="font-size:.6rem;color:var(--text3);font-family:'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase;margin-left:8px">Recepción · ${today().toLocaleDateString('es-SV',{day:'2-digit',month:'long',year:'numeric'})}</span></div>
-<div class="statsGrid">
-  <div class="statCard"><div class="num" style="color:var(--green)">${paid.length}</div><div class="lbl">Pagaron este mes</div></div>
-  <div class="statCard"><div class="num" style="color:var(--orange)">${pending.length}</div><div class="lbl">Cuotas pendientes</div></div>
-  <div class="statCard"><div class="num" style="color:var(--accent)">${warning.length}</div><div class="lbl">Próximas a vencer</div></div>
-  <div class="statCard"><div class="num" style="color:var(--red)">${blockedU.length}</div><div class="lbl">Bloqueados</div></div>
-  <div class="statCard"><div class="num" style="color:var(--teal)">${grace.length}</div><div class="lbl">En período de gracia</div></div>
-  <div class="statCard"><div class="num" style="color:var(--text3)">${frozen.length}</div><div class="lbl">Congelados</div></div>
+  const sociosAdentroR=new Set(accessLog.filter(l=>l.date===todayStr&&l.type==='entry'&&!l.exitTime).map(l=>l.userId)).size;
+  const entradasHoy=accessLog.filter(l=>l.date===todayStr&&l.type==='entry'&&l.allowed).length;
+  const clasesHoy=getClassesForDay(DAYS_FULL[today().getDay()]);
+  const dangerCountR=notifications.filter(n=>n.type==='danger').length;
+  return`
+<div class="dashHero">
+  <div>
+    <div style="font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">${today().toLocaleDateString('es-SV',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+    <div style="display:flex;align-items:baseline;gap:14px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:2.8rem;font-weight:900;letter-spacing:-.02em;color:var(--white)">${sociosAdentroR}<span style="font-size:1.1rem;color:var(--text3);margin-left:6px;font-weight:400">en gym ahora</span></div>
+    </div>
+    <div style="font-size:.76rem;font-weight:700;margin-top:4px;color:var(--green)">${entradasHoy} entrada${entradasHoy!==1?'s':''} hoy · ${pending.length} cuota${pending.length!==1?'s':''} pendiente${pending.length!==1?'s':''}</div>
+  </div>
+  <div style="text-align:right">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.9rem;font-weight:900;letter-spacing:-.02em;color:var(--white)">LIFT<span style="color:var(--accent)">.</span></div>
+    <div style="font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-top:2px">Recepción</div>
+    <div style="font-size:.64rem;color:var(--text3);margin-top:6px">${today().toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'})} hs</div>
+    <div style="font-size:.58rem;color:${dangerCountR>0?'var(--red)':'var(--text3)'};margin-top:4px;letter-spacing:.08em">${dangerCountR>0?'🚨 '+dangerCountR+' ALERTAS URGENTES':'SIN ALERTAS URGENTES'}</div>
+  </div>
 </div>
+
+<div class="quickActions">
+  <div class="quickAction" onclick="navigate('cobroDiario')">
+    <div class="qaIcon">💵</div>
+    <div class="qaText"><strong>Ventanilla de Cobro</strong><span>Cobrar cuotas del día</span></div>
+  </div>
+  <div class="quickAction" onclick="navigate('acceso')">
+    <div class="qaIcon">🔐</div>
+    <div class="qaText"><strong>Control de Acceso</strong><span>Validar ingreso de socios</span></div>
+  </div>
+  <div class="quickAction" onclick="navigate('usuarios')">
+    <div class="qaIcon">👥</div>
+    <div class="qaText"><strong>Socios</strong><span>Buscar y gestionar</span></div>
+  </div>
+  <div class="quickAction ${dangerCountR>0?'qa-urgent qa-danger':''}" onclick="navigate('notificaciones')">
+    <div class="qaIcon">${dangerCountR>0?'🚨':'🔔'}</div>
+    <div class="qaText"><strong style="color:${dangerCountR>0?'var(--red)':'var(--white)'}">${dangerCountR>0?dangerCountR+' Urgentes':'Alertas'}</strong><span>${notifications.length} notificacion${notifications.length!==1?'es':''} activas</span></div>
+  </div>
+</div>
+
+<div class="statsGrid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
+  <div class="statCard" style="border-left-color:var(--green);cursor:pointer" onclick="navigate('usuarios')">
+    <div class="num" style="color:var(--green)">${users.filter(u=>getQuotaStatus(u)==='active').length}</div>
+    <div class="lbl">Socios activos</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${users.length} registrados total</div>
+  </div>
+  <div class="statCard" style="border-left-color:var(--orange);cursor:pointer" onclick="navigate('cuotas')">
+    <div class="num" style="color:var(--orange)">${pending.length}</div>
+    <div class="lbl">Cuotas pendientes</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${paid.length} cobrados · ${pctCobrado}%</div>
+  </div>
+  <div class="statCard" style="border-left-color:var(--red);cursor:pointer" onclick="navigate('cuotas')">
+    <div class="num" style="color:var(--red)">${blockedU.length}</div>
+    <div class="lbl">Bloqueados</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${grace.length} en gracia · ${frozen.length} congelados</div>
+  </div>
+  <div class="statCard" style="border-left-color:var(--teal);cursor:pointer" onclick="navigate('agenda')">
+    <div class="num" style="color:var(--teal)">${clasesHoy.length}</div>
+    <div class="lbl">Clases hoy</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${DAYS_FULL[today().getDay()]}</div>
+  </div>
+</div>
+
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-  <div class="card">
-    <h3>Cobro del mes</h3>
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px">
-      <div>
-        <div style="font-size:1.8rem;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--green)">$${totalCobrado.toLocaleString()}</div>
-        <div style="font-size:.7rem;color:var(--text3)">de $${totalEsperado.toLocaleString()} esperados</div>
-      </div>
-      <div style="text-align:right"><div style="font-size:1.3rem;font-weight:700;color:${pctCobrado>=80?'var(--green)':pctCobrado>=50?'var(--orange)':'var(--red)'};">${pctCobrado}%</div><div style="font-size:.67rem;color:var(--text3)">recaudado</div></div>
+  <div class="card" style="${dangerCountR>0?'border-left:3px solid var(--red)':''}">
+    <h3 style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span>Alertas</span>
+      ${notifications.length>0?`<span style="background:${dangerCountR>0?'var(--red)':'var(--accent)'};color:#fff;border-radius:3px;padding:2px 8px;font-size:.65rem;font-family:'Barlow Condensed',sans-serif;font-weight:700">${notifications.length}</span>`:''}
+    </h3>
+    <div style="display:flex;flex-direction:column;gap:5px;max-height:140px;overflow-y:auto">
+      ${notifications.length===0
+        ?'<p style="color:var(--text2);font-size:.78rem">Sin alertas activas ✓</p>'
+        :notifications.slice(0,6).map(n=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border-radius:2px;border:1px solid ${n.type==='danger'?'rgba(255,59,48,.25)':n.type==='warn'?'rgba(229,8,126,.2)':'var(--border)'}"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:${n.type==='danger'?'var(--red)':n.type==='warn'?'var(--accent)':'var(--blue)'}"></div><div style="font-size:.74rem">${n.msg}</div></div>`).join('')}
     </div>
-    <div class="progressBar" style="height:10px;margin-bottom:8px"><div class="progressFill" style="width:${pctCobrado}%;background:${pctCobrado>=80?'var(--green)':pctCobrado>=50?'var(--orange)':'var(--red)'}"></div></div>
-    <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text3)">
-      <span>✅ ${paid.length} cobrados</span>
-      <span style="color:var(--orange)">⏳ ${pending.length} pendientes</span>
-    </div>
-    ${withDebt.length?`<div style="margin-top:10px;padding:8px;background:rgba(255,59,48,.06);border:1px solid rgba(255,59,48,.2);border-radius:2px;font-size:.75rem"><span style="color:var(--red);font-weight:700">💸 Deuda acumulada: $${totalDebt.toLocaleString()}</span> · ${withDebt.length} socio${withDebt.length>1?'s':''}</div>`:''}
   </div>
   <div class="card">
     <h3>Estado del ciclo de cobro</h3>
     <div style="display:flex;flex-direction:column;gap:8px">
       ${[
-        {label:'Día de corte pago',val:'Día 7',ok:curDay<=7,extra:curDay<=7?`(faltan ${7-curDay} días)`:'(vencido)'},
-        {label:'Período de gracia',val:'Hasta día 10',ok:curDay<=10,extra:curDay<=10?`(faltan ${10-curDay} días)`:'(vencido)'},
+        {label:'Día de corte pago',val:'Día 7',ok:curDay<=7,extra:curDay<=7?`faltan ${7-curDay} días`:'VENCIDO'},
+        {label:'Período de gracia',val:'Hasta día 10',ok:curDay<=10,extra:curDay<=10?`faltan ${10-curDay} días`:'VENCIDO'},
         {label:'Bloqueo automático',val:'Desde día 11',ok:false,extra:curDay>=11?'⚠ ACTIVO':'No activo aún'},
       ].map(x=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:var(--surface2);border-radius:2px;border:1px solid var(--border);font-size:.75rem"><div><div style="font-weight:600">${x.label}</div><div style="color:var(--text3);font-size:.68rem">${x.extra}</div></div><span style="font-weight:700;color:${x.ok?'var(--green)':'var(--orange)'}">${x.val}</span></div>`).join('')}
     </div>
+    <div style="margin-top:10px;padding:8px;background:rgba(48,209,88,.06);border:1px solid rgba(48,209,88,.2);border-radius:2px">
+      <div class="progressBar" style="height:8px;margin-bottom:6px"><div class="progressFill" style="width:${pctCobrado}%;background:${pctCobrado>=80?'var(--green)':pctCobrado>=50?'var(--orange)':'var(--red)'}"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:.72rem"><span style="color:var(--green)">✅ ${paid.length} cobrados</span><span style="font-weight:700;color:${pctCobrado>=80?'var(--green)':pctCobrado>=50?'var(--orange)':'var(--red)'}">${pctCobrado}%</span><span style="color:var(--orange)">⏳ ${pending.length} pendientes</span></div>
+    </div>
+    ${withDebt.length?`<div style="margin-top:8px;padding:7px 8px;background:rgba(255,59,48,.06);border:1px solid rgba(255,59,48,.2);border-radius:2px;font-size:.74rem"><span style="color:var(--red);font-weight:700">💸 Deuda acumulada: $${totalDebt.toLocaleString()}</span> · ${withDebt.length} socios</div>`:''}
   </div>
 </div>
+
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
   <div class="card">
-    <h3 style="color:var(--accent)">⚠ Próximas a vencer (${proxVencer.length})</h3>
+    <h3 style="color:var(--orange)">⚠ Próximas a vencer (${proxVencer.length})</h3>
     ${proxVencer.length===0?'<p style="color:var(--text3);font-size:.8rem">Sin cuotas próximas a vencer ✓</p>':
-    `<div style="max-height:200px;overflow-y:auto">${proxVencer.map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.78rem"><div><div style="font-weight:600">${u.name}</div><div style="font-size:.68rem;color:var(--text3)">Plan ${u.plan} · $${safePlan(u.plan).price.toLocaleString()}</div></div><div style="display:flex;align-items:center;gap:6px"><span class="badge warning">${statusLabel(getQuotaStatus(u))}</span><button class="btn btnXs btnSuccess" onclick="markPaid(${u.id})">Cobrar</button></div></div>`).join('')}</div>`}
+    `<div style="max-height:200px;overflow-y:auto">${proxVencer.slice(0,8).map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.78rem"><div><div style="font-weight:600">${u.name}</div><div style="font-size:.68rem;color:var(--text3)">Plan ${u.plan} · $${safePlan(u.plan).price.toLocaleString()}</div></div><div style="display:flex;align-items:center;gap:6px"><span class="badge warning">${statusLabel(getQuotaStatus(u))}</span><button class="btn btnXs btnSuccess" onclick="markPaid(${u.id})">Cobrar</button></div></div>`).join('')}${proxVencer.length>8?`<div style="text-align:center;padding:6px;font-size:.72rem;color:var(--text3)">+${proxVencer.length-8} más</div>`:''}</div>`}
   </div>
   <div class="card">
-    <h3 style="color:var(--red)">🔒 Cuotas vencidas / bloqueados (${blockedU.length+grace.length})</h3>
+    <h3 style="color:var(--red)">🔒 Bloqueados / gracia (${blockedU.length+grace.length})</h3>
     ${(blockedU.length+grace.length)===0?'<p style="color:var(--text3);font-size:.8rem">Sin cuotas vencidas ✓</p>':
-    `<div style="max-height:200px;overflow-y:auto">${[...grace,...blockedU].map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.78rem"><div><div style="font-weight:600">${u.name}</div><div style="font-size:.68rem;color:var(--text3)">Plan ${u.plan}${(u.debt||0)>0?' · Deuda $'+u.debt.toLocaleString():''}</div></div><div style="display:flex;align-items:center;gap:6px"><span class="badge ${getQuotaStatus(u)}">${statusLabel(getQuotaStatus(u))}</span><button class="btn btnXs btnSuccess" onclick="markPaid(${u.id})">Cobrar</button></div></div>`).join('')}</div>`}
+    `<div style="max-height:200px;overflow-y:auto">${[...grace,...blockedU].slice(0,8).map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.78rem"><div><div style="font-weight:600">${u.name}</div><div style="font-size:.68rem;color:var(--text3)">Plan ${u.plan}${(u.debt||0)>0?' · Deuda $'+u.debt.toLocaleString():''}</div></div><div style="display:flex;align-items:center;gap:6px"><span class="badge ${getQuotaStatus(u)}">${statusLabel(getQuotaStatus(u))}</span><button class="btn btnXs btnSuccess" onclick="markPaid(${u.id})">Cobrar</button></div></div>`).join('')}</div>`}
   </div>
 </div>
+
 <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px">
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3>Cuotas pendientes de cobro</h3><button class="btn btnSm btnAccent" onclick="navigate('cuotas')">Ver tabla completa →</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3>Cuotas pendientes de cobro</h3>
+      <button class="btn btnSm btnAccent" onclick="navigate('cobroDiario')">Ir a ventanilla →</button>
+    </div>
     ${pending.length===0?'<p style="color:var(--text3);font-size:.8rem">¡Todos pagaron este mes! ✓</p>':
-    `<div style="max-height:220px;overflow-y:auto">${pending.map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:.78rem"><div style="flex:1"><div style="font-weight:600">${u.name}</div><div style="font-size:.68rem;color:var(--text3)">${u.payMethod} · último pago: ${u.lastPayment||'nunca'}</div></div><div style="display:flex;align-items:center;gap:6px"><span style="color:var(--accent);font-weight:700;font-size:.82rem">$${safePlan(u.plan).price.toLocaleString()}</span><span class="badge ${getQuotaStatus(u)}">${statusLabel(getQuotaStatus(u))}</span><button class="btn btnXs btnSuccess" onclick="markPaid(${u.id})">✓ Cobrar</button></div></div>`).join('')}</div>`}
+    `<div style="max-height:240px;overflow-y:auto">${pending.slice(0,10).map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:.78rem"><div style="flex:1"><div style="font-weight:600">${u.name}</div><div style="font-size:.68rem;color:var(--text3)">${u.payMethod||'—'} · último pago: ${u.lastPayment||'nunca'}</div></div><div style="display:flex;align-items:center;gap:6px"><span style="color:var(--accent);font-weight:700;font-size:.82rem">$${safePlan(u.plan).price.toLocaleString()}</span><span class="badge ${getQuotaStatus(u)}">${statusLabel(getQuotaStatus(u))}</span><button class="btn btnXs btnSuccess" onclick="markPaid(${u.id})">✓ Cobrar</button></div></div>`).join('')}${pending.length>10?`<div style="text-align:center;padding:8px;font-size:.72rem"><button class="btn btnSm btnGhost" onclick="navigate('cuotas')">Ver todos (${pending.length}) →</button></div>`:''}</div>`}
   </div>
-  <div class="card">
-    <h3>Por plan</h3>
-    ${Object.entries(PLANS).map(([n,p])=>{const total=users.filter(u=>u.plan===n).length;const pagaron=paid.filter(u=>u.plan===n).length;const pct=total?Math.round(pagaron/total*100):0;return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:.74rem;margin-bottom:3px"><span class="badge ${p.color}">${n}</span><span style="color:var(--text3)">${pagaron}/${total}</span></div><div class="progressBar"><div class="progressFill" style="width:${pct}%;background:var(--${p.color})"></div></div></div>`;}).join('')}
-    <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
-      <div style="font-size:.7rem;color:var(--text3);margin-bottom:4px">Clases hoy</div>
-      ${getClassesForDay(DAYS_FULL[today().getDay()]).map(c=>`<div style="display:flex;justify-content:space-between;font-size:.75rem;padding:3px 0"><span>${c.time} ${c.type}</span><span style="color:${c.enrolled.length>=c.capacity?'var(--red)':'var(--green)'}">${c.enrolled.length}/${c.capacity}</span></div>`).join('')||'<div style="font-size:.75rem;color:var(--text3)">Sin clases hoy</div>'}
+  <div>
+    <div class="card" style="margin-bottom:14px">
+      <h3>Clases hoy — ${DAYS_FULL[today().getDay()]}</h3>
+      ${clasesHoy.length===0
+        ?'<p style="color:var(--text2);font-size:.78rem">Sin clases programadas hoy</p>'
+        :clasesHoy.map(c=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)"><div style="font-family:'Barlow Condensed',sans-serif;font-size:.95rem;font-weight:700;color:var(--white);min-width:40px">${c.time}</div><div style="flex:1"><div style="font-size:.78rem;font-weight:600">${c.type}</div><div style="font-size:.65rem;color:var(--text3)">${c.trainer}</div></div><div style="font-size:.78rem;font-weight:700;color:${c.enrolled.length>=c.capacity?'var(--red)':'var(--green)'}">${c.enrolled.length}/${c.capacity}</div></div>`).join('')}
+      <div style="margin-top:8px"><button class="btn btnSm btnGhost" style="width:100%" onclick="navigate('agenda')">Ver agenda completa →</button></div>
+    </div>
+    <div class="card">
+      <h3>Por plan</h3>
+      ${Object.entries(PLANS).map(([n,p])=>{const total=users.filter(u=>u.plan===n).length;const pagaron=paid.filter(u=>u.plan===n).length;const pct=total?Math.round(pagaron/total*100):0;return`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:.74rem;margin-bottom:3px"><span class="badge ${p.color}">${n}</span><span style="color:var(--text3)">${pagaron}/${total}</span></div><div class="progressBar" style="height:5px"><div class="progressFill" style="width:${pct}%;background:var(--${p.color})"></div></div></div>`;}).join('')}
     </div>
   </div>
-</div>`;}
+</div>`;
+}
 // ── Dashboard admin normal ──
 const dangerCount=notifications.filter(n=>n.type==='danger').length;
 const pendientes=users.filter(u=>getQuotaStatus(u)==='inactive'||getQuotaStatus(u)==='grace').length;
