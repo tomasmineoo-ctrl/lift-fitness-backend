@@ -1,0 +1,403 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTRL GYM — Variante B</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --white: #ffffff;
+    --off: #f4f2ef;
+    --border: #e2ddd8;
+    --text: #1a1714;
+    --muted: #7a736c;
+    --accent: #E5087E;
+    --indigo: #34388E;
+  }
+  body { background: var(--white); color: var(--text); font-family: 'Space Grotesk', sans-serif; }
+
+  nav {
+    position: fixed; top: 0; width: 100%; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 5rem;
+    background: rgba(255,255,255,0.92); backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { font-size: 1.4rem; font-weight: 700; letter-spacing: -1.5px; }
+  .logo span { color: var(--accent); }
+  nav ul { display: flex; gap: 2.5rem; list-style: none; align-items: center; }
+  nav a { color: var(--muted); text-decoration: none; font-size: .875rem; font-weight: 500; transition: color .2s; }
+  nav a:hover { color: var(--text); }
+  .nav-cta { background: var(--text); color: var(--white) !important; padding: .55rem 1.4rem; border-radius: 6px; font-weight: 600; }
+
+  .hero {
+    min-height: 100vh; display: flex; align-items: center;
+    padding: 10rem 5rem 5rem; gap: 6rem;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #faf9f7 0%, #ffffff 100%);
+  }
+  .hero-left { flex: 1; }
+  .hero-right { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: var(--off); border: 1px solid var(--border);
+    font-size: .75rem; font-weight: 500; letter-spacing: .5px;
+    padding: .35rem .9rem; border-radius: 4px; margin-bottom: 1.8rem; color: var(--muted);
+  }
+  .hero-tag span { color: #22c55e; font-weight: 700; }
+  h1 {
+    font-size: clamp(2.8rem, 5vw, 5rem); font-weight: 700;
+    line-height: 1.08; letter-spacing: -2px; margin-bottom: 1.5rem;
+  }
+  h1 em { color: var(--accent); font-style: normal; }
+  .hero p { font-size: 1.05rem; color: var(--muted); line-height: 1.75; max-width: 440px; margin-bottom: 2.5rem; }
+  .btn-group { display: flex; gap: .75rem; }
+  .btn-primary {
+    background: var(--accent); color: #fff; padding: .85rem 2rem;
+    border: none; border-radius: 6px; font-size: .95rem; font-weight: 600;
+    cursor: pointer; text-decoration: none;
+    box-shadow: 0 4px 20px rgba(229,8,126,.3);
+    transition: transform .15s, box-shadow .15s; font-family: inherit;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(229,8,126,.4); }
+  .btn-ghost {
+    background: transparent; color: var(--text); padding: .85rem 2rem;
+    border: 1.5px solid var(--border); border-radius: 6px; font-size: .95rem; font-weight: 500;
+    cursor: pointer; text-decoration: none; transition: border-color .2s; font-family: inherit;
+  }
+  .btn-ghost:hover { border-color: #bbb; }
+
+  /* MOCK */
+  .mock-wrap { position: relative; }
+  .mock-screen {
+    width: 430px; height: 350px;
+    background: #0d0d0d; border-radius: 12px;
+    box-shadow: 0 40px 80px rgba(0,0,0,.18), 0 0 0 1px #222;
+    overflow: hidden;
+  }
+  .mock-bar { height: 38px; background: #111; border-bottom: 1px solid #1e1e1e; display: flex; align-items: center; padding: 0 1rem; gap: .4rem; }
+  .mock-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .mock-content { padding: 1.5rem; }
+  .mock-title { color: #888; font-size: .65rem; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 1rem; }
+  .mock-stat-row { display: flex; gap: .75rem; margin-bottom: 1rem; }
+  .mock-stat { flex: 1; background: #1a1a1a; border-radius: 8px; padding: 1rem; border: 1px solid #222; }
+  .mock-stat-n { color: #E5087E; font-size: 1.5rem; font-weight: 700; line-height: 1; }
+  .mock-stat-l { color: #555; font-size: .6rem; text-transform: uppercase; letter-spacing: 1px; margin-top: .2rem; }
+  .mock-row { display: flex; align-items: center; gap: .75rem; background: #1a1a1a; border-radius: 6px; padding: .65rem 1rem; margin-bottom: .4rem; }
+  .mock-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #E5087E, #34388E); flex-shrink: 0; }
+  .mock-name { color: #ccc; font-size: .75rem; flex: 1; font-weight: 500; }
+  .mock-badge { background: rgba(34,197,94,.15); color: #22c55e; font-size: .6rem; font-weight: 600; padding: .2rem .6rem; border-radius: 4px; }
+
+  /* LOGOS */
+  .logos { padding: 2.5rem 5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 3rem; }
+  .logos p { color: var(--muted); font-size: .75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
+  .logo-pills { display: flex; gap: 1rem; }
+  .logo-pill { background: var(--off); border: 1px solid var(--border); padding: .45rem 1.2rem; border-radius: 4px; color: var(--muted); font-size: .85rem; font-weight: 600; }
+
+  /* FEATURES */
+  .features { padding: 7rem 5rem; }
+  .section-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 4rem; gap: 4rem; }
+  .section-title { font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 700; letter-spacing: -1.5px; line-height: 1.1; }
+  .section-title em { color: var(--accent); font-style: normal; }
+  .section-desc { max-width: 360px; color: var(--muted); line-height: 1.7; padding-top: .5rem; font-size: .95rem; }
+  .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+  .feature-card { border: 1px solid var(--border); border-radius: 8px; padding: 2rem; transition: box-shadow .2s; }
+  .feature-card:hover { box-shadow: 0 8px 40px rgba(0,0,0,.07); }
+  .feat-num { font-size: .7rem; font-weight: 700; color: var(--accent); letter-spacing: 2px; margin-bottom: 1rem; }
+  .feat-title { font-size: 1rem; font-weight: 600; letter-spacing: -.3px; margin-bottom: .5rem; }
+  .feat-desc { color: var(--muted); font-size: .875rem; line-height: 1.65; }
+
+  /* PLANS */
+  .plans { padding: 7rem 5rem; background: var(--off); border-top: 1px solid var(--border); }
+  .plans-header { text-align: center; margin-bottom: 4rem; }
+  .plans-title { font-size: clamp(2rem, 3vw, 2.8rem); font-weight: 700; letter-spacing: -1.5px; }
+  .plans-sub { color: var(--muted); margin-top: .5rem; }
+  .plans-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; max-width: 1000px; margin: 0 auto; }
+  .plan-card { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 2.5rem; transition: box-shadow .2s; }
+  .plan-card:hover { box-shadow: 0 16px 50px rgba(0,0,0,.09); }
+  .plan-card.featured { border-color: var(--accent); border-width: 2px; }
+  .plan-name { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: .5rem; }
+  .plan-card.featured .plan-name { color: var(--accent); }
+  .plan-price { font-size: 2.8rem; font-weight: 700; letter-spacing: -2px; }
+  .plan-price span { font-size: 1rem; color: var(--muted); font-weight: 400; letter-spacing: 0; }
+  .plan-divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+  .plan-features { list-style: none; }
+  .plan-features li { color: var(--muted); font-size: .875rem; padding: .45rem 0; display: flex; gap: .6rem; }
+  .plan-features li::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+  .plan-btn { width: 100%; margin-top: 2rem; padding: .85rem; border-radius: 6px; font-size: .9rem; font-weight: 600; cursor: pointer; border: 1.5px solid var(--border); background: transparent; color: var(--text); text-decoration: none; display: block; text-align: center; transition: all .2s; font-family: inherit; }
+  .plan-card.featured .plan-btn { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .plan-btn:hover { opacity: .85; }
+
+  footer { padding: 2.5rem 5rem; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .footer-logo { font-size: 1.2rem; font-weight: 700; letter-spacing: -1px; }
+  footer p { color: var(--muted); font-size: .8rem; }
+
+  /* ── LOGIN MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(26,23,20,.55); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity .25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--white); border-radius: 16px; width: 100%; max-width: 420px;
+    padding: 2.5rem; box-shadow: 0 32px 80px rgba(0,0,0,.18);
+    transform: translateY(16px); transition: transform .25s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-logo { font-size: 1.3rem; font-weight: 700; letter-spacing: -1px; margin-bottom: 1.75rem; }
+  .modal-logo span { color: var(--accent); }
+  .modal h2 { font-size: 1.5rem; font-weight: 700; letter-spacing: -1px; margin-bottom: .4rem; }
+  .modal-sub { color: var(--muted); font-size: .875rem; margin-bottom: 2rem; }
+  .form-group { margin-bottom: 1.1rem; }
+  .form-group label { display: block; font-size: .8rem; font-weight: 600; margin-bottom: .4rem; color: var(--text); }
+  .form-group input {
+    width: 100%; padding: .75rem 1rem; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: .95rem; font-family: inherit;
+    background: var(--off); color: var(--text); outline: none;
+    transition: border-color .2s;
+  }
+  .form-group input:focus { border-color: var(--accent); background: var(--white); }
+  .form-group input::placeholder { color: #bbb; }
+  .modal-btn {
+    width: 100%; padding: .9rem; background: var(--accent); color: #fff;
+    border: none; border-radius: 8px; font-size: 1rem; font-weight: 600;
+    cursor: pointer; font-family: inherit; margin-top: .5rem;
+    transition: opacity .2s, transform .15s;
+    display: flex; align-items: center; justify-content: center; gap: .6rem;
+  }
+  .modal-btn:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
+  .modal-btn:disabled { opacity: .6; cursor: not-allowed; }
+  .modal-error {
+    background: #fff1f4; border: 1px solid #fcd5e0; color: #c0385a;
+    border-radius: 8px; padding: .75rem 1rem; font-size: .85rem;
+    margin-bottom: 1rem; display: none;
+  }
+  .modal-error.visible { display: block; }
+  .modal-close {
+    position: absolute; top: 1.2rem; right: 1.2rem;
+    background: none; border: none; cursor: pointer; color: var(--muted);
+    font-size: 1.2rem; line-height: 1; padding: .25rem;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal { position: relative; }
+  .spinner {
+    width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.4);
+    border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .modal-btn.loading .spinner { display: block; }
+  .modal-btn.loading .btn-text { opacity: .7; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">ctrl<span>gym</span></div>
+  <ul>
+    <li><a href="#">Producto</a></li>
+    <li><a href="#">Precios</a></li>
+    <li><a href="#">Empresa</a></li>
+    <li><a href="#" class="nav-cta" onclick="openLogin(event)">Entrar →</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-tag"><span>● Live</span>&nbsp; Plataforma activa · San Salvador</div>
+    <h1>Software de gestión<br>para <em>gimnasios</em><br>modernos</h1>
+    <p>Controlá socios, clases, pagos y accesos desde un solo lugar. Simple, rápido, sin papeles.</p>
+    <div class="btn-group">
+      <a href="#" class="btn-primary">Empezar gratis</a>
+      <a href="#" class="btn-ghost">Ver demo</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="mock-wrap">
+      <div class="mock-screen">
+        <div class="mock-bar">
+          <div class="mock-dot" style="background:#ff5f57"></div>
+          <div class="mock-dot" style="background:#febc2e"></div>
+          <div class="mock-dot" style="background:#28c840"></div>
+        </div>
+        <div class="mock-content">
+          <div class="mock-title">Dashboard — LIFT Fitness</div>
+          <div class="mock-stat-row">
+            <div class="mock-stat"><div class="mock-stat-n">248</div><div class="mock-stat-l">Socios</div></div>
+            <div class="mock-stat"><div class="mock-stat-n" style="color:#34388E">$8.4k</div><div class="mock-stat-l">Mes actual</div></div>
+            <div class="mock-stat"><div class="mock-stat-n" style="color:#22c55e">12</div><div class="mock-stat-l">Hoy</div></div>
+          </div>
+          <div class="mock-row"><div class="mock-avatar"></div><div class="mock-name">Carlos Mendoza</div><div class="mock-badge">Al día</div></div>
+          <div class="mock-row"><div class="mock-avatar" style="background:linear-gradient(135deg,#34388E,#6366f1)"></div><div class="mock-name">Ana Rodríguez</div><div class="mock-badge">Al día</div></div>
+          <div class="mock-row"><div class="mock-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)"></div><div class="mock-name">Luis Torres</div><div class="mock-badge" style="background:rgba(239,68,68,.15);color:#ef4444">Vencida</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="logos">
+  <p>Tecnología</p>
+  <div class="logo-pills">
+    <div class="logo-pill">Supabase</div>
+    <div class="logo-pill">Railway</div>
+    <div class="logo-pill">Cloudflare</div>
+    <div class="logo-pill">Node.js</div>
+  </div>
+</div>
+
+<section class="features">
+  <div class="section-header">
+    <div class="section-title">Herramientas para<br>cada área de tu <em>gym</em></div>
+    <div class="section-desc">Todo lo que necesita tu equipo: recepción, entrenadores, nutricionistas y administración en una sola plataforma.</div>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card"><div class="feat-num">01</div><div class="feat-title">Gestión de Socios</div><div class="feat-desc">Ficha completa, historial de pagos, control de deuda, QR de acceso y estados de membresía automáticos.</div></div>
+    <div class="feature-card"><div class="feat-num">02</div><div class="feat-title">Cobros & Finanzas</div><div class="feat-desc">Registro de pagos, control de caja, gastos operativos y reportes de ingresos mensuales.</div></div>
+    <div class="feature-card"><div class="feat-num">03</div><div class="feat-title">Clases & Horarios</div><div class="feat-desc">Programá clases, gestioná inscripciones, controlá cupos y enviá notificaciones automáticas.</div></div>
+    <div class="feature-card"><div class="feat-num">04</div><div class="feat-title">Control de Acceso</div><div class="feat-desc">Acceso por QR o PIN. Registro en tiempo real. Bloqueo automático por deuda.</div></div>
+    <div class="feature-card"><div class="feat-num">05</div><div class="feat-title">Panel Nutrición</div><div class="feat-desc">Asignación de clientes a nutricionistas, seguimiento de metas, planes y agenda de citas.</div></div>
+    <div class="feature-card"><div class="feat-num">06</div><div class="feat-title">Reportes & Analytics</div><div class="feat-desc">Dashboard en tiempo real con KPIs, tendencias de socios y alertas inteligentes.</div></div>
+  </div>
+</section>
+
+<section class="plans">
+  <div class="plans-header">
+    <div class="plans-title">Planes para cada etapa</div>
+    <div class="plans-sub">Empezá gratis, escalá cuando lo necesités</div>
+  </div>
+  <div class="plans-grid">
+    <div class="plan-card"><div class="plan-name">Starter</div><div class="plan-price">$49<span>/mes</span></div><div class="plan-divider"></div><ul class="plan-features"><li>Hasta 150 socios</li><li>Gestión de pagos</li><li>Control de acceso</li><li>Soporte por email</li></ul><a href="#" class="plan-btn">Empezar</a></div>
+    <div class="plan-card featured"><div class="plan-name">Pro</div><div class="plan-price">$99<span>/mes</span></div><div class="plan-divider"></div><ul class="plan-features"><li>Socios ilimitados</li><li>Clases & horarios</li><li>Panel de nutrición</li><li>Reportes avanzados</li><li>Soporte prioritario</li></ul><a href="#" class="plan-btn">Empezar</a></div>
+    <div class="plan-card"><div class="plan-name">Enterprise</div><div class="plan-price">Custom</div><div class="plan-divider"></div><ul class="plan-features"><li>Multi-sede</li><li>Integraciones custom</li><li>SLA dedicado</li><li>Onboarding personal</li></ul><a href="#" class="plan-btn">Hablar con ventas</a></div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">ctrl<span style="color:var(--accent)">gym</span></div>
+  <p>© 2025 CTRL GYM. Todos los derechos reservados.</p>
+  <p>lift.ctrlgym.org</p>
+</footer>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="loginModal" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeLogin()">✕</button>
+    <div class="modal-logo">ctrl<span>gym</span></div>
+    <h2>Accedé a tu panel</h2>
+    <p class="modal-sub">Ingresá con las credenciales de tu gimnasio</p>
+
+    <div class="modal-error" id="loginError"></div>
+
+    <form onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="admin@lift.com" required autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="loginPass" placeholder="••••••••" required autocomplete="current-password" />
+      </div>
+      <button type="submit" class="modal-btn" id="loginBtn">
+        <div class="spinner"></div>
+        <span class="btn-text">Ingresar al panel</span>
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+  const API_URL = 'https://lift-fitness-production.up.railway.app';
+
+  function openLogin(e) {
+    e.preventDefault();
+    document.getElementById('loginModal').classList.add('open');
+    setTimeout(() => document.getElementById('loginEmail').focus(), 300);
+  }
+  function closeLogin() {
+    document.getElementById('loginModal').classList.remove('open');
+    document.getElementById('loginError').classList.remove('visible');
+    document.getElementById('loginBtn').classList.remove('loading');
+    document.getElementById('loginBtn').disabled = false;
+  }
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('loginModal')) closeLogin();
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLogin(); });
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPass').value;
+    const btn = document.getElementById('loginBtn');
+    const errEl = document.getElementById('loginError');
+
+    btn.classList.add('loading');
+    btn.disabled = true;
+    errEl.classList.remove('visible');
+
+    try {
+      // ── MODO PREVIEW LOCAL ──────────────────────────────────────
+      // En producción esto llama al backend real. En preview simulamos
+      // el JWT para poder ver el flujo completo sin el servidor.
+      const isLocalPreview = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      let gymSlug = 'lift';
+      let fakeToken = null;
+
+      if (isLocalPreview) {
+        // Simular delay de red
+        await new Promise(r => setTimeout(r, 900));
+        // Validación mínima de demo
+        if (!email.includes('@') || password.length < 4) {
+          errEl.textContent = 'Credenciales incorrectas. Intentá de nuevo.';
+          errEl.classList.add('visible');
+          btn.classList.remove('loading');
+          btn.disabled = false;
+          return;
+        }
+        // Armar un JWT falso con gym_slug
+        const header  = btoa(JSON.stringify({ alg:'HS256', typ:'JWT' }));
+        const payloadB = btoa(JSON.stringify({ gym_slug:'lift', gym_name:'LIFT Fitness', email, iat: Date.now() }));
+        fakeToken = `${header}.${payloadB}.preview_signature`;
+        gymSlug = 'lift';
+      } else {
+        const res = await fetch(`${API_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, gym_slug: 'lift' }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.textContent = data.error || 'Credenciales incorrectas. Intentá de nuevo.';
+          errEl.classList.add('visible');
+          btn.classList.remove('loading');
+          btn.disabled = false;
+          return;
+        }
+        const payload = JSON.parse(atob(data.token.split('.')[1]));
+        gymSlug = payload.gym_slug || 'lift';
+        fakeToken = data.token;
+      }
+
+      // Redirigir al panel del propietario
+      btn.querySelector('.btn-text').textContent = `Entrando…`;
+      const dest = isLocalPreview
+        ? `http://localhost:4446/owner-panel.html?token=${fakeToken}&gym=${gymSlug}`
+        : `https://ctrlgym.org/owner-panel.html?token=${fakeToken}&gym=${gymSlug}`;
+      window.location.href = dest;
+
+    } catch (err) {
+      errEl.textContent = 'Error de conexión. Intentá de nuevo.';
+      errEl.classList.add('visible');
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>
+
