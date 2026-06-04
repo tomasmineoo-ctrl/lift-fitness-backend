@@ -376,7 +376,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
     <div class="suppWelcome" id="suppWelcome">
       <div class="suppWIcon">🤖</div>
       <strong>Hola, ¿en qué puedo ayudarte?</strong>
-      <span>Estoy aquí para resolver tus dudas sobre el sistema LIFT. Escribí tu consulta abajo.</span>
+      <span>Preguntame cómo usar cualquier función del sistema, dónde encontrar algo, o cómo realizar una tarea específica.</span>
     </div>
   </div>
   <div class="suppInputArea">
@@ -719,7 +719,7 @@ async function sendSupportMsg(){
     const res=await fetch('/api/support/chat',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},
-      body:JSON.stringify({messages:_suppHistory})
+      body:JSON.stringify({messages:_suppHistory,currentView:typeof currentView!=='undefined'?currentView:''})
     });
     const data=await res.json();
     const reply=data.response||data.error||'Sin respuesta.';
