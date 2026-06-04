@@ -1419,7 +1419,7 @@ function toggleDay(el){const ex=el.nextElementSibling;ex.style.display=ex.style.
 function openModal(html){document.getElementById('modalContent').innerHTML=html;document.getElementById('modalOverlay').classList.add('open');}
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
 function viewUser(id){const u=users.find(x=>x.id===id);if(!u)return;const ini=u.name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();const cards=cardDatabase.filter(c=>c.userId===u.id);openModal(`<h3>${u.name}</h3><div class="profileCard"><div class="avatar">${ini}</div><div><h2 style="font-size:.98rem;font-family:'Barlow Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase">${u.name}</h2><p style="font-size:.73rem;color:var(--text3)">${u.email}</p><span class="badge ${safePlan(u.plan).color}">${u.plan}</span><span class="badge ${getQuotaStatus(u)}" style="margin-left:4px">${statusLabel(getQuotaStatus(u))}</span><div style="margin-top:5px;font-size:.7rem;color:var(--text3)">PIN: <span style="font-family:monospace;color:var(--accent)">${u.pin||'—'}</span></div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.78rem">${[['DNI',u.dni],['Teléfono',u.phone],['Nacimiento',u.dob],['Cobertura',u.medCoverage],['Apto médico',u.medClearance?'✅':'❌'],['Peso',u.weight+'kg'],['Altura',u.height+'cm'],['Inscripción',u.inscDate],['Último pago',u.lastPayment||'—'],['Deuda',(u.debt||0)>0?'$'+u.debt.toLocaleString():'Sin deuda']].map(([l,v])=>`<div style="background:var(--surface2);padding:7px;border-radius:2px;border:1px solid var(--border)"><div style="color:var(--text3);font-size:.63rem;font-family:'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase">${l}</div><div style="font-weight:600">${v}</div></div>`).join('')}</div>${cards.length?`<div style="margin-top:12px"><div style="font-size:.63rem;color:var(--accent);margin-bottom:6px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase">Tarjetas</div>${cards.map(c=>`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:2px;padding:8px;font-size:.75rem;margin-bottom:4px">${getBrandIcon(c.brand)} ${c.brand} · ${c.bank} · ****${c.last4} · Vto ${c.expiry}</div>`).join('')}</div>`:''}<div class="modalActions"><button class="btn btnAccent" onclick="closeModal()">Cerrar</button></div>`);}
-function openNewUser(){openModal(`<h3>Nuevo Socio</h3><div class="formGrid"><div class="formGroup"><label>Nombre *</label><input id="nName" placeholder="Nombre Apellido"/></div><div class="formGroup"><label>Email *</label><input id="nEmail" type="email" placeholder="email@mail.com"/></div><div class="formGroup"><label>Contraseña</label><input id="nPass" type="password" placeholder="Inicial"/></div><div class="formGroup"><label>PIN (4 dígitos)</label><input id="nPin" type="number" placeholder="0000"/></div><div class="formGroup"><label>Teléfono</label><input id="nPhone" placeholder="11-xxxx-xxxx"/></div><div class="formGroup"><label>DNI</label><input id="nDni" placeholder="XX.XXX.XXX"/></div><div class="formGroup"><label>Nacionalidad</label><input id="nNat" value="Argentina"/></div><div class="formGroup"><label>Fecha nacimiento</label><input id="nDob" type="date"/></div><div class="formGroup fullWidth"><label>Dirección</label><input id="nAddr" placeholder="Calle 123"/></div><div class="formGroup"><label>Peso (kg)</label><input id="nWeight" type="number" placeholder="70"/></div><div class="formGroup"><label>Altura (cm)</label><input id="nHeight" type="number" placeholder="170"/></div><div class="formGroup"><label>Grupo sanguíneo</label><input id="nBlood" placeholder="A+"/></div><div class="formGroup"><label>Cobertura médica</label><input id="nMed" placeholder="OSDE..."/></div><div class="formGroup"><label>Apto médico</label><select id="nClear"><option value="true">✅ Sí</option><option value="false">❌ No</option></select></div><div class="formGroup"><label>Plan</label><select id="nPlan">${Object.keys(PLANS).map(p=>`<option>${p}</option>`).join('')}</select></div><div class="formGroup"><label>Forma de pago</label><select id="nPay">${PAYMENT_METHODS.map(p=>`<option>${p}</option>`).join('')}</select></div></div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="saveNewUser()">Guardar</button></div>`);}
+function openNewUser(){openModal(`<h3>Nuevo Socio</h3><p style="font-size:.72rem;color:var(--text3);margin-bottom:14px;margin-top:-8px">Los campos marcados con <span style="color:var(--accent)">*</span> son obligatorios.</p><div class="formGrid"><div class="formGroup"><label>Nombre <span style="color:var(--accent)">*</span></label><input id="nName" placeholder="Nombre Apellido"/></div><div class="formGroup"><label>Email <span style="color:var(--accent)">*</span></label><input id="nEmail" type="email" placeholder="email@mail.com"/></div><div class="formGroup"><label>Contraseña <span style="color:var(--accent)">*</span></label><input id="nPass" type="password" placeholder="Contraseña inicial"/></div><div class="formGroup"><label>PIN (4 dígitos) <span style="color:var(--accent)">*</span></label><input id="nPin" type="number" placeholder="1234" maxlength="4"/></div><div class="formGroup"><label>Teléfono <span style="color:var(--accent)">*</span></label><input id="nPhone" placeholder="11-xxxx-xxxx"/></div><div class="formGroup"><label>DNI <span style="color:var(--accent)">*</span></label><input id="nDni" placeholder="XX.XXX.XXX"/></div><div class="formGroup"><label>Nacionalidad <span style="color:var(--accent)">*</span></label><input id="nNat" value="Argentina"/></div><div class="formGroup"><label>Fecha nacimiento <span style="color:var(--accent)">*</span></label><input id="nDob" type="date"/></div><div class="formGroup fullWidth"><label style="color:var(--text3)">Dirección <span style="font-weight:400;opacity:.6">(opcional)</span></label><input id="nAddr" placeholder="Calle 123"/></div><div class="formGroup"><label style="color:var(--text3)">Peso (kg) <span style="font-weight:400;opacity:.6">(opcional)</span></label><input id="nWeight" type="number" placeholder="70"/></div><div class="formGroup"><label style="color:var(--text3)">Altura (cm) <span style="font-weight:400;opacity:.6">(opcional)</span></label><input id="nHeight" type="number" placeholder="170"/></div><div class="formGroup"><label style="color:var(--text3)">Grupo sanguíneo <span style="font-weight:400;opacity:.6">(opcional)</span></label><input id="nBlood" placeholder="A+"/></div><div class="formGroup"><label style="color:var(--text3)">Cobertura médica <span style="font-weight:400;opacity:.6">(opcional)</span></label><input id="nMed" placeholder="OSDE..."/></div><div class="formGroup"><label style="color:var(--text3)">Apto médico <span style="font-weight:400;opacity:.6">(opcional)</span></label><select id="nClear"><option value="">— Sin especificar —</option><option value="true">✅ Sí</option><option value="false">❌ No</option></select></div><div class="formGroup"><label>Plan</label><select id="nPlan">${Object.keys(PLANS).map(p=>`<option>${p}</option>`).join('')}</select></div><div class="formGroup"><label>Forma de pago</label><select id="nPay">${PAYMENT_METHODS.map(p=>`<option>${p}</option>`).join('')}</select></div></div><div id="nuError" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.3);border-radius:4px;font-size:.8rem;color:#ff3b30"></div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="saveNewUser()">Guardar</button></div>`);}
 function saveNewUser(){const get=i=>document.getElementById(i)?.value||'';if(!get('nName')||!get('nEmail')){alert('Nombre y email obligatorios');return;}const pin=get('nPin')||String(Math.floor(1000+Math.random()*9000));if(users.find(u=>u.pin===pin&&get('nPin'))){alert('Ese PIN ya existe');return;}users.push({id:Date.now(),name:get('nName'),email:get('nEmail'),pass:get('nPass')||'1234',pin,phone:get('nPhone'),dni:get('nDni'),nationality:get('nNat')||'Argentina',dob:get('nDob'),address:get('nAddr'),weight:+get('nWeight')||0,height:+get('nHeight')||0,bloodType:get('nBlood'),medCoverage:get('nMed'),medClearance:get('nClear')==='true',photo:'',plan:get('nPlan'),payMethod:get('nPay'),inscDate:new Date().toISOString().slice(0,10),lastPayment:'',status:'active',routine:null,frozen:false,physicalHistory:[],payHistory:[],debt:0});logAction('Nuevo socio',`${get('nName')} — Plan ${get('nPlan')}`);saveDB();closeModal();navigate('usuarios');}
 /* ── EDIT CUOTA (plan / deuda / estado) ── */
 window.openEditCuota=function(id){const u=users.find(x=>x.id===id);if(!u)return;openModal(`<h3>Editar cuota — ${u.name}</h3><div class="formGrid"><div class="formGroup"><label>Plan</label><select id="ecPlan">${Object.keys(PLANS).map(p=>`<option ${u.plan===p?'selected':''}>${p}</option>`).join('')}</select></div><div class="formGroup"><label>Deuda ($)</label><input id="ecDebt" type="number" value="${u.debt||0}" min="0"/></div><div class="formGroup"><label>Último pago</label><input id="ecLastPay" type="date" value="${u.lastPayment||''}"/></div><div class="formGroup"><label>Estado</label><select id="ecStatus"><option value="active" ${u.status==='active'?'selected':''}>Activo</option><option value="inactive" ${u.status==='inactive'?'selected':''}>Inactivo</option><option value="frozen" ${u.status==='frozen'?'selected':''}>Congelado</option></select></div><div class="formGroup"><label>Método de pago</label><select id="ecPayM">${(typeof PAYMENT_METHODS!=='undefined'?PAYMENT_METHODS:['Efectivo','Tarjeta','Transferencia']).map(m=>`<option ${u.payMethod===m?'selected':''}>${m}</option>`).join('')}</select></div></div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="saveEditCuota(${id})">Guardar</button></div>`);};
@@ -5193,26 +5193,49 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){if(
      SOCIOS — saveNewUser, saveEdit, toggleFreeze
   ══════════════════════════════════════════════════════ */
   window.saveNewUser = async function () {
-    const get = i => document.getElementById(i)?.value || '';
-    if (!get('nName') || !get('nEmail')) { alert('Nombre y email obligatorios'); return; }
+    const get = i => document.getElementById(i)?.value?.trim() || '';
+    const showErr = msg => {
+      const el = document.getElementById('nuError');
+      if (el) { el.textContent = '⚠️ ' + msg; el.style.display = 'block'; }
+      else alert(msg);
+    };
 
-    const pin = get('nPin') || String(Math.floor(1000 + Math.random() * 9000));
+    // Validar campos obligatorios
+    const required = [
+      ['nName',  'Nombre'],
+      ['nEmail', 'Email'],
+      ['nPass',  'Contraseña'],
+      ['nPin',   'PIN'],
+      ['nPhone', 'Teléfono'],
+      ['nDni',   'DNI'],
+      ['nNat',   'Nacionalidad'],
+      ['nDob',   'Fecha de nacimiento'],
+    ];
+    for (const [id, label] of required) {
+      if (!get(id)) { showErr(`El campo "${label}" es obligatorio.`); return; }
+    }
+    if (get('nPin').length !== 4) { showErr('El PIN debe tener exactamente 4 dígitos.'); return; }
+    if (get('nPass').length < 4)  { showErr('La contraseña debe tener al menos 4 caracteres.'); return; }
+
+    const weightVal = get('nWeight') ? +get('nWeight') : null;
+    const heightVal = get('nHeight') ? +get('nHeight') : null;
+    const clearVal  = get('nClear') === 'true' ? true : get('nClear') === 'false' ? false : null;
 
     const payload = {
       name:         get('nName'),
       email:        get('nEmail'),
-      password:     get('nPass') || '1234',
-      pin,
+      password:     get('nPass'),
+      pin:          get('nPin'),
       phone:        get('nPhone'),
       dni:          get('nDni'),
-      nationality:  get('nNat') || 'El Salvador',
+      nationality:  get('nNat'),
       dob:          get('nDob') || null,
-      address:      get('nAddr'),
-      weight:       +get('nWeight') || null,
-      height:       +get('nHeight') || null,
-      blood_type:   get('nBlood'),
-      med_coverage: get('nMed'),
-      med_clearance: get('nClear') === 'true',
+      address:      get('nAddr') || null,
+      weight:       weightVal,
+      height:       heightVal,
+      blood_type:   get('nBlood') || null,
+      med_coverage: get('nMed') || null,
+      med_clearance: clearVal,
       plan:         get('nPlan') || 'Bronce',
       pay_method:   get('nPay') || 'Efectivo',
       insc_date:    new Date().toISOString().slice(0, 10),
@@ -5224,7 +5247,7 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){if(
       closeModal();
       navigate('usuarios');
     } catch (err) {
-      alert('Error al crear socio: ' + err.message);
+      showErr('Error al crear socio: ' + err.message);
     }
   };
 
