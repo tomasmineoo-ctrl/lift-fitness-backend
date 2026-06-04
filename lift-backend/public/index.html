@@ -67,6 +67,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
 .sidebarSupportBtn:hover{opacity:.85}
 .sidebarSupportBtn .suppPulse{width:7px;height:7px;border-radius:50%;background:#fff;opacity:.8;animation:suppPulse 2s infinite;flex-shrink:0}
 @keyframes suppPulse{0%,100%{opacity:.8;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+@keyframes badgePop{0%{transform:scale(0)}70%{transform:scale(1.3)}100%{transform:scale(1)}}
 .supportChatPanel{position:fixed;bottom:20px;left:235px;width:360px;height:490px;background:var(--surface);border:1px solid var(--border2);border-radius:14px;display:flex;flex-direction:column;z-index:9999;box-shadow:0 12px 48px rgba(0,0,0,.7);transform:scale(.95) translateY(8px);opacity:0;pointer-events:none;transition:transform .18s ease,opacity .18s ease}
 .supportChatPanel.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
 .suppHeader{padding:13px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;flex-shrink:0}
@@ -93,6 +94,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
 .sidebar::-webkit-scrollbar-thumb{background:var(--border2)}
 .sideSection{padding:18px 16px 6px;font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);font-weight:600;font-family:'Barlow Condensed',sans-serif}
 .navItem{display:flex;align-items:center;gap:9px;padding:8px 16px;cursor:pointer;color:var(--text3);font-size:.8rem;font-weight:500;border-left:2px solid transparent;transition:all .1s}
+.chatBadge{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;background:var(--accent);color:#fff;border-radius:9px;font-size:.6rem;font-weight:800;font-family:'Barlow',sans-serif;margin-left:auto;line-height:1;flex-shrink:0;animation:badgePop .2s ease}
 .navItem:hover{background:var(--surface2);color:var(--text);border-left-color:var(--border2)}
 .navItem.active{background:var(--surface2);color:var(--white);border-left-color:var(--accent)}
 .navItem .icon{font-size:.9rem;width:16px;text-align:center;opacity:.8}
@@ -395,8 +397,8 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
 </div>
 
 <script>
-function saveDB(){try{const keys={gp_users:users,gp_expenses:expenses,gp_expenseCategories:expenseCategories,gp_discounts:discounts,gp_referrals:referrals,gp_announcements:announcements,gp_machines:machines,gp_accessLog:accessLog,gp_messages:messages,gp_staffAccounts:staffAccounts,gp_paymentsDB:paymentsDB,gp_cardDB:cardDatabase,gp_classes:classes,gp_adminLog:adminLog,gp_trainerProfiles:trainerProfiles,gp_userNotifications:userNotifications,gp_turnoRegistros:turnoRegistros,gp_nutriClientes:nutriClientesDB};Object.entries(keys).forEach(([k,v])=>localStorage.setItem(k,JSON.stringify(v)));}catch(e){}}
-function loadDB(){try{const p=k=>{const d=localStorage.getItem(k);return d?JSON.parse(d):null;};const u=p('gp_users');if(u)users=u;const e=p('gp_expenses');if(e)expenses=e;const ec=p('gp_expenseCategories');if(ec)expenseCategories=ec;const d=p('gp_discounts');if(d)discounts=d;const r=p('gp_referrals');if(r)referrals=r;const a=p('gp_announcements');if(a)announcements=a;const m=p('gp_machines');if(m)machines=m;const al=p('gp_accessLog');if(al)accessLog=al;const ms=p('gp_messages');if(ms)messages=ms;const st=p('gp_staffAccounts');if(st)staffAccounts=st;const pb=p('gp_paymentsDB');if(pb)paymentsDB=pb;const cb=p('gp_cardDB');if(cb)cardDatabase=cb;const cl=p('gp_classes');if(cl){classes=cl;classes.forEach(c=>{if(!c.waitlist)c.waitlist=[];if(!c.everEnrolled)c.everEnrolled=[...(c.enrolled||[])];if(!('openSlot' in c))c.openSlot=null;});}const lg=p('gp_adminLog');if(lg)adminLog=lg;const tp=p('gp_trainerProfiles');if(tp)trainerProfiles=tp;const un=p('gp_userNotifications');if(un)userNotifications=un;const tr=p('gp_turnoRegistros');if(tr)turnoRegistros=tr;}catch(e){}}
+function saveDB(){try{const keys={gp_users:users,gp_expenses:expenses,gp_expenseCategories:expenseCategories,gp_discounts:discounts,gp_referrals:referrals,gp_announcements:announcements,gp_machines:machines,gp_accessLog:accessLog,gp_messages:messages,gp_staffAccounts:staffAccounts,gp_paymentsDB:paymentsDB,gp_cardDB:cardDatabase,gp_classes:classes,gp_adminLog:adminLog,gp_trainerProfiles:trainerProfiles,gp_userNotifications:userNotifications,gp_turnoRegistros:turnoRegistros,gp_nutriClientes:nutriClientesDB,gp_chatStaffRead:chatStaffRead,gp_chatUserRead:chatUserRead};Object.entries(keys).forEach(([k,v])=>localStorage.setItem(k,JSON.stringify(v)));}catch(e){}}
+function loadDB(){try{const p=k=>{const d=localStorage.getItem(k);return d?JSON.parse(d):null;};const u=p('gp_users');if(u)users=u;const e=p('gp_expenses');if(e)expenses=e;const ec=p('gp_expenseCategories');if(ec)expenseCategories=ec;const d=p('gp_discounts');if(d)discounts=d;const r=p('gp_referrals');if(r)referrals=r;const a=p('gp_announcements');if(a)announcements=a;const m=p('gp_machines');if(m)machines=m;const al=p('gp_accessLog');if(al)accessLog=al;const ms=p('gp_messages');if(ms)messages=ms;const st=p('gp_staffAccounts');if(st)staffAccounts=st;const pb=p('gp_paymentsDB');if(pb)paymentsDB=pb;const cb=p('gp_cardDB');if(cb)cardDatabase=cb;const cl=p('gp_classes');if(cl){classes=cl;classes.forEach(c=>{if(!c.waitlist)c.waitlist=[];if(!c.everEnrolled)c.everEnrolled=[...(c.enrolled||[])];if(!('openSlot' in c))c.openSlot=null;});}const lg=p('gp_adminLog');if(lg)adminLog=lg;const tp=p('gp_trainerProfiles');if(tp)trainerProfiles=tp;const un=p('gp_userNotifications');if(un)userNotifications=un;const tr=p('gp_turnoRegistros');if(tr)turnoRegistros=tr;const csr=p('gp_chatStaffRead');if(csr)chatStaffRead=csr;const cur=p('gp_chatUserRead');if(cur)chatUserRead=cur;}catch(e){}}
 
 let expenseCategories=[{id:1,name:'Alquiler',icon:'🏠',color:'#e74c3c'},{id:2,name:'Servicios',icon:'💡',color:'#f39c12'},{id:3,name:'Sueldos',icon:'👥',color:'#3498db'},{id:4,name:'Mantenimiento',icon:'🔧',color:'#9b59b6'},{id:5,name:'Equipamiento',icon:'🏋️',color:'#2ecc71'},{id:6,name:'Marketing',icon:'📣',color:'#1abc9c'},{id:7,name:'Limpieza',icon:'🧹',color:'#e67e22'},{id:8,name:'Otros',icon:'📦',color:'#95a5a6'}];
 let trainerProfiles=[{id:1,trainerEmail:'trainer@lift.com',students:[{id:1,userId:1,name:'Carlos Mejía',goal:'Pérdida de grasa + masa muscular',level:'Intermedio',notes:'Lesión leve en hombro derecho.',metrics:[{date:'2025-01-01',weight:87,bf:22,muscle:38,waist:94,chest:102,arm:36,notes:'Inicio'},{date:'2025-03-01',weight:84,bf:20,muscle:39,waist:91,chest:103,arm:37,notes:'Buen progreso'},{date:'2025-05-01',weight:82,bf:18,muscle:40,waist:89,chest:104,arm:38,notes:'Excelente'}],customFields:[{key:'Frecuencia',value:'4 días'},{key:'Cardio',value:'20 min post'},{key:'Suplementos',value:'Proteína + creatina'}]},{id:2,userId:4,name:'María López',goal:'Tonificación y flexibilidad',level:'Avanzado',notes:'Alta motivación.',metrics:[{date:'2025-01-01',weight:62,bf:26,muscle:32,waist:68,chest:90,arm:27,notes:'Inicio'},{date:'2025-04-01',weight:58,bf:22,muscle:34,waist:64,chest:91,arm:28,notes:'Gran mejora'}],customFields:[{key:'Frecuencia',value:'5 días'},{key:'Yoga',value:'2x semana'},{key:'Dieta',value:'Hipocalórica'}]}]}];
@@ -645,7 +647,7 @@ let referrals=[{id:1,referrerId:4,referrerName:'Laura Rodríguez',referredName:'
 let announcements=[{id:1,title:'Nuevo horario de pilates',body:'A partir del lunes, la clase de pilates se dicta a las 18hs.',date:'2025-05-15',target:'Todos',author:'Admin'},{id:2,title:'Mantenimiento lunes',body:'El lunes 20 el gimnasio cierra a las 18hs.',date:'2025-05-18',target:'Todos',author:'Admin'}];
 let cardDatabase=[{id:1,cardType:'Crédito',brand:'Visa',bank:'Agrícola',last4:'4242',holder:'Carlos Mejía',expiry:'12/28',status:'active',installments:true,country:'El Salvador',userId:1},{id:2,cardType:'Crédito',brand:'Mastercard',bank:'Davivienda',last4:'8801',holder:'María López',expiry:'07/27',status:'active',installments:false,country:'El Salvador',userId:4}];
 let paymentsDB=[{id:1,userId:1,userName:'Carlos Mejía',amount:50,brand:'—',bank:'—',cardType:'Efectivo',last4:'—',installments:1,status:'approved',transactionId:'TX-992882',date:'2025-05-01',plan:'Oro'},{id:2,userId:4,userName:'María López',amount:75,brand:'Visa',bank:'Agrícola',cardType:'Crédito',last4:'4242',installments:1,status:'approved',transactionId:'TX-882331',date:'2025-05-05',plan:'Diamante'},{id:3,userId:2,userName:'Ana Flores',amount:35,brand:'—',bank:'—',cardType:'Tarjeta de crédito',last4:'—',installments:1,status:'approved',transactionId:'TX-771004',date:'2025-04-28',plan:'Plata'},{id:4,userId:3,userName:'Roberto Díaz',amount:25,brand:'—',bank:'—',cardType:'Efectivo',last4:'—',installments:1,status:'pending',transactionId:'TX-660001',date:'2025-03-31',plan:'Bronce'}];
-let messages={};let notifications=[];let userNotifications={};
+let messages={};let notifications=[];let userNotifications={};let chatStaffRead={};let chatUserRead={};
 let adminLog=[{id:1,user:'Gerencia Lift',action:'Sistema iniciado',detail:'Lift Fitness Center v7 PRO',time:'08:00',date:'2025-05-19'},{id:2,user:'Gerencia Lift',action:'Pago registrado',detail:'Carlos Mejía — Plan Oro $50.00',time:'08:15',date:'2025-05-19'}];
 let machines=[{id:1,name:'Press de Banca',category:'Pecho',description:'Pectoral mayor, deltoides anterior y tríceps.',usage:'1. Regular asiento. 2. Agarre ancho. 3. Bajar controlado.',videoUrl:'https://www.youtube.com/watch?v=rT7DgCr-3pg'},{id:2,name:'Polea Alta',category:'Espalda',description:'Dorsal ancho, bíceps y redondo mayor.',usage:'1. Ajustar rodillas. 2. Agarre pronado. 3. Tirar al pecho.',videoUrl:'https://www.youtube.com/watch?v=EUIri47Epcg'},{id:3,name:'Prensa de Piernas',category:'Piernas',description:'Cuádriceps, isquiotibiales y glúteos.',usage:'1. Ajustar respaldo. 2. Pies al ancho de hombros.',videoUrl:'https://www.youtube.com/watch?v=IZxyjW7MPJQ'}];
 let currentUser=null;let calendarDate=new Date(2025,4,1);let pinAccessBuffer='';
@@ -865,20 +867,64 @@ const receptionNav=[{section:'Cobro'},{id:'cobroDiario',icon:'💵',label:'Venta
 const nutriNav=[{section:'Mi Panel'},{id:'nutriDashboard',icon:'📊',label:'Mi Dashboard'},{id:'nutriClientes',icon:'👥',label:'Mis Clientes'},{id:'nutriAgenda',icon:'📅',label:'Agenda de Citas'},{id:'nutriPlanes',icon:'📋',label:'Planes Nutricionales'},{id:'miCredencial',icon:'📲',label:'Mi Credencial QR'},{section:'Comunicación'},{id:'comunicados',icon:'📢',label:'Comunicados'},{id:'mensajes',icon:'💬',label:'Mensajes'},{section:'Comunidad'},{id:'comunidad',icon:'🔥',label:'Comunidad Fitness'}];
 const userNav=[{section:'Mi Cuenta'},{id:'miPerfil',icon:'👤',label:'Mi Perfil'},{id:'miQR',icon:'📲',label:'Mi QR & PIN'},{id:'miPlan',icon:'⭐',label:'Mi Plan'},{id:'misPuntos',icon:'🏆',label:'Mis Puntos'},{id:'misReferidos',icon:'🤝',label:'Referir Amigos'},{section:'Compras'},{id:'cafeteria',icon:'☕',label:'Cafetería'},{id:'shop',icon:'🛍️',label:'Shop LIFT'},{section:'Comunidad'},{id:'comunidad',icon:'🔥',label:'Comunidad Fitness'},{section:'Clases'},{id:'misClases',icon:'📅',label:'Clases & Reservas'},{section:'Entrenamiento'},{id:'miRutina',icon:'📋',label:'Mi Rutina'},{section:'Comunicación'},{id:'misAnuncios',icon:'📢',label:'Anuncios'},{id:'misMensajes',icon:'💬',label:'Mensajes'},{id:'misNotif',icon:'🔔',label:'Notificaciones'}];
 
+const CHAT_NAV_IDS=['mensajes','misMensajes','trainerMensajes'];
+function getUnreadChatCount(){
+  if(!currentUser)return 0;
+  if(currentUser.role==='user'){
+    const uid=currentUser.data?.id;if(!uid)return 0;
+    const msgs=(messages[uid]||[]).filter(m=>m.from!=='user');
+    return Math.max(0,msgs.length-(chatUserRead[uid]||0));
+  }
+  return Object.keys(messages).reduce((total,uid)=>{
+    const userMsgs=(messages[uid]||[]).filter(m=>m.from==='user');
+    return total+Math.max(0,userMsgs.length-(chatStaffRead[uid]||0));
+  },0);
+}
+function markStaffChatRead(uid){
+  chatStaffRead[uid]=(messages[uid]||[]).filter(m=>m.from==='user').length;
+  saveDB();refreshChatBadge();
+}
+function markUserChatRead(){
+  const uid=currentUser?.data?.id;if(!uid)return;
+  chatUserRead[uid]=(messages[uid]||[]).filter(m=>m.from!=='user').length;
+  saveDB();refreshChatBadge();
+}
+function refreshChatBadge(){
+  const count=getUnreadChatCount();
+  CHAT_NAV_IDS.forEach(id=>{
+    const el=document.getElementById('nav_'+id);if(!el)return;
+    let badge=el.querySelector('.chatBadge');
+    if(count>0){
+      if(!badge){badge=document.createElement('span');badge.className='chatBadge';el.appendChild(badge);}
+      badge.textContent=count>99?'99+':String(count);
+    } else {if(badge)badge.remove();}
+  });
+}
 function buildSidebar(){
   let nav=adminNav;
   if(currentUser.role==='trainer')nav=trainerNav;
   else if(currentUser.role==='reception')nav=receptionNav;
   else if(currentUser.role==='user')nav=userNav;
   else if(currentUser.role==='nutritionist')nav=nutriNav;
+  const unread=getUnreadChatCount();
+  const chatBadgeHtml=unread>0?`<span class="chatBadge">${unread>99?'99+':unread}</span>`:'';
+  const navItemHtml=(i,isSubItem=false,gid='')=>{
+    const isChatItem=CHAT_NAV_IDS.includes(i.id);
+    const badge=isChatItem?chatBadgeHtml:'';
+    const click=isSubItem?`navigate('${i.id}');_openGrp('${gid}')`:`navigate('${i.id}')`;
+    const cls=isSubItem?'navItem navSubItem':'navItem';
+    const icon=i.icon?`<span class="icon">${i.icon}</span>`:'';
+    return`<div class="${cls}" id="nav_${i.id}" onclick="${click}">${icon}${i.label}${badge}</div>`;
+  };
   const navHtml=nav.map(n=>{
     if(n.section)return`<div class="sideSection">${n.section}</div>`;
     if(n.group){
-      const sub=n.items.map(i=>`<div class="navItem navSubItem" id="nav_${i.id}" onclick="navigate('${i.id}');_openGrp('${n.gid}')">${i.label}</div>`).join('');
+      const sub=n.items.map(i=>chatItemHtml(i,true,n.gid)).join('');
       return`<div id="${n.gid}"><div class="navGroupHeader" onclick="toggleNavGrp('${n.gid}')"><span>${n.group}</span><span class="gArr">▶</span></div><div class="navGroupItems" id="gi_${n.gid}">${sub}</div></div>`;
     }
-    return`<div class="navItem" id="nav_${n.id}" onclick="navigate('${n.id}')"><span class="icon">${n.icon}</span>${n.label}</div>`;
+    return navItemHtml(n);
   }).join('');
+  function chatItemHtml(i,sub,gid){return navItemHtml(i,sub,gid);};
   document.getElementById('sidebar').innerHTML=
     `<div class="sidebarNav">${navHtml}</div>`+
     `<div class="sidebarSupportBtn" onclick="openSupportChat()"><div class="suppPulse"></div>🤖 Soporte 24/7</div>`;
@@ -945,7 +991,7 @@ async function sendSupportMsg(){
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-function navigate(view){processSlotTimers();if(_qrTimer&&view!=='miQR'&&view!=='miCredencial'){clearInterval(_qrTimer);_qrTimer=null;}document.querySelectorAll('.navItem').forEach(el=>el.classList.remove('active'));const el=document.getElementById('nav_'+view);if(el)el.classList.add('active');const fn=views[view];document.getElementById('content').innerHTML=fn?fn():`<p style="color:var(--text2)">Vista no disponible</p>`;afterRender(view);genNotifications();}
+function navigate(view){processSlotTimers();if(_qrTimer&&view!=='miQR'&&view!=='miCredencial'){clearInterval(_qrTimer);_qrTimer=null;}document.querySelectorAll('.navItem').forEach(el=>el.classList.remove('active'));const el=document.getElementById('nav_'+view);if(el)el.classList.add('active');const fn=views[view];document.getElementById('content').innerHTML=fn?fn():`<p style="color:var(--text2)">Vista no disponible</p>`;afterRender(view);genNotifications();refreshChatBadge();}
 function exportCSV(data,filename){if(!data.length)return;const keys=Object.keys(data[0]);const rows=[keys.join(','),...data.map(r=>keys.map(k=>JSON.stringify(r[k]??'')).join(','))];const blob=new Blob([rows.join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename+'.csv';a.click();}
 function exportUsersCSV(){exportCSV(users.map(u=>({Nombre:u.name,Email:u.email,DNI:u.dni,Plan:u.plan,Estado:statusLabel(getQuotaStatus(u)),UltimoPago:u.lastPayment,Deuda:u.debt})),'socios');}
 function exportPaymentsCSV(){exportCSV(paymentsDB.map(p=>({Fecha:p.date,Usuario:p.userName,Plan:p.plan,Importe:p.amount,Marca:p.brand,Estado:p.status,TxID:p.transactionId})),'pagos');}
@@ -1804,8 +1850,9 @@ misNotif:()=>{processSlotTimers();genNotifications();const u=currentUser.data;if
 };
 
 function msgBubble(m){const isUserView=currentUser.role==='user';const sent=isUserView?m.from==='user':m.from!=='user';return`<div class="msgBubble ${sent?'sent':'recv'}">${m.text}<div class="msgMeta">${m.time}</div></div>`;}
-function sendMsg(uid){const inp=document.getElementById('msgInput');if(!inp||!inp.value.trim())return;if(!messages[uid])messages[uid]=[];const now=new Date();const isUser=currentUser.role==='user';messages[uid].push({from:isUser?'user':'admin',text:inp.value.trim(),time:now.toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'})});inp.value='';saveDB();if(isUser)navigate('misMensajes');else openChat(uid);}
-function openChat(uid){const u=users.find(x=>x.id===uid);if(!messages[uid])messages[uid]=[];document.querySelectorAll('[id^=chatUser_]').forEach(el=>el.style.background='');const el=document.getElementById('chatUser_'+uid);if(el)el.style.background='var(--surface2)';document.getElementById('chatArea').innerHTML=`<div style="padding:10px 16px;border-bottom:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.06em;text-transform:uppercase">${u.name}</div><div class="chatContainer" style="height:370px"><div class="chatMessages" id="chatMsgs">${messages[uid].map(m=>msgBubble(m)).join('')}${!messages[uid].length?'<div style="text-align:center;color:var(--text2);font-size:.78rem;margin-top:30px">Sin mensajes</div>':''}</div><div class="chatInput"><input id="msgInput" placeholder="Responder..." onkeydown="if(event.key===\'Enter\')sendMsg(${uid})"/><button class="btn btnAccent" onclick="sendMsg(${uid})">Enviar</button></div></div>`;const msgs=document.getElementById('chatMsgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;}
+function sendMsg(uid){const inp=document.getElementById('msgInput');if(!inp||!inp.value.trim())return;if(!messages[uid])messages[uid]=[];const now=new Date();const isUser=currentUser.role==='user';messages[uid].push({from:isUser?'user':'admin',text:inp.value.trim(),time:now.toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'})});inp.value='';if(isUser){// marcar mensaje del user: staff aún no lo leyó; refresca badge para staff en próxima carga
+saveDB();navigate('misMensajes');}else{markStaffChatRead(uid);saveDB();openChat(uid);}}
+function openChat(uid){const u=users.find(x=>x.id===uid);if(!messages[uid])messages[uid]=[];markStaffChatRead(uid);document.querySelectorAll('[id^=chatUser_]').forEach(el=>el.style.background='');const el=document.getElementById('chatUser_'+uid);if(el)el.style.background='var(--surface2)';document.getElementById('chatArea').innerHTML=`<div style="padding:10px 16px;border-bottom:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.06em;text-transform:uppercase">${u.name}</div><div class="chatContainer" style="height:370px"><div class="chatMessages" id="chatMsgs">${messages[uid].map(m=>msgBubble(m)).join('')}${!messages[uid].length?'<div style="text-align:center;color:var(--text2);font-size:.78rem;margin-top:30px">Sin mensajes</div>':''}</div><div class="chatInput"><input id="msgInput" placeholder="Responder..." onkeydown="if(event.key===\'Enter\')sendMsg(${uid})"/><button class="btn btnAccent" onclick="sendMsg(${uid})">Enviar</button></div></div>`;const msgs=document.getElementById('chatMsgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;}
 function switchTab(el,tabId){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');['tabTx','tabCards','tabNewCard'].forEach(id=>{const t=document.getElementById(id);if(t)t.style.display=id===tabId?'block':'none';});if(tabId==='tabTx')renderPaymentsTable();}
 window.gpTab=function(el,showId,allIds){el.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');allIds.forEach(id=>{const p=document.getElementById(id);if(p)p.style.display=id===showId?'':'none';});if(showId==='gpTxList')setTimeout(refreshPayments,50);};
 window.gpFilterCuotas=function(){const s=(document.getElementById('gpCuotaSearch')?.value||'').toLowerCase();const st=document.getElementById('gpCuotaStatus')?.value||'';const f=users.filter(u=>(!s||u.name.toLowerCase().includes(s)||u.email.toLowerCase().includes(s))&&(!st||getQuotaStatus(u)===st));const tb=document.getElementById('gpCuotaTable');if(tb)tb.innerHTML='<tr><th>Socio</th><th>Plan</th><th>Importe</th><th>Deuda</th><th>Último pago</th><th>Estado</th><th>Acciones</th></tr>'+f.map(u=>`<tr><td><strong>${u.name}</strong></td><td><span class="badge ${safePlan(u.plan).color}">${u.plan}</span></td><td style="color:var(--accent);font-weight:700">$${safePlan(u.plan).price.toLocaleString()}</td><td style="color:${(u.debt||0)>0?'var(--red)':'var(--text3)'};font-weight:${(u.debt||0)>0?700:400}">${(u.debt||0)>0?'$'+u.debt.toLocaleString():'—'}</td><td style="color:var(--text3);font-size:.73rem">${u.lastPayment||'—'}</td><td><span class="badge ${getQuotaStatus(u)}">${statusLabel(getQuotaStatus(u))}</span></td><td style="display:flex;gap:4px"><button class="btn btnSm btnSuccess" onclick="markPaid(${u.id})">✓ Cobrar</button><button class="btn btnSm btnInfo" onclick="openEditCuota(${u.id})">✏️</button></td></tr>`).join('');}
@@ -1883,7 +1930,7 @@ window.guardarBackupNube=async function(){const btn=document.getElementById('btn
 window.cargarListaBackups=async function(){const el=document.getElementById('backupList');if(!el)return;el.innerHTML='<p style="color:var(--text3);font-size:.8rem">Cargando...</p>';try{const list=await apiFetch('/api/admin/backup/list');if(!list||!list.length){el.innerHTML='<p style="color:var(--text3);font-size:.8rem">Sin backups en la nube aún. El primero se creará esta noche a las 3:00 AM.</p>';return;}el.innerHTML='<table class="tbl"><tr><th>Archivo</th><th>Tamaño</th><th>Fecha</th><th></th></tr>'+list.map(f=>`<tr><td style="font-family:monospace;font-size:.72rem">${f.name}</td><td style="font-size:.72rem;color:var(--text3)">${f.metadata?.size?Math.round(f.metadata.size/1024)+' KB':'—'}</td><td style="font-size:.72rem;color:var(--text3)">${f.created_at?f.created_at.slice(0,19).replace('T',' '):'—'}</td><td><a href="/api/admin/backup/fetch/${f.name}" download="${f.name}" class="btn btnXs btnGhost">⬇️</a></td></tr>`).join('')+'</table>';}catch(e){el.innerHTML='<p style="color:var(--red);font-size:.8rem">Error al cargar backups: '+e.message+'</p>';}};
 async function refreshPayments(){try{const res=await apiFetch('/api/payments?limit=500');if(res&&res.data){paymentsDB=(res.data||[]).map(p=>({...p,userName:p.user_name||p.userName||'—',date:p.payment_date||p.date||''}));}}catch(e){console.warn('[refreshPayments]',e.message);}renderPaymentsTable();}
 async function refreshShopVentas(){try{const data=await apiFetch('/api/shop/ventas');if(Array.isArray(data)){shopVentas=data.map(v=>({id:v.id,productoId:v.producto_id,productoNombre:v.producto_nombre,productoEmoji:v.producto_emoji||'🎁',userId:v.user_id,userName:v.user_name,cantidad:v.cantidad,metodoPago:v.metodo_pago,precioTotal:+v.precio_total,puntosOtorgados:v.puntos_otorgados,fecha:v.fecha}));document.getElementById('content').innerHTML=views.adminShop();afterRender('_adminShopInner');}}catch(e){console.warn('[refreshShopVentas]',e.message);}}
-function afterRender(view){if(view==='usuarios')renderUserTable();if(view==='adminPanel')renderAdminPanel();if(view==='panelSocios')renderPS();if(view==='backups')cargarListaBackups();if(view==='acceso')renderAccessLog();if(view==='pagos'||view==='gestionPagos')refreshPayments();if(view==='adminShop')refreshShopVentas();if(view==='adminLogView'){setTimeout(()=>renderLog(),50);}if(view==='miQR'||view==='miCredencial')setTimeout(()=>startQRRotation(view),80);if(['mensajes','misMensajes'].includes(view))setTimeout(()=>{const el=document.getElementById('chatMsgs');if(el)el.scrollTop=el.scrollHeight;},50);}
+function afterRender(view){if(view==='usuarios')renderUserTable();if(view==='adminPanel')renderAdminPanel();if(view==='panelSocios')renderPS();if(view==='backups')cargarListaBackups();if(view==='acceso')renderAccessLog();if(view==='pagos'||view==='gestionPagos')refreshPayments();if(view==='adminShop')refreshShopVentas();if(view==='adminLogView'){setTimeout(()=>renderLog(),50);}if(view==='miQR'||view==='miCredencial')setTimeout(()=>startQRRotation(view),80);if(view==='misMensajes'){markUserChatRead();setTimeout(()=>{const el=document.getElementById('chatMsgs');if(el)el.scrollTop=el.scrollHeight;},50);}if(view==='mensajes')setTimeout(()=>{const el=document.getElementById('chatMsgs');if(el)el.scrollTop=el.scrollHeight;},50);}
 let _qrTimer=null;
 // Genera el token temporal rotativo: epoch//30 XOR con id o email para ser único por usuario
 function getTOTPSlot(){return Math.floor(Date.now()/30000);}
