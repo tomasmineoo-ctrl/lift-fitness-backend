@@ -98,7 +98,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
   if (!check) return res.status(401).json({ error: 'Credenciales incorrectas' });
 
-  if (!user.email_verified) {
+  if (!(user as any).email_verified) {
     return res.status(403).json({ error: 'EMAIL_NOT_VERIFIED', message: 'Confirmá tu email antes de iniciar sesión. Revisá tu casilla de correo.' });
   }
 
