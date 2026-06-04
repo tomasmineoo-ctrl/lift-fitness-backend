@@ -36,7 +36,8 @@ router.post('/', authorize('admin'), async (req: Request, res: Response) => {
     password: z.string().min(6),
     name:     z.string().min(2),
     role:     z.enum(['admin','trainer','reception','nutritionist']),
-    pin:      z.string().length(4).optional(),
+    pin:      z.string().min(3).max(10).regex(/^\d+$/).optional(),
+    pin2:     z.string().min(3).max(10).regex(/^\d+$/).optional().nullable(),
     phone:    z.string().optional(),
   });
   const { password, ...rest } = schema.parse(req.body);

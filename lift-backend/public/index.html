@@ -818,8 +818,8 @@ function doLogin(){const em=document.getElementById('loginEmail').value.trim();c
 function doLogout(){currentUser=null;document.getElementById('loginScreen').style.display='flex';document.getElementById('app').style.display='none';}
 function startApp(){genNotifications();document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('roleLabel').textContent=ROLES[currentUser.role]||currentUser.role;buildSidebar();navigate(currentUser.role==='user'?'miPerfil':currentUser.role==='trainer'?'trainerDashboard':currentUser.role==='reception'?'cobroDiario':currentUser.role==='nutritionist'?'nutriDashboard':'dashboard');}
 let pinBuf='';
-function showPinLogin(){openModal(`<h3>Ingreso con PIN</h3><p style="font-size:.78rem;color:var(--text2);margin-bottom:12px;text-align:center">Ingresá tu PIN personal de 4 dígitos</p><div class="pinDisplay" id="pinDisplay">—</div><div class="pinGrid">${[1,2,3,4,5,6,7,8,9,'⌫',0,'✓'].map(k=>`<div class="pinBtn" onclick="pinPress('${k}')">${k}</div>`).join('')}</div><div id="pinMsg" style="text-align:center;font-size:.78rem;margin-top:10px;color:var(--red)"></div>`);pinBuf='';}
-function pinPress(k){if(k==='⌫')pinBuf=pinBuf.slice(0,-1);else if(k==='✓'){const u=users.find(x=>x.pin===pinBuf);if(u){currentUser={role:'user',name:u.name,data:u,email:u.email};closeModal();startApp();}else{document.getElementById('pinMsg').textContent='PIN incorrecto';pinBuf='';}}else if(pinBuf.length<4)pinBuf+=k;const d=document.getElementById('pinDisplay');if(d)d.textContent=pinBuf?'●'.repeat(pinBuf.length):'—';}
+function showPinLogin(){openModal(`<h3>Ingreso con PIN</h3><p style="font-size:.78rem;color:var(--text2);margin-bottom:12px;text-align:center">Ingresá tu PIN (3–6 dígitos)</p><div class="pinDisplay" id="pinDisplay">—</div><div class="pinGrid">${[1,2,3,4,5,6,7,8,9,'⌫',0,'✓'].map(k=>`<div class="pinBtn" onclick="pinPress('${k}')">${k}</div>`).join('')}</div><div id="pinMsg" style="text-align:center;font-size:.78rem;margin-top:10px;color:var(--red)"></div>`);pinBuf='';}
+function pinPress(k){if(k==='⌫')pinBuf=pinBuf.slice(0,-1);else if(k==='✓'){const u=users.find(x=>x.pin===pinBuf);if(u){currentUser={role:'user',name:u.name,data:u,email:u.email};closeModal();startApp();}else{document.getElementById('pinMsg').textContent='PIN incorrecto';pinBuf='';}}else if(pinBuf.length<10)pinBuf+=k;const d=document.getElementById('pinDisplay');if(d)d.textContent=pinBuf?'●'.repeat(pinBuf.length):'—';}
 
 const adminNav=[
   {id:'dashboard',icon:'📊',label:'Dashboard'},
@@ -1431,7 +1431,10 @@ staff:()=>`<div class="pageTitle">Staff & Roles</div>
       <td><strong>${s.name}</strong></td>
       <td style="color:var(--text3);font-size:.73rem">${s.email}</td>
       <td><span class="roleTag ${s.role}">${ROLES[s.role]||s.role}</span></td>
-      <td><span style="font-family:monospace;font-size:.9rem;font-weight:700;letter-spacing:.18em;color:var(--accent);background:var(--surface2);border:1px solid var(--border2);padding:2px 8px;border-radius:3px">${s.pin||'—'}</span></td>
+      <td style="white-space:nowrap">
+        <span style="font-family:monospace;font-size:.9rem;font-weight:700;letter-spacing:.18em;color:var(--accent);background:var(--surface2);border:1px solid var(--border2);padding:2px 8px;border-radius:3px">${s.pin||'—'}</span>
+        ${s.pin2?`<span style="margin-left:4px;font-family:monospace;font-size:.9rem;font-weight:700;letter-spacing:.18em;color:#8b8fe8;background:var(--surface2);border:1px solid rgba(52,56,142,.4);padding:2px 8px;border-radius:3px" title="PIN 2">${s.pin2}</span>`:''}
+      </td>
       <td style="max-width:280px">
         ${s.role==='admin'
           ?'<span style="color:var(--text3);font-size:.72rem">Acceso total</span>'
@@ -1441,7 +1444,10 @@ staff:()=>`<div class="pageTitle">Staff & Roles</div>
             </div>`
         }
       </td>
-      <td style="display:flex;gap:6px;align-items:center">${s.email!=='admin@lift.com'?`<button class="btn btnSm" style="background:var(--surface2);border:1px solid var(--border2)" onclick="openEditPin('${s.email}')">🔢 PIN</button><button class="btn btnSm btnDanger" onclick="removeStaff('${s.email}')">Eliminar</button>`:'—'}</td>
+      <td style="display:flex;gap:6px;align-items:center">
+        <button class="btn btnSm" style="background:var(--surface2);border:1px solid var(--border2)" onclick="openEditPin('${s.email}')">🔢 PIN${s.role==='admin'?' ×2':''}</button>
+        ${s.email!=='admin@lift.com'?`<button class="btn btnSm btnDanger" onclick="removeStaff('${s.email}')">Eliminar</button>`:''}
+      </td>
     </tr>`).join('')}
   </table>
 </div>`,
@@ -1587,7 +1593,7 @@ function getRolePerms(s){
   return perms.map(pid=>{const p=PERMS_CATALOG.find(x=>x.id===pid);return p?`<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(52,56,142,.18);border:1px solid rgba(52,56,142,.35);border-radius:3px;padding:1px 6px;font-size:.65rem;color:#8b8fe8;margin:1px">${p.emoji} ${p.label}</span>`:''}).join('');
 }
 function blockUser(id){const u=users.find(x=>x.id===id);if(!u)return;const isBlocked=getQuotaStatus(u)==='blocked';if(isBlocked){u.status='active';u.lastPayment=new Date().toISOString().slice(0,10);}else u.status='blocked';logAction(isBlocked?'Socio desbloqueado':'Socio bloqueado',u.name);saveDB();if(document.getElementById('psTable'))renderPS();else renderAdminPanel();}
-function pinAccessPress(k){if(k==='⌫')pinAccessBuffer=pinAccessBuffer.slice(0,-1);else if(k==='✓')validateAccess('pin');else if(pinAccessBuffer.length<4)pinAccessBuffer+=k;const d=document.getElementById('pinAccessDisplay');if(d)d.textContent=pinAccessBuffer?'●'.repeat(pinAccessBuffer.length):'—';}
+function pinAccessPress(k){if(k==='⌫')pinAccessBuffer=pinAccessBuffer.slice(0,-1);else if(k==='✓')validateAccess('pin');else if(pinAccessBuffer.length<10)pinAccessBuffer+=k;const d=document.getElementById('pinAccessDisplay');if(d)d.textContent=pinAccessBuffer?'●'.repeat(pinAccessBuffer.length):'—';}
 function validateAccess(method='email'){let u=null;if(method==='email'){const em=document.getElementById('accessEmail').value.trim();u=users.find(x=>x.email===em);}else{u=users.find(x=>x.pin===pinAccessBuffer);pinAccessBuffer='';const d=document.getElementById('pinAccessDisplay');if(d)d.textContent='—';}const res=document.getElementById('accessResult');if(!u){res.innerHTML=`<div style="color:var(--red);font-size:.8rem;padding:8px;background:rgba(255,59,48,.08);border:1px solid rgba(255,59,48,.2);border-radius:2px">❌ ${method==='pin'?'PIN incorrecto':'Socio no encontrado'}</div>`;return;}const st=getQuotaStatus(u);const allowed=['active','warning','grace'].includes(st);const now=new Date();accessLog.push({id:Date.now(),userId:u.id,userName:u.name,type:'entry',time:now.toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'}),date:now.toISOString().slice(0,10),method:method==='pin'?'PIN':'Manual',allowed});logAction('Ingreso validado',`${u.name} — ${allowed?'Permitido':'Denegado'}`);saveDB();res.innerHTML=allowed?`<div style="background:rgba(48,209,88,.08);border:1px solid rgba(48,209,88,.2);border-radius:2px;padding:12px;text-align:center"><div style="font-size:1.4rem">✅</div><div style="font-weight:700;color:var(--green);font-family:'Barlow Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase">${u.name}</div><div style="font-size:.72rem;color:var(--text3)">Acceso permitido · Plan ${u.plan}</div></div>`:`<div style="background:rgba(255,59,48,.08);border:1px solid rgba(255,59,48,.2);border-radius:2px;padding:12px;text-align:center"><div style="font-size:1.4rem">🚫</div><div style="font-weight:700;color:var(--red);font-family:'Barlow Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase">${u.name}</div><div style="font-size:.72rem;color:var(--text3)">Acceso denegado · ${statusLabel(st)}</div></div>`;}
 function calPrev(){calendarDate=new Date(calendarDate.getFullYear(),calendarDate.getMonth()-1,1);navigate('agenda');}
 function calNext(){calendarDate=new Date(calendarDate.getFullYear(),calendarDate.getMonth()+1,1);navigate('agenda');}
@@ -1630,9 +1636,9 @@ function openManageCategories(){if(currentUser.role!=='admin'){alert('Solo el ad
 function addCategoryRow(){const newId='new_'+Date.now();const div=document.createElement('div');div.id='catRow_'+newId;div.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px';div.innerHTML=`<input value="📦" style="width:44px;padding:6px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:1rem;text-align:center" id="catIcon_${newId}"/><input placeholder="Nombre..." style="flex:1;padding:6px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.83rem;font-family:'Barlow',sans-serif" id="catName_${newId}"/><input type="color" value="#95a5a6" style="width:36px;height:34px;padding:2px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;cursor:pointer" id="catColor_${newId}"/><button class="btn btnXs btnDanger" onclick="this.closest('[id^=catRow_]').remove()">✕</button>`;document.getElementById('catList').appendChild(div);}
 function deleteCategory(id){if(expenses.some(e=>e.categoryId===id)){alert('No podés eliminar una categoría con gastos asociados');return;}expenseCategories=expenseCategories.filter(c=>c.id!==id);const row=document.getElementById('catRow_'+id);if(row)row.remove();}
 function saveCategories(){if(currentUser.role!=='admin'){alert('Solo el administrador puede editar categorías');return;}const rows=[...document.getElementById('catList').children];const updated=[];rows.forEach(row=>{const rawId=row.id.replace('catRow_','');const icon=document.getElementById('catIcon_'+rawId)?.value||'📦';const name=document.getElementById('catName_'+rawId)?.value||'';const color=document.getElementById('catColor_'+rawId)?.value||'#95a5a6';if(!name.trim())return;const existingId=rawId.startsWith('new_')?Date.now()+Math.floor(Math.random()*1000):+rawId;updated.push({id:existingId,name,icon,color});});expenseCategories=updated;logAction('Categorías de gastos actualizadas','');saveDB();closeModal();navigate('finanzas');}
-function editPin(id){const u=users.find(x=>x.id===id);if(!u)return;openModal(`<h3>Cambiar PIN — ${u.name}</h3><p style="font-size:.78rem;color:var(--text3);margin-bottom:12px">PIN actual: <strong style="font-family:monospace;letter-spacing:.2em">${u.pin||'—'}</strong></p><div class="formGroup" style="margin-bottom:12px"><label>Nuevo PIN (4 dígitos)</label><input id="newPin" type="number" placeholder="0000" style="font-size:1.2rem;letter-spacing:.3em;text-align:center;font-family:monospace"/></div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="savePin(${id})">Guardar</button></div>`);}
-function savePin(id){const pin=String(document.getElementById('newPin')?.value||'');if(pin.length!==4||!/^\d{4}$/.test(pin)){alert('El PIN debe ser exactamente 4 dígitos');return;}if(users.find(u=>u.id!==id&&u.pin===pin)){alert('Ese PIN ya lo usa otro socio');return;}const u=users.find(x=>x.id===id);if(!u)return;u.pin=pin;logAction('PIN modificado',u.name);saveDB();closeModal();navigate('pinAcceso');}
-function openChangePin(){const u=currentUser.data;openModal(`<h3>Cambiar mi PIN</h3><div class="formGroup" style="margin-bottom:12px"><label>Nuevo PIN (4 dígitos)</label><input id="newPin" type="number" placeholder="0000" style="font-size:1.2rem;letter-spacing:.3em;text-align:center;font-family:monospace"/></div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="savePin(${u.id})">Guardar</button></div>`);}
+function editPin(id){const u=users.find(x=>x.id===id);if(!u)return;openModal(`<h3>Cambiar PIN — ${u.name}</h3><p style="font-size:.78rem;color:var(--text3);margin-bottom:12px">PIN actual: <strong style="font-family:monospace;letter-spacing:.2em">${u.pin||'—'}</strong></p><div class="formGroup" style="margin-bottom:12px"><label>Nuevo PIN (3–6 dígitos)</label><input id="newPin" type="text" maxlength="6" placeholder="123456" style="font-size:1.2rem;letter-spacing:.3em;text-align:center;font-family:monospace" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6)"/></div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="savePin(${id})">Guardar</button></div>`);}
+function savePin(id){const pin=String(document.getElementById('newPin')?.value||'');if(pin.length<3||pin.length>6||!/^\d+$/.test(pin)){alert('El PIN debe tener entre 3 y 6 dígitos numéricos');return;}if(users.find(u=>u.id!==id&&u.pin===pin)){alert('Ese PIN ya lo usa otro socio');return;}const u=users.find(x=>x.id===id);if(!u)return;u.pin=pin;logAction('PIN modificado',u.name);saveDB();closeModal();navigate('pinAcceso');}
+function openChangePin(){const u=currentUser.data;openModal(`<h3>Cambiar mi PIN</h3><div class="formGroup" style="margin-bottom:12px"><label>Nuevo PIN (3–6 dígitos)</label><input id="newPin" type="text" maxlength="6" placeholder="123456" style="font-size:1.2rem;letter-spacing:.3em;text-align:center;font-family:monospace" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6)"/></div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="savePin(${u.id})">Guardar</button></div>`);}
 function openAddStudent(){openModal(`<h3>Nuevo Alumno</h3><div class="formGrid"><div class="formGroup"><label>Vincular a socio (opcional)</label><select id="stUserId"><option value="">— Sin vincular —</option>${users.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select></div><div class="formGroup"><label>Nombre completo *</label><input id="stName" placeholder="Nombre del alumno"/></div><div class="formGroup"><label>Objetivo principal</label><input id="stGoal" placeholder="Bajar de peso, ganar músculo..."/></div><div class="formGroup"><label>Nivel</label><select id="stLevel"><option>Principiante</option><option>Intermedio</option><option>Avanzado</option></select></div><div class="formGroup fullWidth"><label>Notas / observaciones</label><textarea id="stNotes" placeholder="Lesiones, preferencias, restricciones..."></textarea></div></div><div style="margin-top:12px"><div style="font-size:.68rem;color:var(--accent);margin-bottom:8px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase">Campos personalizados</div><div id="customFieldsList"><div class="formGrid customFieldRow" style="margin-bottom:6px"><div class="formGroup"><label>Campo</label><input class="cfKey" placeholder="Ej: Frecuencia semanal"/></div><div class="formGroup"><label>Valor</label><input class="cfVal" placeholder="Ej: 4 días"/></div></div></div><button class="btn btnGhost btnSm" onclick="addCustomField()">+ Agregar campo</button></div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="saveNewStudent()">Guardar Alumno</button></div>`);}
 function addCustomField(){const div=document.createElement('div');div.className='formGrid customFieldRow';div.style.marginBottom='6px';div.innerHTML=`<div class="formGroup"><label>Campo</label><input class="cfKey" placeholder="Nombre del campo"/></div><div class="formGroup"><label>Valor</label><input class="cfVal" placeholder="Valor"/></div>`;document.getElementById('customFieldsList').appendChild(div);}
 function saveNewStudent(){const get=i=>document.getElementById(i)?.value||'';if(!get('stName')){alert('Ingresá el nombre');return;}const tp=getMyTrainerProfile();const customFields=[...document.querySelectorAll('.customFieldRow')].map(row=>({key:row.querySelector('.cfKey')?.value||'',value:row.querySelector('.cfVal')?.value||''})).filter(f=>f.key&&f.value);const linkedUser=users.find(u=>u.id===+get('stUserId'));tp.students=tp.students||[];tp.students.push({id:Date.now(),userId:linkedUser?.id||null,name:get('stName'),goal:get('stGoal'),level:get('stLevel'),notes:get('stNotes'),metrics:[],customFields});saveTrainerProfile(tp);closeModal();navigate('trainerStudents');}
@@ -1775,33 +1781,62 @@ function openEditStaffPerms(email){
 }
 function openEditPin(email){
   const s=staffAccounts.find(x=>x.email===email);if(!s)return;
+  const isAdmin=s.role==='admin';
+  const maxLen=isAdmin?10:6;
   openModal(`
     <h3>🔢 Editar PIN — ${s.name}</h3>
     <p style="font-size:.78rem;color:var(--text3);margin-bottom:14px">El PIN se usa para iniciar sesión rápida desde la pantalla de acceso.</p>
-    <div class="formGroup">
-      <label>PIN actual</label>
-      <span style="font-family:monospace;font-size:1.2rem;font-weight:700;letter-spacing:.25em;color:var(--accent);background:var(--surface2);border:1px solid var(--border2);padding:4px 14px;border-radius:4px">${s.pin||'—'}</span>
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px;padding:10px;background:var(--surface2);border-radius:6px">
+      <div><div style="font-size:.65rem;color:var(--text3);margin-bottom:2px">PIN actual</div>
+        <span style="font-family:monospace;font-size:1.1rem;font-weight:700;letter-spacing:.25em;color:var(--accent)">${s.pin||'—'}</span>
+      </div>
+      ${isAdmin&&s.pin2?`<div style="border-left:1px solid var(--border);padding-left:12px"><div style="font-size:.65rem;color:var(--text3);margin-bottom:2px">PIN 2 actual</div>
+        <span style="font-family:monospace;font-size:1.1rem;font-weight:700;letter-spacing:.25em;color:var(--indigo)">${s.pin2}</span>
+      </div>`:''}
     </div>
-    <div class="formGroup" style="margin-top:12px">
-      <label>Nuevo PIN (4 dígitos)</label>
-      <input id="newPinInput" type="text" maxlength="4" pattern="[0-9]{4}" placeholder="0000"
-        style="font-family:monospace;font-size:1.3rem;font-weight:700;letter-spacing:.3em;text-align:center;width:100px"
-        oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)"/>
+    <div class="formGrid">
+      <div class="formGroup">
+        <label>PIN principal (3–${maxLen} dígitos)</label>
+        <input id="newPinInput" type="text" maxlength="${maxLen}" placeholder="${isAdmin?'hasta 10 dígitos':'3 a 6 dígitos'}"
+          style="font-family:monospace;font-size:1.2rem;font-weight:700;letter-spacing:.25em;text-align:center"
+          oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,${maxLen})"/>
+      </div>
+      ${isAdmin?`<div class="formGroup">
+        <label>PIN secundario (opcional, 3–10 dígitos)</label>
+        <input id="newPin2Input" type="text" maxlength="10" placeholder="PIN alternativo"
+          style="font-family:monospace;font-size:1.2rem;font-weight:700;letter-spacing:.25em;text-align:center"
+          oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"/>
+        <div style="font-size:.68rem;color:var(--text3);margin-top:4px">Dejalo vacío para no cambiar el PIN 2</div>
+      </div>`:''}
     </div>
     <div class="modalActions">
       <button class="btn btnGhost" onclick="closeModal()">Cancelar</button>
-      <button class="btn btnAccent" onclick="saveStaffPin('${email}')">Guardar PIN</button>
+      <button class="btn btnAccent" onclick="saveStaffPin('${email}')">Guardar PIN${isAdmin?' (s)':''}</button>
     </div>
   `);
   setTimeout(()=>document.getElementById('newPinInput')?.focus(),100);
 }
 function saveStaffPin(email){
   const s=staffAccounts.find(x=>x.email===email);if(!s)return;
-  const val=document.getElementById('newPinInput')?.value||'';
-  if(val.length!==4){alert('El PIN debe tener exactamente 4 dígitos');return;}
-  if(!/^\d{4}$/.test(val)){alert('Solo se permiten números');return;}
-  if(staffAccounts.some(x=>x.email!==email&&x.pin===val)){alert('Ese PIN ya está en uso por otro usuario');return;}
-  s.pin=val;saveDB();closeModal();navigate('staff');
+  const isAdmin=s.role==='admin';
+  const maxLen=isAdmin?10:6;
+  const val=(document.getElementById('newPinInput')?.value||'').trim();
+  if(val){
+    if(val.length<3||val.length>maxLen||!/^\d+$/.test(val)){alert(`El PIN principal debe tener entre 3 y ${maxLen} dígitos numéricos`);return;}
+    if(staffAccounts.some(x=>x.email!==email&&(x.pin===val||x.pin2===val))){alert('Ese PIN ya está en uso por otro usuario');return;}
+    s.pin=val;
+  }
+  if(isAdmin){
+    const val2=(document.getElementById('newPin2Input')?.value||'').trim();
+    if(val2){
+      if(val2.length<3||val2.length>10||!/^\d+$/.test(val2)){alert('El PIN secundario debe tener entre 3 y 10 dígitos numéricos');return;}
+      if(val2===s.pin){alert('El PIN secundario no puede ser igual al principal');return;}
+      if(staffAccounts.some(x=>x.email!==email&&(x.pin===val2||x.pin2===val2))){alert('Ese PIN 2 ya está en uso por otro usuario');return;}
+      s.pin2=val2;
+    }
+  }
+  if(!val&&!(isAdmin&&document.getElementById('newPin2Input')?.value?.trim())){alert('Ingresá al menos un PIN para guardar');return;}
+  saveDB();closeModal();navigate('staff');
 }
 function saveStaffPerms(email){
   const s=staffAccounts.find(x=>x.email===email);if(!s)return;
@@ -2159,7 +2194,7 @@ function rPinPress(k){
   if(k==='⌫') buf = buf.slice(0,-1);
   else if(k==='✓'){
     const staff = staffAccounts.find(s=>s.email===currentUser.email);
-    if(staff && staff.pin === buf){
+    if(staff && (staff.pin === buf || (staff.pin2 && staff.pin2 === buf))){
       closeModal();
       window._rPinBuf='';
       if(pendingAction){ pendingAction(); pendingAction=null; }
@@ -2168,7 +2203,7 @@ function rPinPress(k){
       window._rPinBuf='';
       buf='';
     }
-  } else if(buf.length < 4) buf += k;
+  } else if(buf.length < 10) buf += k;
   window._rPinBuf = buf;
   const d = document.getElementById('rPinDisplay');
   if(d) d.textContent = buf ? '●'.repeat(buf.length) : '—';

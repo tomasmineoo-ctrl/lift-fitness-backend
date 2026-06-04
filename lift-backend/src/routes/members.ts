@@ -71,7 +71,7 @@ router.post('/', authorize('admin', 'reception'), async (req: Request, res: Resp
     name:         z.string().min(2),
     email:        z.string().email(),
     password:     z.string().min(4),
-    pin:          z.string().length(4).optional(),
+    pin:          z.string().min(3).max(6).regex(/^\d+$/).optional(),
     phone:        z.string().min(1).optional(),
     dni:          z.string().min(1).optional(),
     nationality:  z.string().min(1).optional(),

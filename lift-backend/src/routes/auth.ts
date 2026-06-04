@@ -110,20 +110,20 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 // POST /api/auth/login/pin
 router.post('/login/pin', async (req: Request, res: Response) => {
   const { pin, gym_slug } = z.object({
-    pin:      z.string().length(4),
+    pin:      z.string().min(3).max(10).regex(/^\d+$/, 'PIN debe ser numérico'),
     gym_slug: z.string().optional(),
   }).parse(req.body);
 
   const gym = await resolveGym(gym_slug, req.headers.host);
   if (!gym) return res.status(404).json({ error: 'Gimnasio no encontrado' });
 
-  // Buscar en staff
-  const { data: staffRow } = await supabase
+  // Buscar en staff — por pin principal o pin2
+  const { data: allStaff } = await supabase
     .from('staff')
-    .select('id, email, name, role, active')
-    .eq('pin', pin)
-    .eq('gym_id', gym.id)
-    .single();
+    .select('id, email, name, role, active, pin, pin2')
+    .eq('gym_id', gym.id);
+
+  const staffRow = (allStaff || []).find(s => s.pin === pin || (s as any).pin2 === pin);
 
   if (staffRow) {
     if (!staffRow.active) return res.status(403).json({ error: 'Cuenta desactivada' });

@@ -74,7 +74,7 @@ router.post('/verify', async (req: Request, res: Response) => {
   const gymId = req.user!.gym_id;
   const { user_id, pin } = z.object({
     user_id: z.number().int().optional(),
-    pin:     z.string().length(4).optional(),
+    pin:     z.string().min(3).max(10).regex(/^\d+$/).optional(),
   }).parse(req.body);
 
   let userId = user_id;
