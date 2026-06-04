@@ -532,6 +532,24 @@ function saveComisiones(){try{localStorage.setItem('gp_comisionesConfig',JSON.st
 let turnoRegistros=[];  // {id, recepEmail, recepName, turno, fecha, pagos:[], totalEfectivo:0, totalDigital:0, totalCripto:0, cerrado:false}
 let users=[{id:1,name:'Carlos Mejía',email:'carlos@mail.com',pass:'1234',pin:'1234',phone:'7890-1234',dni:'01234567-8',nationality:'El Salvador',dob:'1990-05-15',address:'Col. Escalón, San Salvador',weight:82,height:178,bloodType:'A+',medCoverage:'ISSS',medClearance:true,photo:'',plan:'Oro',payMethod:'Efectivo',inscDate:'2024-11-10',lastPayment:'2025-05-01',status:'active',routine:null,frozen:false,physicalHistory:[],payHistory:[{date:'2025-05-01',amount:50,method:'Efectivo',plan:'Oro'}],debt:0},{id:2,name:'Ana Flores',email:'ana@mail.com',pass:'1234',pin:'5678',phone:'7777-8888',dni:'02345678-9',nationality:'El Salvador',dob:'1995-08-22',address:'Col. San Benito, San Salvador',weight:61,height:165,bloodType:'O+',medCoverage:'Privado',medClearance:true,photo:'',plan:'Plata',payMethod:'Tarjeta de crédito',inscDate:'2025-01-15',lastPayment:'2025-04-28',status:'active',routine:null,frozen:false,physicalHistory:[],payHistory:[{date:'2025-04-28',amount:35,method:'Tarjeta de crédito',plan:'Plata'}],debt:0},{id:3,name:'Roberto Díaz',email:'roberto@mail.com',pass:'1234',pin:'9999',phone:'7654-3210',dni:'03456789-0',nationality:'El Salvador',dob:'1988-12-01',address:'Soyapango, San Salvador',weight:95,height:185,bloodType:'B+',medCoverage:'ISSS',medClearance:false,photo:'',plan:'Bronce',payMethod:'Efectivo',inscDate:'2025-03-08',lastPayment:'2025-03-31',status:'inactive',routine:null,frozen:false,physicalHistory:[],payHistory:[],debt:25},{id:4,name:'María López',email:'maria@mail.com',pass:'1234',pin:'2468',phone:'7123-4567',dni:'04567890-1',nationality:'El Salvador',dob:'1993-03-17',address:'Col. Médica, San Salvador',weight:58,height:162,bloodType:'AB-',medCoverage:'Privado',medClearance:true,photo:'',plan:'Diamante',payMethod:'Tarjeta de crédito',inscDate:'2024-08-01',lastPayment:'2025-05-05',status:'active',routine:null,frozen:false,physicalHistory:[],payHistory:[{date:'2025-05-05',amount:75,method:'Tarjeta de crédito',plan:'Diamante'}],debt:0}];
 let classes=[{id:1,type:'Yoga',trainer:'Lic. Martínez',day:'Lunes',time:'08:00',duration:60,capacity:15,enrolled:[1,2],waitlist:[],everEnrolled:[1,2],openSlot:null,active:true},{id:2,type:'Spinning',trainer:'Lic. Martínez',day:'Martes',time:'07:00',duration:45,capacity:10,enrolled:[4],waitlist:[],everEnrolled:[4],openSlot:null,active:true},{id:3,type:'Pilates',trainer:'Lic. Martínez',day:'Miércoles',time:'18:00',duration:60,capacity:12,enrolled:[2,4],waitlist:[],everEnrolled:[2,4],openSlot:null,active:true},{id:4,type:'Funcional',trainer:'Lic. Martínez',day:'Jueves',time:'09:00',duration:50,capacity:20,enrolled:[1,3,4],waitlist:[],everEnrolled:[1,3,4],openSlot:null,active:true},{id:5,type:'Boxeo',trainer:'Lic. Martínez',day:'Viernes',time:'19:00',duration:60,capacity:8,enrolled:[],waitlist:[],everEnrolled:[],openSlot:null,active:true}];
+// AGENDA UNIFICADA
+let agendaActivities=[];
+try{const ag=localStorage.getItem('gp_agendaActivities');if(ag)agendaActivities=JSON.parse(ag);}catch(e){}
+function saveAgenda(){try{localStorage.setItem('gp_agendaActivities',JSON.stringify(agendaActivities));}catch(e){}}
+
+// Tipos de actividad disponibles para el admin
+const ACTIVITY_TYPES=[
+  {id:'clase',label:'Clase Grupal',color:'#E5087E',icon:'🏋️'},
+  {id:'personal',label:'Entrenamiento Personal',color:'#34388E',icon:'👤'},
+  {id:'nutricion',label:'Consulta Nutrición',color:'#30D158',icon:'🥗'},
+  {id:'evento',label:'Evento',color:'#FF9F0A',icon:'🎉'},
+  {id:'reserva',label:'Reserva de Espacio',color:'#64D2FF',icon:'📌'},
+  {id:'otro',label:'Otro',color:'#666',icon:'📋'},
+];
+
+// Horarios laborales del staff — solo admin los carga
+// staffAccounts ya existe, le agregamos workSchedule: [{day:'Lunes',from:'09:00',to:'18:00'}]
+
 let accessLog=[{id:1,userId:1,userName:'Carlos Mejía',type:'entry',time:'08:15',date:'2025-05-19',method:'QR',allowed:true},{id:2,userId:4,userName:'María López',type:'entry',time:'08:42',date:'2025-05-19',method:'QR',allowed:true},{id:3,userId:3,userName:'Roberto Díaz',type:'entry',time:'09:10',date:'2025-05-19',method:'PIN',allowed:false},{id:4,userId:2,userName:'Ana Flores',type:'entry',time:'10:05',date:'2025-05-19',method:'QR',allowed:true}];
 let expenses=[{id:1,date:'2025-05-01',categoryId:1,desc:'Alquiler mayo',amount:180000},{id:2,date:'2025-05-03',categoryId:2,desc:'Luz y gas',amount:32000},{id:3,date:'2025-05-05',categoryId:3,desc:'Staff mayo',amount:250000},{id:4,date:'2025-05-08',categoryId:4,desc:'Reparación cinta',amount:15000}];
 let discounts=[{id:1,name:'Estudiantes',pct:15,active:true,plan:'Todos'},{id:2,name:'Jubilados',pct:20,active:true,plan:'Bronce'}];
@@ -927,10 +945,10 @@ return`
     <div class="lbl">Gestión Shop</div>
     <div style="font-size:.62rem;color:var(--text3);margin-top:5px">Productos y canjes</div>
   </div>
-  <div class="statCard" style="border-left-color:var(--teal)">
-    <div class="num" style="color:var(--teal)">${classes.filter(c=>c.active).length}</div>
-    <div class="lbl">Clases activas</div>
-    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${getClassesForDay(DAYS_FULL[today().getDay()]).length} programadas hoy</div>
+  <div class="statCard" style="border-left-color:var(--teal);cursor:pointer" onclick="navigate('agenda')">
+    <div class="num" style="color:var(--teal)">${agendaActivities.filter(a=>a.date>=today().toISOString().slice(0,10)).length||classes.filter(c=>c.active).length}</div>
+    <div class="lbl">Actividades</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${agendaActivities.filter(a=>a.date===today().toISOString().slice(0,10)).length} programadas hoy</div>
   </div>
 </div>
 
@@ -1011,7 +1029,111 @@ mensajesMasivos:()=>`<div class="pageTitle">Mensajes Masivos</div><div style="di
 
 mensajes:()=>{const isAdmin=currentUser.role!=='user';if(!isAdmin){if(!currentUser.data)return'<div class="pageTitle">Mensajes</div><div class="card"><p style="color:var(--text3)">Datos no disponibles.</p></div>';const uid=currentUser.data.id;if(!messages[uid])messages[uid]=[];return`<div class="pageTitle">Mensajes</div><div class="card" style="padding:0"><div class="chatContainer"><div class="chatMessages" id="chatMsgs">${messages[uid].map(m=>msgBubble(m)).join('')}${!messages[uid].length?'<div style="text-align:center;color:var(--text2);font-size:.78rem;margin-top:30px">Enviá un mensaje al gimnasio</div>':''}</div><div class="chatInput"><input id="msgInput" placeholder="Escribí..." onkeydown="if(event.key===\'Enter\')sendMsg(${uid})"/><button class="btn btnAccent" onclick="sendMsg(${uid})">Enviar</button></div></div></div>`;}return`<div class="pageTitle">Chat con Socios</div><div style="display:flex;gap:12px;height:450px"><div class="card" style="width:180px;padding:8px;overflow-y:auto;flex-shrink:0">${users.map(u=>{const cnt=(messages[u.id]||[]).filter(m=>m.from==='user').length;return`<div onclick="openChat(${u.id})" id="chatUser_${u.id}" style="padding:7px;border-radius:2px;cursor:pointer;margin-bottom:3px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:.78rem">${u.name.split(' ')[0]}</span>${cnt?`<span style="background:var(--accent);color:#fff;border-radius:2px;padding:1px 5px;font-size:.62rem">${cnt}</span>`:''}</div>`;}).join('')}</div><div class="card" style="flex:1;padding:0" id="chatArea"><div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2);font-size:.82rem">Seleccioná un socio</div></div></div>`;},
 
-agenda:()=>{processSlotTimers();const y=calendarDate.getFullYear();const mo=calendarDate.getMonth();const firstDay=new Date(y,mo,1).getDay();const daysInMo=new Date(y,mo+1,0).getDate();const todayD=today().getDate();const todayM=today().getMonth();const todayY=today().getFullYear();let cells=[];for(let i=0;i<firstDay;i++)cells.push(null);for(let d=1;d<=daysInMo;d++)cells.push(d);while(cells.length%7!==0)cells.push(null);const canEdit=currentUser.role==='admin'||currentUser.role==='reception'||currentUser.role==='trainer';return`<div class="pageTitle">Agenda & Clases</div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="display:flex;align-items:center;gap:10px"><button class="btn btnGhost btnSm" onclick="calPrev()">◀</button><strong style="font-size:.95rem;font-family:'Barlow Condensed',sans-serif;letter-spacing:.05em;text-transform:uppercase">${MONTHS_ES[mo]} ${y}</strong><button class="btn btnGhost btnSm" onclick="calNext()">▶</button></div>${canEdit?`<button class="btn btnAccent" onclick="openNewClass()">+ Nueva Clase</button>`:''}</div><div class="calHeader">${DAYS_ES.map(d=>`<div style="text-align:center;font-size:.65rem;color:var(--text3);padding:4px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase">${d}</div>`).join('')}</div><div class="calGrid">${cells.map(d=>{if(!d)return`<div class="calDay otherMonth"></div>`;const dayName=DAYS_FULL[new Date(y,mo,d).getDay()];const dayClasses=getClassesForDay(dayName);const isToday=d===todayD&&mo===todayM&&y===todayY;return`<div class="calDay ${isToday?'today':''}" onclick="showDayClasses('${dayName}',${d})"><div class="dayNum">${d}${isToday?`<span style="color:var(--accent)"> ●</span>`:''}</div>${dayClasses.slice(0,2).map(c=>`<div class="classChip ${CLASS_COLORS[c.type]||'default'}">${c.time} ${c.type}</div>`).join('')}${dayClasses.length>2?`<div style="font-size:.55rem;color:var(--text3)">+${dayClasses.length-2}</div>`:''}</div>`;}).join('')}</div><div style="margin-top:14px"><div class="card"><h3>Todas las clases</h3>${classes.map(c=>{const wl=(c.waitlist||[]).length;const slot=c.openSlot;const slotActive=slot&&Date.now()<slot.expiresAt;return`<div class="classCard"><div class="classTime">${c.time}</div><div class="classInfo"><h4>${c.type} <span class="classChip ${CLASS_COLORS[c.type]||'default'}" style="display:inline">${c.day}</span>${slotActive?`<span style="background:var(--accent-glow);color:var(--accent);border:1px solid var(--accent);padding:1px 6px;border-radius:2px;font-size:.62rem;margin-left:4px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.05em">⚡ CUPO ABIERTO</span>`:''}</h4><p>${c.trainer} · ${c.duration} min · Cap: ${c.capacity}${wl?` · <span style="color:var(--orange)">${wl} en espera</span>`:''}</p></div><div style="text-align:right;min-width:60px"><div style="font-size:.82rem;font-weight:700;color:${c.enrolled.length>=c.capacity?'var(--red)':'var(--green)'}">${c.enrolled.length}/${c.capacity}</div>${canEdit?`<button class="btn btnXs btnDanger" style="margin-top:4px" onclick="deleteClass(${c.id})">✕</button>`:''}</div></div>`;}).join('')}</div>${canEdit?(()=>{const activeSlots=classes.filter(c=>c.openSlot&&!c.openSlot.notifiedAll);if(!activeSlots.length)return'';return`<div class="card" style="border-left:3px solid var(--accent)"><h3>⚡ Cupos abiertos en este momento</h3>${activeSlots.map(c=>{const mins=Math.max(0,Math.round((c.openSlot.expiresAt-Date.now())/60000));return`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:.8rem"><div><div style="font-weight:600">${c.type} — ${c.day} ${c.time}</div><div style="color:var(--text3);font-size:.7rem">Prioridad waitlist · ${mins} min restantes · ${c.waitlist.length} esperando</div></div><button class="btn btnXs btnGhost" onclick="adminFastForwardSlot(${c.id})" title="Simular fin de prioridad (notifica a todos)">⏩ Saltar prioridad</button></div>`;}).join('')}<div style="font-size:.68rem;color:var(--text3);margin-top:6px;font-style:italic">ℹ Cuando finalicen los 20 min, se notificará automáticamente a todos los socios con historial en la clase.</div></div>`;})():''}</div>`;},
+agenda:()=>{
+  const role=currentUser.role;
+  const isAdmin=role==='admin';
+  const isReception=role==='reception';
+  const isTrainer=role==='trainer';
+  const isNutri=role==='nutritionist';
+  const isUser=role==='user';
+  const isCafe=role==='cafeteria';
+  const canCreate=isAdmin||isReception||isTrainer||isNutri;
+  const canManageAll=isAdmin||isReception;
+
+  // Filtrar actividades según rol
+  function getVisibleActivities(){
+    return agendaActivities.filter(a=>{
+      if(isAdmin||isReception) return true;
+      if(isTrainer) return a.type==='clase'||a.type==='evento'||(a.staffEmail===currentUser.email)||a.visibleAll;
+      if(isNutri) return a.type==='nutricion'&&a.staffEmail===currentUser.email||a.type==='evento'||a.visibleAll;
+      if(isUser) return a.visibleAll||a.enrolledUsers&&a.enrolledUsers.includes(currentUser.data&&currentUser.data.id);
+      if(isCafe) return a.type==='evento'||a.notifyCafe;
+      return a.visibleAll;
+    });
+  }
+
+  const visible=getVisibleActivities();
+  const hoy=today().toISOString().slice(0,10);
+  const proximas=visible.filter(a=>a.date>=hoy).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+  const pasadas=visible.filter(a=>a.date<hoy).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+
+  // Grilla semanal — semana actual
+  const semanaInicio=new Date(today());
+  semanaInicio.setDate(today().getDate()-today().getDay()+1);
+  const semana=Array.from({length:7},(_,i)=>{const d=new Date(semanaInicio);d.setDate(semanaInicio.getDate()+i);return d.toISOString().slice(0,10);});
+  const DIAS_CORTO=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+  return`
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+  <div class="pageTitle" style="margin:0">📅 Agenda</div>
+  <div style="display:flex;gap:8px">
+    ${canCreate?`<button class="btn btnAccent" onclick="openNuevaActividad()">+ Nueva Actividad</button>`:''}
+    ${isAdmin?`<button class="btn" style="background:rgba(52,56,142,.2);color:#8b8fc4;border:1px solid rgba(52,56,142,.4);font-size:.75rem" onclick="navigate('staff')">⚙️ Horarios Staff</button>`:''}
+  </div>
+</div>
+
+<!-- LEYENDA DE TIPOS -->
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+  ${ACTIVITY_TYPES.map(t=>`<span style="background:${t.color}22;border:1px solid ${t.color}55;color:${t.color};padding:3px 10px;border-radius:2px;font-size:.65rem;font-weight:700;letter-spacing:.04em">${t.icon} ${t.label.toUpperCase()}</span>`).join('')}
+</div>
+
+<!-- GRILLA SEMANAL -->
+<div class="card" style="padding:12px;margin-bottom:14px">
+  <div style="font-size:.72rem;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px">ESTA SEMANA</div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+    ${semana.map((fecha,i)=>{
+      const esHoy=fecha===hoy;
+      const actDia=proximas.filter(a=>a.date===fecha);
+      const d=new Date(fecha);
+      return`<div style="background:${esHoy?'rgba(229,8,126,.08)':'#0a0a0a'};border:1px solid ${esHoy?'var(--accent)':'#1a1a1a'};border-radius:4px;padding:8px;min-height:80px">
+        <div style="font-size:.65rem;color:${esHoy?'var(--accent)':'var(--text3)'};font-weight:700;margin-bottom:6px;text-align:center">${DIAS_CORTO[i]}<br><span style="font-size:.8rem;color:${esHoy?'var(--accent)':'var(--white)'}">${d.getDate()}</span></div>
+        ${actDia.length===0?`<div style="font-size:.6rem;color:#333;text-align:center;margin-top:8px">—</div>`
+          :actDia.slice(0,3).map(a=>{const t=ACTIVITY_TYPES.find(x=>x.id===a.type)||{color:'#666',icon:'📋'};return`<div onclick="verActividad(${a.id})" style="background:${t.color}22;border-left:2px solid ${t.color};padding:2px 4px;margin-bottom:3px;border-radius:1px;cursor:pointer;font-size:.6rem;color:#ddd;overflow:hidden;white-space:nowrap;text-overflow:ellipsis" title="${a.title}">${t.icon} ${a.time} ${a.title}</div>`;}).join('')}
+        ${actDia.length>3?`<div style="font-size:.55rem;color:var(--text3);text-align:center">+${actDia.length-3} más</div>`:''}
+      </div>`;
+    }).join('')}
+  </div>
+</div>
+
+<!-- PRÓXIMAS ACTIVIDADES -->
+<div class="card" style="padding:0;margin-bottom:14px;overflow:hidden">
+  <div style="padding:12px 16px;border-bottom:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:.72rem;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase">PRÓXIMAS ACTIVIDADES</span>
+    <span style="font-size:.68rem;color:var(--text3)">${proximas.length} programadas</span>
+  </div>
+  ${proximas.length===0?`<div style="padding:24px;text-align:center;color:var(--text3);font-size:.8rem">Sin actividades programadas</div>`
+  :proximas.map(a=>{
+    const t=ACTIVITY_TYPES.find(x=>x.id===a.type)||{color:'#666',icon:'📋',label:'Otro'};
+    const puedeModificar=isAdmin||(isReception&&a.type!=='personal')||a.staffEmail===currentUser.email;
+    const inscripto=a.enrolledUsers&&currentUser.data&&a.enrolledUsers.includes(currentUser.data.id);
+    return`<div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #111;cursor:pointer" onclick="verActividad(${a.id})">
+      <div style="width:3px;height:40px;background:${t.color};border-radius:2px;flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+          <span style="font-size:.75rem;font-weight:700;color:#eee">${t.icon} ${a.title}</span>
+          <span style="background:${t.color}22;color:${t.color};font-size:.6rem;padding:1px 6px;border-radius:2px;font-weight:700;white-space:nowrap">${t.label}</span>
+          ${a.requiresEnrollment?`<span style="background:rgba(255,159,10,.15);color:#FF9F0A;font-size:.6rem;padding:1px 6px;border-radius:2px">Inscripción</span>`:''}
+        </div>
+        <div style="font-size:.68rem;color:var(--text3)">${a.date} · ${a.time}${a.duration?' · '+a.duration+' min':''} ${a.staffName?'· '+a.staffName:''}</div>
+        ${a.description?`<div style="font-size:.65rem;color:#555;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${a.description}</div>`:''}
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        ${a.capacity?`<div style="font-size:.7rem;color:${(a.enrolledUsers||[]).length>=a.capacity?'var(--red)':'var(--green)'};font-weight:700">${(a.enrolledUsers||[]).length}/${a.capacity}</div>`:''}
+        ${isUser&&a.requiresEnrollment?`<button class="btn btnSm" onclick="event.stopPropagation();inscribirseActividad(${a.id})" style="background:${inscripto?'rgba(255,59,48,.1)':'rgba(229,8,126,.15)'};color:${inscripto?'var(--red)':'var(--accent)'};border:1px solid ${inscripto?'rgba(255,59,48,.3)':'rgba(229,8,126,.3)'};font-size:.65rem;padding:4px 8px;margin-top:4px">${inscripto?'✕ Cancelar':'+ Inscribirme'}</button>`:''}
+        ${puedeModificar&&!isUser?`<div style="display:flex;gap:4px;margin-top:4px"><button class="btn btnSm" onclick="event.stopPropagation();editarActividad(${a.id})" style="font-size:.6rem;padding:3px 7px">✏️</button><button class="btn btnSm btnDanger" onclick="event.stopPropagation();confirmarEliminarActividad(${a.id})" style="font-size:.6rem;padding:3px 7px">✕</button></div>`:''}
+      </div>
+    </div>`;
+  }).join('')}
+</div>
+
+${pasadas.length>0?`
+<div class="card" style="padding:0;overflow:hidden">
+  <div style="padding:10px 16px;border-bottom:1px solid #1a1a1a">
+    <span style="font-size:.68rem;color:var(--text3);letter-spacing:.08em;text-transform:uppercase">ÚLTIMAS REALIZADAS</span>
+  </div>
+  ${pasadas.map(a=>{const t=ACTIVITY_TYPES.find(x=>x.id===a.type)||{color:'#666',icon:'📋'};return`<div style="display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid #111;opacity:.5"><div style="width:3px;height:30px;background:${t.color};border-radius:2px"></div><div><div style="font-size:.73rem;color:#aaa">${t.icon} ${a.title}</div><div style="font-size:.65rem;color:var(--text3)">${a.date} · ${a.time}</div></div></div>`;}).join('')}
+</div>`:''}
+`;},
 
 reservarClase:()=>`<div class="pageTitle">Reservar Clase a Alumno</div><div class="card"><div class="formGrid"><div class="formGroup"><label>Alumno</label><select id="reserveUserId">${users.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select></div><div class="formGroup"><label>Clase</label><select id="reserveClassId">${classes.map(c=>`<option value="${c.id}">${c.type} — ${c.day} ${c.time} (${c.enrolled.length}/${c.capacity}${(c.waitlist||[]).length?` · ${c.waitlist.length} en espera`:''})</option>`).join('')}</select></div></div><div style="margin-top:12px"><button class="btn btnAccent" onclick="trainerReserveClass()">✓ Confirmar reserva</button></div><div id="reserveResult" style="margin-top:10px"></div><div style="font-size:.7rem;color:var(--text3);margin-top:8px;font-style:italic">ℹ Si la clase está llena, el alumno será agregado a la lista de espera automáticamente.</div></div><div class="card"><h3>Reservas y listas de espera</h3>${classes.map(c=>{const wl=c.waitlist||[];return`<div style="margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><strong style="font-size:.83rem;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.04em">${c.type} — ${c.day} ${c.time}</strong><span style="font-size:.76rem;color:${c.enrolled.length>=c.capacity?'var(--red)':'var(--green)'}">${c.enrolled.length}/${c.capacity}${wl.length?` · ${wl.length} en espera`:''}</span></div><div style="font-size:.68rem;color:var(--text3);margin-bottom:3px;letter-spacing:.05em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif">Inscriptos</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">${c.enrolled.map(id=>{const u=users.find(x=>x.id===id);return u?`<span style="background:var(--surface2);border:1px solid var(--border);border-radius:2px;padding:2px 7px;font-size:.72rem">${u.name}<span onclick="trainerCancelReservation(${c.id},${id})" style="cursor:pointer;color:var(--red);margin-left:3px">✕</span></span>`:''}).join('')}${c.enrolled.length===0?'<span style="color:var(--text3);font-size:.72rem">Sin inscriptos</span>':''}</div>${wl.length?`<div style="font-size:.68rem;color:var(--orange);margin-bottom:3px;letter-spacing:.05em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif">Lista de espera</div><div style="display:flex;flex-wrap:wrap;gap:4px">${wl.map((id,idx)=>{const u=users.find(x=>x.id===id);return u?`<span style="background:rgba(255,159,10,.08);border:1px solid rgba(255,159,10,.3);border-radius:2px;padding:2px 7px;font-size:.72rem;color:var(--orange)">#${idx+1} ${u.name}<span onclick="trainerCancelReservation(${c.id},${id})" style="cursor:pointer;color:var(--red);margin-left:3px">✕</span></span>`:''}).join('')}</div>`:''}</div>`;}).join('')}</div>`,
 
@@ -1325,8 +1447,44 @@ function saveReferral(){const get=i=>document.getElementById(i)?.value||'';if(!g
 function openNewAnnouncement(){openModal(`<h3>Nuevo Comunicado</h3><div class="formGrid"><div class="formGroup fullWidth"><label>Título *</label><input id="aTitle" placeholder="Título"/></div><div class="formGroup fullWidth"><label>Mensaje *</label><textarea id="aBody" placeholder="Contenido..."></textarea></div><div class="formGroup"><label>Destinatarios</label><select id="aTarget"><option>Todos</option>${Object.keys(PLANS).map(p=>`<option>Plan ${p}</option>`).join('')}</select></div></div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="saveAnnouncement()">Publicar</button></div>`);}
 function saveAnnouncement(){const get=i=>document.getElementById(i)?.value||'';if(!get('aTitle')||!get('aBody')){alert('Completá campos');return;}announcements.unshift({id:Date.now(),title:get('aTitle'),body:get('aBody'),date:new Date().toISOString().slice(0,10),target:get('aTarget'),author:currentUser.name});saveDB();closeModal();navigate('comunicados');}
 function deleteAnnouncement(id){if(confirm('¿Eliminar?')){announcements=announcements.filter(a=>a.id!==id);saveDB();navigate('comunicados');}}
-function openNewStaff(){openModal(`<h3>Agregar Staff</h3><div class="formGrid"><div class="formGroup"><label>Nombre *</label><input id="sName" placeholder="Nombre completo"/></div><div class="formGroup"><label>Email *</label><input id="sEmail" type="email" placeholder="email@lift.com"/></div><div class="formGroup"><label>Contraseña *</label><input id="sPass" type="password" placeholder="Contraseña"/></div><div class="formGroup"><label>Rol</label><select id="sRole"><option value="reception">Recepcionista</option><option value="trainer">Entrenador</option><option value="admin">Administrador</option></select></div></div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="saveStaff()">Agregar</button></div>`);}
-function saveStaff(){const get=i=>document.getElementById(i)?.value||'';if(!get('sName')||!get('sEmail')||!get('sPass')){alert('Completá campos');return;}if(staffAccounts.find(s=>s.email===get('sEmail'))){alert('Email ya registrado');return;}staffAccounts.push({email:get('sEmail'),pass:get('sPass'),role:get('sRole'),name:get('sName')});logAction('Staff agregado',get('sName'));saveDB();closeModal();navigate('staff');}
+function openNewStaff(){
+  const dias=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+  openModal(`<h3>Agregar Staff</h3>
+  <div class="formGrid">
+    <div class="formGroup"><label>Nombre *</label><input id="sName" placeholder="Nombre completo"/></div>
+    <div class="formGroup"><label>Email *</label><input id="sEmail" type="email" placeholder="email@lift.com"/></div>
+    <div class="formGroup"><label>Contraseña *</label><input id="sPass" type="password" placeholder="Contraseña"/></div>
+    <div class="formGroup"><label>Teléfono (WhatsApp)</label><input id="sPhone" placeholder="549XXXXXXXXXX"/></div>
+    <div class="formGroup"><label>Rol</label><select id="sRole"><option value="reception">Recepcionista</option><option value="trainer">Entrenador</option><option value="nutritionist">Nutricionista</option><option value="cafeteria">Cafetería</option><option value="admin">Administrador</option></select></div>
+  </div>
+  <div style="margin-top:14px">
+    <label style="font-size:.72rem;color:var(--text2);letter-spacing:.06em;text-transform:uppercase;font-weight:700">Horario Laboral</label>
+    <div style="font-size:.68rem;color:var(--text3);margin-bottom:8px">Solo visible y modificable desde administración</div>
+    <div id="workScheduleList">
+      ${dias.map(d=>`<div style="display:grid;grid-template-columns:100px 1fr 1fr 80px;gap:8px;align-items:center;margin-bottom:6px">
+        <label style="font-size:.75rem;color:var(--text2)">${d}</label>
+        <input id="ws_${d}_from" type="time" placeholder="Desde" style="padding:6px;background:var(--surface2);border:1px solid var(--border2);border-radius:3px;color:var(--white);font-size:.75rem"/>
+        <input id="ws_${d}_to" type="time" placeholder="Hasta" style="padding:6px;background:var(--surface2);border:1px solid var(--border2);border-radius:3px;color:var(--white);font-size:.75rem"/>
+        <span style="font-size:.65rem;color:var(--text3)">Dejar vacío = libre</span>
+      </div>`).join('')}
+    </div>
+  </div>
+  <div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="saveStaff()">Agregar</button></div>`);
+}
+function saveStaff(){
+  const get=i=>document.getElementById(i)?.value||'';
+  if(!get('sName')||!get('sEmail')||!get('sPass')){alert('Completá nombre, email y contraseña.');return;}
+  if(staffAccounts.find(s=>s.email===get('sEmail'))){alert('Email ya registrado.');return;}
+  const dias=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+  const workSchedule=dias.map(d=>{
+    const from=document.getElementById(`ws_${d}_from`)?.value||'';
+    const to=document.getElementById(`ws_${d}_to`)?.value||'';
+    return from&&to?{day:d,from,to}:null;
+  }).filter(Boolean);
+  staffAccounts.push({email:get('sEmail'),pass:get('sPass'),role:get('sRole'),name:get('sName'),phone:get('sPhone'),workSchedule});
+  logAction('Staff agregado',get('sName'));
+  saveDB();closeModal();navigate('staff');
+}
 function removeStaff(email){if(confirm('¿Eliminar?')){staffAccounts=staffAccounts.filter(s=>s.email!==email);saveDB();navigate('staff');}}
 function openRoutine(id){const u=users.find(x=>x.id===id);if(!u)return;const days=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];const r=u.routine||[];openModal(`<h3>Rutina de ${u.name}</h3><div id="routineEditor">${days.map((d,i)=>{const day=r.find(x=>x.day===d)||{day:d,exercises:[]};return`<div class="routineDay" style="margin-bottom:6px"><div class="dayHeader" style="cursor:default;font-size:.8rem">${d}</div><div style="padding:8px"><div id="exList_${i}">${day.exercises.map(ex=>`<div class="exerciseItem"><input style="flex:1;padding:3px 5px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" value="${ex.name}"/><input style="width:42px;padding:3px 4px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" value="${ex.sets}"/><input style="width:42px;padding:3px 4px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" value="${ex.reps}"/><input style="width:46px;padding:3px 4px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" value="${ex.rest}"/><button class="btn btnXs btnDanger" onclick="removeEx(this)">✕</button></div>`).join('')}</div><button class="btn btnSm btnGhost" style="margin-top:5px;font-size:.7rem" onclick="addEx(${i})">+ Ejercicio</button></div></div>`;}).join('')}</div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="saveRoutine(${id})">Guardar</button></div>`);}
 function addEx(di){const list=document.getElementById('exList_'+di);const div=document.createElement('div');div.className='exerciseItem';div.innerHTML=`<input style="flex:1;padding:3px 5px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" placeholder="Ejercicio"/><input style="width:42px;padding:3px 4px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" placeholder="Series"/><input style="width:42px;padding:3px 4px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" placeholder="Reps"/><input style="width:46px;padding:3px 4px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" placeholder="Desc(s)"/><button class="btn btnXs btnDanger" onclick="removeEx(this)">✕</button>`;list.appendChild(div);}
@@ -1337,6 +1495,253 @@ function saveNewMachine(){const get=i=>document.getElementById(i)?.value||'';if(
 function deleteMachine(id){if(confirm('¿Eliminar?')){machines=machines.filter(m=>m.id!==id);saveDB();navigate('maquinas');}}
 function viewMachine(id){const m=machines.find(x=>x.id===id);const ytId=m.videoUrl.match(/(?:v=|youtu\.be\/)([^&\s]+)/)?.[1]||'';openModal(`<h3>${m.name}</h3><p style="font-size:.8rem;margin-bottom:10px;color:var(--text3)">${m.description}</p><div class="card" style="margin-bottom:10px"><h3>Instrucciones</h3><p style="font-size:.78rem;line-height:1.7;white-space:pre-line">${m.usage}</p></div>${ytId?`<div class="card"><h3>Video</h3><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:2px"><iframe src="https://www.youtube.com/embed/${ytId}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen></iframe></div></div>`:''}<div class="modalActions"><button class="btn btnAccent" onclick="closeModal()">Cerrar</button></div>`);}
 function showMachineQR(id){const m=machines.find(x=>x.id===id);openModal(`<h3>QR — ${m.name}</h3><div style="text-align:center"><div class="qrWrap"><canvas id="mqrCanvas"></canvas></div>${m.videoUrl?`<a href="${m.videoUrl}" target="_blank" style="display:inline-block;margin-top:8px;font-size:.73rem;color:var(--blue)">Abrir video</a>`:''}</div><div class="modalActions"><button class="btn btnAccent" onclick="closeModal()">Cerrar</button></div>`);setTimeout(()=>{const canvas=document.getElementById('mqrCanvas');if(!canvas)return;const size=155;canvas.width=canvas.height=size;const ctx=canvas.getContext('2d');const data=`LIFT_MACHINE|${m.id}|${m.name}`;ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);ctx.fillStyle='#000';const grid=15;const cell=size/grid;for(let i=0;i<grid;i++)for(let j=0;j<grid;j++){const val=(data.charCodeAt((i*grid+j)%data.length)+i*7+j*13)%2;if(val)ctx.fillRect(i*cell,j*cell,cell-1,cell-1);}[[0,0],[9,0],[0,9]].forEach(([x,y])=>{ctx.fillStyle='#000';ctx.fillRect(x*cell,y*cell,cell*5,cell*5);ctx.fillStyle='#fff';ctx.fillRect(x*cell+cell,y*cell+cell,cell*3,cell*3);ctx.fillStyle='#000';ctx.fillRect(x*cell+cell*1.5,y*cell+cell*1.5,cell*2,cell*2);});},80);}
+// ============================================================
+// AGENDA UNIFICADA — FUNCIONES
+// ============================================================
+function openNuevaActividad(preDate){
+  const role=currentUser.role;
+  const isAdmin=role==='admin';
+  const isReception=role==='reception';
+  // Staff disponibles para asignar (solo admin y recepción ven a todos)
+  const staffOpts=staffAccounts.filter(s=>s.role!=='admin'||isAdmin).map(s=>`<option value="${s.email}" data-name="${s.name}">${s.name} (${s.role})</option>`).join('');
+  // Tipos disponibles según rol
+  const tiposPermitidos=isAdmin||isReception?ACTIVITY_TYPES:
+    role==='trainer'?ACTIVITY_TYPES.filter(t=>['clase','personal','evento','reserva','otro'].includes(t.id)):
+    role==='nutritionist'?ACTIVITY_TYPES.filter(t=>['nutricion','evento','reserva','otro'].includes(t.id)):
+    ACTIVITY_TYPES;
+  openModal(`
+    <h3 style="margin-bottom:16px">Nueva Actividad</h3>
+    <div class="formGrid">
+      <div class="formGroup" style="grid-column:1/-1">
+        <label>Tipo de actividad *</label>
+        <select id="actType" onchange="actualizarFormActividad()">
+          ${tiposPermitidos.map(t=>`<option value="${t.id}">${t.icon} ${t.label}</option>`).join('')}
+        </select>
+      </div>
+      <div class="formGroup" style="grid-column:1/-1">
+        <label>Título *</label>
+        <input id="actTitle" placeholder="Nombre de la actividad"/>
+      </div>
+      <div class="formGroup">
+        <label>Fecha *</label>
+        <input id="actDate" type="date" value="${preDate||today().toISOString().slice(0,10)}"/>
+      </div>
+      <div class="formGroup">
+        <label>Hora *</label>
+        <input id="actTime" type="time" value="09:00"/>
+      </div>
+      <div class="formGroup">
+        <label>Duración (min)</label>
+        <input id="actDuration" type="number" placeholder="60" value="60"/>
+      </div>
+      <div class="formGroup" id="actCapGroup">
+        <label>Cupo máximo</label>
+        <input id="actCapacity" type="number" placeholder="Sin límite"/>
+      </div>
+      ${isAdmin||isReception?`
+      <div class="formGroup" style="grid-column:1/-1" id="actStaffGroup">
+        <label>Staff asignado</label>
+        <select id="actStaff">
+          <option value="">— Sin asignar —</option>
+          ${staffOpts}
+        </select>
+      </div>`:`<input type="hidden" id="actStaff" value="${currentUser.email}"/>`}
+      <div class="formGroup" style="grid-column:1/-1">
+        <label>Descripción</label>
+        <textarea id="actDesc" rows="2" placeholder="Detalles de la actividad..." style="width:100%;padding:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:3px;color:var(--white);font-family:inherit;font-size:.8rem"></textarea>
+      </div>
+      <div class="formGroup" style="grid-column:1/-1;display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="actVisibleAll" checked style="width:auto"/>
+        <label style="margin:0;font-size:.78rem;cursor:pointer" for="actVisibleAll">Visible para todos los socios</label>
+        &nbsp;&nbsp;
+        <input type="checkbox" id="actRequiresEnrollment" style="width:auto"/>
+        <label style="margin:0;font-size:.78rem;cursor:pointer" for="actRequiresEnrollment">Requiere inscripción</label>
+        &nbsp;&nbsp;
+        <input type="checkbox" id="actNotifyCafe" style="width:auto"/>
+        <label style="margin:0;font-size:.78rem;cursor:pointer" for="actNotifyCafe">Notificar cafetería</label>
+      </div>
+    </div>
+    <div style="background:rgba(229,8,126,.06);border:1px solid rgba(229,8,126,.2);border-radius:3px;padding:10px;margin:10px 0;font-size:.72rem;color:var(--text2)">
+      ⚠️ <strong>Confirmación:</strong> Al guardar, se enviará una notificación interna al staff y socios involucrados.
+    </div>
+    <div class="modalActions">
+      <button class="btn btnGhost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btnAccent" onclick="guardarNuevaActividad()">✓ Confirmar y Guardar</button>
+    </div>
+  `);
+}
+
+function guardarNuevaActividad(){
+  const get=id=>document.getElementById(id);
+  const title=get('actTitle')?.value?.trim();
+  const date=get('actDate')?.value;
+  const time=get('actTime')?.value;
+  if(!title||!date||!time){alert('Completá título, fecha y hora.');return;}
+  const staffSel=get('actStaff');
+  const staffEmail=staffSel?.value||currentUser.email;
+  const staffName=staffSel?.options[staffSel.selectedIndex]?.dataset?.name||currentUser.name||'';
+  const act={
+    id:Date.now(),
+    type:get('actType')?.value||'otro',
+    title,date,time,
+    duration:parseInt(get('actDuration')?.value)||60,
+    capacity:parseInt(get('actCapacity')?.value)||0,
+    staffEmail,staffName,
+    description:get('actDesc')?.value||'',
+    visibleAll:get('actVisibleAll')?.checked||false,
+    requiresEnrollment:get('actRequiresEnrollment')?.checked||false,
+    notifyCafe:get('actNotifyCafe')?.checked||false,
+    enrolledUsers:[],
+    createdBy:currentUser.name||currentUser.email,
+    createdAt:new Date().toISOString(),
+  };
+  agendaActivities.push(act);
+  saveAgenda();
+  logAction('Nueva actividad',`${act.type} — ${act.title} — ${act.date} ${act.time}`);
+  // Notificación interna
+  if(typeof userNotifications!=='undefined'){
+    users.forEach(u=>{
+      if(act.visibleAll||(act.enrolledUsers||[]).includes(u.id)){
+        userNotifications.push({id:Date.now()+Math.random(),userId:u.id,type:'agenda',msg:`Nueva actividad: ${act.title} — ${act.date} ${act.time}`,date:new Date().toISOString().slice(0,10),read:false});
+      }
+    });
+    saveDB();
+  }
+  closeModal();
+  navigate('agenda');
+}
+
+function verActividad(id){
+  const a=agendaActivities.find(x=>x.id===id);
+  if(!a)return;
+  const t=ACTIVITY_TYPES.find(x=>x.id===a.type)||{color:'#666',icon:'📋',label:'Actividad'};
+  const role=currentUser.role;
+  const puedeModificar=role==='admin'||(role==='reception'&&a.type!=='personal')||a.staffEmail===currentUser.email;
+  const inscriptos=(a.enrolledUsers||[]).map(uid=>{const u=users.find(x=>x.id===uid);return u?u.name:'Socio #'+uid;});
+  const phone=a.staffEmail?(staffAccounts.find(s=>s.email===a.staffEmail)||{}).phone||null:null;
+  const waMsg=encodeURIComponent(`Recordatorio: "${a.title}" el ${a.date} a las ${a.time}. LIFT Fitness Center.`);
+  openModal(`
+    <div style="border-left:4px solid ${t.color};padding-left:14px;margin-bottom:16px">
+      <div style="font-size:.65rem;color:${t.color};font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">${t.icon} ${t.label}</div>
+      <h3 style="margin:0 0 4px">${a.title}</h3>
+      <div style="font-size:.75rem;color:var(--text3)">${a.date} · ${a.time} · ${a.duration} min${a.staffName?' · '+a.staffName:''}</div>
+    </div>
+    ${a.description?`<p style="font-size:.8rem;color:var(--text2);margin-bottom:12px">${a.description}</p>`:''}
+    ${a.capacity?`<div style="font-size:.78rem;margin-bottom:10px">Inscriptos: <strong>${(a.enrolledUsers||[]).length}/${a.capacity}</strong>${inscriptos.length?` — ${inscriptos.join(', ')}`:''}</div>`:''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+      ${phone?`<a href="https://wa.me/${phone}?text=${waMsg}" target="_blank" class="btn" style="background:#25D366;color:white;font-size:.75rem;border:none">📱 WhatsApp</a>`:''}
+      ${puedeModificar?`<button class="btn btnGhost btnSm" onclick="closeModal();editarActividad(${a.id})">✏️ Editar</button>`:''}
+      ${puedeModificar?`<button class="btn btnDanger btnSm" onclick="closeModal();confirmarEliminarActividad(${a.id})">✕ Eliminar</button>`:''}
+      <button class="btn btnGhost btnSm" onclick="closeModal()">Cerrar</button>
+    </div>
+  `);
+}
+
+function confirmarEliminarActividad(id){
+  const a=agendaActivities.find(x=>x.id===id);
+  if(!a)return;
+  openModal(`
+    <h3 style="color:var(--red)">⚠️ Confirmar eliminación</h3>
+    <p style="font-size:.82rem;margin:12px 0">Estás por eliminar: <strong>${a.title}</strong> (${a.date} ${a.time})</p>
+    <p style="font-size:.75rem;color:var(--text3)">Esta acción no se puede deshacer. Los inscriptos recibirán una notificación.</p>
+    <div style="background:rgba(255,59,48,.06);border:1px solid rgba(255,59,48,.2);border-radius:3px;padding:10px;margin:10px 0;font-size:.72rem;color:#ff6b6b">
+      Ejecutado por: <strong>${currentUser.name||currentUser.email}</strong>
+    </div>
+    <div class="modalActions">
+      <button class="btn btnGhost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btnDanger" onclick="eliminarActividad(${id})">Sí, eliminar</button>
+    </div>
+  `);
+}
+
+function eliminarActividad(id){
+  const a=agendaActivities.find(x=>x.id===id);
+  if(!a)return;
+  agendaActivities=agendaActivities.filter(x=>x.id!==id);
+  saveAgenda();
+  logAction('Actividad eliminada',`${a.type} — ${a.title} — ${a.date}`);
+  closeModal();
+  navigate('agenda');
+}
+
+function editarActividad(id){
+  const a=agendaActivities.find(x=>x.id===id);
+  if(!a)return;
+  openModal(`
+    <h3 style="margin-bottom:16px">Editar Actividad</h3>
+    <div class="formGrid">
+      <div class="formGroup" style="grid-column:1/-1">
+        <label>Título</label>
+        <input id="editActTitle" value="${a.title}"/>
+      </div>
+      <div class="formGroup">
+        <label>Fecha</label>
+        <input id="editActDate" type="date" value="${a.date}"/>
+      </div>
+      <div class="formGroup">
+        <label>Hora</label>
+        <input id="editActTime" type="time" value="${a.time}"/>
+      </div>
+      <div class="formGroup">
+        <label>Duración (min)</label>
+        <input id="editActDuration" type="number" value="${a.duration||60}"/>
+      </div>
+      <div class="formGroup">
+        <label>Cupo</label>
+        <input id="editActCapacity" type="number" value="${a.capacity||''}"/>
+      </div>
+      <div class="formGroup" style="grid-column:1/-1">
+        <label>Descripción</label>
+        <textarea id="editActDesc" rows="2" style="width:100%;padding:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:3px;color:var(--white);font-family:inherit;font-size:.8rem">${a.description||''}</textarea>
+      </div>
+    </div>
+    <div style="background:rgba(52,56,142,.08);border:1px solid rgba(52,56,142,.3);border-radius:3px;padding:10px;margin:10px 0;font-size:.72rem;color:#8b8fc4">
+      ⚠️ Cambio ejecutado por: <strong>${currentUser.name||currentUser.email}</strong>
+    </div>
+    <div class="modalActions">
+      <button class="btn btnGhost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btnAccent" onclick="guardarEdicionActividad(${id})">✓ Confirmar Cambios</button>
+    </div>
+  `);
+}
+
+function guardarEdicionActividad(id){
+  const a=agendaActivities.find(x=>x.id===id);
+  if(!a)return;
+  const get=i=>document.getElementById(i);
+  a.title=get('editActTitle')?.value||a.title;
+  a.date=get('editActDate')?.value||a.date;
+  a.time=get('editActTime')?.value||a.time;
+  a.duration=parseInt(get('editActDuration')?.value)||a.duration;
+  a.capacity=parseInt(get('editActCapacity')?.value)||0;
+  a.description=get('editActDesc')?.value||'';
+  a.editedBy=currentUser.name||currentUser.email;
+  a.editedAt=new Date().toISOString();
+  saveAgenda();
+  logAction('Actividad editada',`${a.type} — ${a.title} — ${a.date}`);
+  closeModal();
+  navigate('agenda');
+}
+
+function inscribirseActividad(id){
+  const a=agendaActivities.find(x=>x.id===id);
+  if(!a||!currentUser.data)return;
+  const uid=currentUser.data.id;
+  if(!a.enrolledUsers)a.enrolledUsers=[];
+  if(a.enrolledUsers.includes(uid)){
+    if(!confirm(`¿Cancelar tu inscripción a "${a.title}"?`))return;
+    a.enrolledUsers=a.enrolledUsers.filter(x=>x!==uid);
+    logAction('Canceló inscripción',a.title);
+  } else {
+    if(a.capacity&&a.enrolledUsers.length>=a.capacity){alert('Sin cupos disponibles.');return;}
+    a.enrolledUsers.push(uid);
+    logAction('Se inscribió',a.title);
+  }
+  saveAgenda();
+  navigate('agenda');
+}
+
+// ============================================================
 function openNewClass(){openModal(`<h3>Nueva Clase</h3><div class="formGrid"><div class="formGroup"><label>Tipo</label><select id="clType">${CLASS_TYPES.map(t=>`<option>${t}</option>`).join('')}</select></div><div class="formGroup"><label>Entrenador</label><input id="clTrainer" value="${currentUser.name||'—'}"/></div><div class="formGroup"><label>Día</label><select id="clDay">${DAYS_FULL.slice(1,7).map(d=>`<option>${d}</option>`).join('')}</select></div><div class="formGroup"><label>Horario</label><input id="clTime" placeholder="08:00"/></div><div class="formGroup"><label>Duración (min)</label><input id="clDur" type="number" placeholder="60"/></div><div class="formGroup"><label>Capacidad máxima</label><input id="clCap" type="number" placeholder="15"/></div></div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="saveNewClass()">Guardar</button></div>`);}
 function saveNewClass(){const get=i=>document.getElementById(i)?.value||'';classes.push({id:Date.now(),type:get('clType'),trainer:get('clTrainer')||'—',day:get('clDay'),time:get('clTime'),duration:+get('clDur')||60,capacity:+get('clCap')||15,enrolled:[],waitlist:[],everEnrolled:[],openSlot:null,active:true});logAction('Nueva clase',`${get('clType')} — ${get('clDay')} ${get('clTime')}`);saveDB();closeModal();navigate('agenda');}
 function saveCard(){const get=i=>document.getElementById(i)?.value||'';const num=get('cardNumber').replace(/\s/g,'');if(num.length<15){alert('Número inválido');return;}if(!luhn(num)){alert('Número no válido (Luhn)');return;}if(!get('cardExpiry').match(/^\d{2}\/\d{2}$/)){alert('Vencimiento en formato MM/AA');return;}cardDatabase.push({id:Date.now(),cardType:get('cardType')||'Crédito',brand:get('cardBrand')||'Visa',bank:get('cardBank')||'—',last4:num.slice(-4),holder:get('cardHolder')||'—',expiry:get('cardExpiry'),status:'active',installments:get('cardInstallments')==='true',country:'Argentina',userId:+get('cardUserId')});saveDB();alert('Tarjeta guardada ✓');navigate('pagos');}
