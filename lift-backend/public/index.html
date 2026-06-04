@@ -534,21 +534,23 @@ function getTotalDeudaUsuario(userId){return getCuentaAbierta(userId).reduce((s,
 
 // ── CAFETERÍA ──
 let cafeteriaMenu = [
-  {id:1,nombre:'Agua 500ml',categoria:'Bebidas',precio:1.00,imagen:'💧',opciones:[],activo:true,puntosPorCompra:2},
-  {id:2,nombre:'Proteína Shake',categoria:'Bebidas',precio:3.50,imagen:'🥤',opciones:['Chocolate','Vainilla','Fresa'],activo:true,puntosPorCompra:7},
-  {id:3,nombre:'Café americano',categoria:'Bebidas calientes',precio:1.50,imagen:'☕',opciones:['Grande','Mediano','Pequeño'],activo:true,puntosPorCompra:3},
-  {id:4,nombre:'Sandwich pollo',categoria:'Comidas',precio:4.00,imagen:'🥪',opciones:['Pan integral','Pan blanco','Sin pan'],activo:true,puntosPorCompra:8},
-  {id:5,nombre:'Ensalada verde',categoria:'Comidas',precio:3.00,imagen:'🥗',opciones:['Con pollo','Con atún','Solo'],activo:true,puntosPorCompra:6},
-  {id:6,nombre:'Banana',categoria:'Snacks',precio:0.50,imagen:'🍌',opciones:[],activo:true,puntosPorCompra:1},
-  {id:7,nombre:'Barra proteica',categoria:'Snacks',precio:2.50,imagen:'🍫',opciones:['Chocolate','Mantequilla de maní','Frutos rojos'],activo:true,puntosPorCompra:5},
-  {id:8,nombre:'Jugo natural',categoria:'Bebidas',precio:2.00,imagen:'🍊',opciones:['Naranja','Sandía','Melón','Piña'],activo:true,puntosPorCompra:4}
+  {id:1,nombre:'Agua 500ml',categoria:'Bebidas',precio:1.00,imagen:'💧',opciones:[],activo:true,puntosPorCompra:2,stock:999},
+  {id:2,nombre:'Proteína Shake',categoria:'Bebidas',precio:3.50,imagen:'🥤',opciones:['Chocolate','Vainilla','Fresa'],activo:true,puntosPorCompra:7,stock:999},
+  {id:3,nombre:'Café americano',categoria:'Bebidas calientes',precio:1.50,imagen:'☕',opciones:['Grande','Mediano','Pequeño'],activo:true,puntosPorCompra:3,stock:999},
+  {id:4,nombre:'Sandwich pollo',categoria:'Comidas',precio:4.00,imagen:'🥪',opciones:['Pan integral','Pan blanco','Sin pan'],activo:true,puntosPorCompra:8,stock:999},
+  {id:5,nombre:'Ensalada verde',categoria:'Comidas',precio:3.00,imagen:'🥗',opciones:['Con pollo','Con atún','Solo'],activo:true,puntosPorCompra:6,stock:999},
+  {id:6,nombre:'Banana',categoria:'Snacks',precio:0.50,imagen:'🍌',opciones:[],activo:true,puntosPorCompra:1,stock:999},
+  {id:7,nombre:'Barra proteica',categoria:'Snacks',precio:2.50,imagen:'🍫',opciones:['Chocolate','Mantequilla de maní','Frutos rojos'],activo:true,puntosPorCompra:5,stock:999},
+  {id:8,nombre:'Jugo natural',categoria:'Bebidas',precio:2.00,imagen:'🍊',opciones:['Naranja','Sandía','Melón','Piña'],activo:true,puntosPorCompra:4,stock:999}
 ];
 let cafeteriaPedidos = []; // {id,userId,userName,items,total,estado,metodo,fecha,hora,notas}
 let cafeteriaComisiones = {metaMensual:500,beneficio:'Bono $25'};
+let cafeteriaVentas = []; // {id,productoId,productoNombre,productoEmoji,userName,cantidad,metodoPago,precioTotal,puntosOtorgados,fecha}
 try{const cm=localStorage.getItem('gp_cafMenu');if(cm)cafeteriaMenu=JSON.parse(cm);}catch(e){}
 try{const cp=localStorage.getItem('gp_cafPedidos');if(cp)cafeteriaPedidos=JSON.parse(cp);}catch(e){}
 try{const cc=localStorage.getItem('gp_cafComisiones');if(cc)cafeteriaComisiones=JSON.parse(cc);}catch(e){}
-function saveCafeteria(){try{localStorage.setItem('gp_cafMenu',JSON.stringify(cafeteriaMenu));localStorage.setItem('gp_cafPedidos',JSON.stringify(cafeteriaPedidos));localStorage.setItem('gp_cafComisiones',JSON.stringify(cafeteriaComisiones));}catch(e){}}
+try{const cv=localStorage.getItem('gp_cafVentas');if(cv)cafeteriaVentas=JSON.parse(cv);}catch(e){}
+function saveCafeteria(){try{localStorage.setItem('gp_cafMenu',JSON.stringify(cafeteriaMenu));localStorage.setItem('gp_cafPedidos',JSON.stringify(cafeteriaPedidos));localStorage.setItem('gp_cafComisiones',JSON.stringify(cafeteriaComisiones));localStorage.setItem('gp_cafVentas',JSON.stringify(cafeteriaVentas));}catch(e){}}
 
 // ── SHOP ──
 let shopProductos = [
@@ -2693,61 +2695,34 @@ function confirmarPedidoCafeteria(){
 // CAFETERÍA — VISTA OPERADOR (panel en admin)
 // ═══════════════════════════════════════════════════════════
 views.adminCafeteria = () => {
-  const pendientes = cafeteriaPedidos.filter(p=>p.estado==='pendiente');
-  const hoy = new Date().toISOString().slice(0,10);
-  const pedidosHoy = cafeteriaPedidos.filter(p=>p.fecha===hoy);
-  const ventaHoy = pedidosHoy.filter(p=>p.estado==='entregado').reduce((s,p)=>s+p.total,0);
-  const mesActual = hoy.slice(0,7);
-  const ventaMes = cafeteriaPedidos.filter(p=>p.fecha.startsWith(mesActual)&&p.estado==='entregado').reduce((s,p)=>s+p.total,0);
-  const meta = cafeteriaComisiones.metaMensual;
-  const pct = Math.min(100,Math.round(ventaMes/meta*100));
+  const tab = window._cafTab||'menu';
+  const ingresosCaf = cafeteriaVentas.reduce((s,v)=>s+(v.precioTotal||0),0);
+  const productosActivos = cafeteriaMenu.filter(p=>p.activo!==false).length;
   return `
-  <div class="pageTitle">Gestión Cafetería ☕</div>
-  <div class="statsGrid" style="margin-bottom:14px">
-    <div class="statCard"><div class="num" style="color:var(--orange)">${pendientes.length}</div><div class="lbl">Pendientes</div></div>
-    <div class="statCard"><div class="num" style="color:var(--green)">$${ventaHoy.toFixed(2)}</div><div class="lbl">Venta hoy</div></div>
-    <div class="statCard"><div class="num" style="color:var(--blue)">$${ventaMes.toFixed(2)}</div><div class="lbl">Venta mes</div></div>
-    <div class="statCard"><div class="num" style="color:${pct>=100?'var(--green)':'var(--accent)'}">${pct}%</div><div class="lbl">Meta mensual</div></div>
-  </div>
-  <!-- Barra de progreso meta -->
-  <div class="card" style="margin-bottom:14px">
-    <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:6px">
-      <span style="color:var(--text2)">Meta mensual: <strong>$${meta}</strong></span>
-      <span style="color:${pct>=100?'var(--green)':'var(--text3)'}">Beneficio: <strong>${cafeteriaComisiones.beneficio}</strong></span>
+  <div class="pageTitle">Gestionar Cafetería ☕</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+    <div class="card" style="text-align:center;padding:14px">
+      <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Productos activos</div>
+      <div style="font-size:1.8rem;font-weight:800;font-family:'Barlow Condensed',sans-serif">${productosActivos}</div>
     </div>
-    <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden">
-      <div style="height:100%;width:${pct}%;background:${pct>=100?'var(--green)':'var(--accent)'};border-radius:4px;transition:.3s"></div>
+    <div class="card" style="text-align:center;padding:14px">
+      <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Ventas totales</div>
+      <div style="font-size:1.8rem;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--green)">${cafeteriaVentas.length}</div>
     </div>
-    <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--text3);margin-top:3px">
-      <span>$0</span><span>$${meta}</span>
+    <div class="card" style="text-align:center;padding:14px">
+      <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Ingresos totales</div>
+      <div style="font-size:1.8rem;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--accent)">$${ingresosCaf.toFixed(2)}</div>
     </div>
-    ${pct>=100?`<div style="margin-top:8px;padding:8px;background:rgba(48,209,88,.08);border:1px solid rgba(48,209,88,.25);border-radius:2px;font-size:.78rem;color:var(--green)">🎉 ¡Meta alcanzada! Beneficio desbloqueado: ${cafeteriaComisiones.beneficio}</div>`:''}
   </div>
-  <!-- Pedidos pendientes -->
-  <div class="card" style="margin-bottom:14px">
-    <h3>Pedidos pendientes (${pendientes.length})</h3>
-    ${pendientes.length?pendientes.map(p=>`
-      <div style="background:rgba(255,159,10,.06);border:1px solid rgba(255,159,10,.2);border-radius:2px;padding:10px;margin-bottom:8px">
-        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
-          <div>
-            <strong style="font-size:.9rem">${p.userName}</strong>
-            <span style="font-size:.7rem;color:var(--text3);margin-left:8px">${p.hora}</span>
-          </div>
-          <strong style="color:var(--accent)">$${p.total.toFixed(2)}</strong>
-        </div>
-        <div style="font-size:.78rem;color:var(--text2);margin-bottom:6px">
-          ${p.items.map(i=>`${i.qty}x ${i.nombre}${i.opcion?' ('+i.opcion+')':''}`).join(' · ')}
-        </div>
-        ${p.notas?`<div style="font-size:.72rem;color:var(--text3);margin-bottom:6px">📝 ${p.notas}</div>`:''}
-        <div style="display:flex;gap:6px">
-          <button class="btn btnSuccess btnSm" onclick="despacharPedido(${p.id})">✓ Despachar</button>
-          <button class="btn btnDanger btnSm" onclick="cancelarPedido(${p.id})">✕ Cancelar</button>
-        </div>
-      </div>`).join(''):'<p style="font-size:.78rem;color:var(--text3)">Sin pedidos pendientes.</p>'}
+
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <button class="btn ${tab==='menu'?'btnAccent':'btnGhost'} btnSm" onclick="window._cafTab='menu';navigate('adminCafeteria')">🍽️ Menú</button>
+    <button class="btn ${tab==='ventas'?'btnAccent':'btnGhost'} btnSm" onclick="window._cafTab='ventas';navigate('adminCafeteria')">🧾 Historial de ventas</button>
   </div>
-  <!-- Gestión del menú -->
+
+  ${tab==='menu'?`
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <h3 style="margin-bottom:0">Menú</h3>
       <div style="display:flex;gap:6px">
         <button class="btn btnAccent btnSm" onclick="openNuevoProductoCaf()">+ Producto</button>
@@ -2755,20 +2730,45 @@ views.adminCafeteria = () => {
       </div>
     </div>
     <table class="tbl">
-      <tr><th>Producto</th><th>Categoría</th><th>Precio</th><th>Pts</th><th>Estado</th><th></th></tr>
-      ${cafeteriaMenu.map(p=>`<tr>
-        <td>${p.imagen} ${p.nombre}</td>
-        <td style="color:var(--text3)">${p.categoria}</td>
-        <td style="color:var(--green)">$${p.precio.toFixed(2)}</td>
-        <td style="color:var(--accent)">+${p.puntosPorCompra}</td>
-        <td><span class="badge ${p.activo?'active':'inactive'}">${p.activo?'Activo':'Inactivo'}</span></td>
-        <td style="display:flex;gap:4px">
-          <button class="btn btnInfo btnXs" onclick="editarProductoCaf(${p.id})">✏</button>
-          <button class="btn btnDanger btnXs" onclick="toggleProductoCaf(${p.id})">${p.activo?'OFF':'ON'}</button>
+      <tr><th>Producto</th><th>Categoría</th><th>Precio</th><th>Pts ganados</th><th>Stock</th><th>Acciones</th></tr>
+      ${cafeteriaMenu.map(p=>`<tr style="${(p.stock!==undefined&&p.stock<=3&&p.stock>=0&&p.stock!==999)?'background:rgba(255,59,48,.05)':''}">
+        <td><span style="font-size:1.1rem">${p.imagen}</span> <strong>${p.nombre}</strong></td>
+        <td><span class="badge info">${p.categoria}</span></td>
+        <td style="color:var(--green)">$${Number(p.precio||0).toFixed(2)}</td>
+        <td style="color:var(--green)">${p.puntosPorCompra?'+'+p.puntosPorCompra+' pts':'—'}</td>
+        <td><span style="font-weight:700;color:${(p.stock===999||p.stock===undefined)?'var(--green)':p.stock<=3?'var(--red)':p.stock<=10?'var(--orange)':'var(--green)'}">${(p.stock===999||p.stock===undefined)?'∞':p.stock}</span></td>
+        <td>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <button class="btn btnAccent btnXs" onclick="openVenderCafe(${p.id})" ${p.stock===0?'disabled':''}>💰 Vender</button>
+            <button class="btn btnSm btnXs" style="background:var(--surface2);border:1px solid var(--border2)" onclick="openAgregarStockCafe(${p.id})">+Stock</button>
+            <button class="btn btnSm btnXs" style="background:var(--surface2);border:1px solid var(--border2)" onclick="editarProductoCaf(${p.id})">✏️</button>
+            <button class="btn btnDanger btnXs" onclick="eliminarProductoCaf(${p.id})">✕</button>
+          </div>
         </td>
       </tr>`).join('')}
     </table>
-  </div>`;
+  </div>`:`
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="margin-bottom:0">Historial de ventas</h3>
+      <span style="font-size:.75rem;color:var(--text3)">${cafeteriaVentas.length} venta${cafeteriaVentas.length!==1?'s':''} registrada${cafeteriaVentas.length!==1?'s':''}</span>
+    </div>
+    ${cafeteriaVentas.length===0?`<div style="text-align:center;padding:32px;color:var(--text3)">No hay ventas registradas aún.</div>`:`
+    <table class="tbl">
+      <tr><th>Fecha</th><th>Producto</th><th>Socio / Cliente</th><th>Método</th><th>Precio</th><th>Cant.</th><th>Pts otorgados</th></tr>
+      ${[...cafeteriaVentas].reverse().map(v=>`<tr>
+        <td style="font-size:.75rem;color:var(--text3)">${v.fecha}</td>
+        <td>${v.productoEmoji||'☕'} ${v.productoNombre}</td>
+        <td>${v.userName||'<span style="color:var(--text3)">—</span>'}</td>
+        <td><span class="badge ${v.metodoPago==='efectivo'?'warning':v.metodoPago==='transferencia'?'info':''}">
+          ${v.metodoPago==='efectivo'?'💵 Efectivo':v.metodoPago==='transferencia'?'📲 Transferencia':'Otro'}
+        </span></td>
+        <td style="color:var(--green)">$${Number(v.precioTotal||0).toFixed(2)}</td>
+        <td>${v.cantidad||1}</td>
+        <td style="color:var(--green)">${v.puntosOtorgados?'+'+v.puntosOtorgados:'—'}</td>
+      </tr>`).join('')}
+    </table>`}
+  </div>`}`;
 };
 
 function despacharPedido(id){
@@ -2779,19 +2779,81 @@ function cancelarPedido(id){
   const p=cafeteriaPedidos.find(x=>x.id===id);
   if(p){p.estado='cancelado';saveCafeteria();navigate('adminCafeteria');}
 }
-function toggleProductoCaf(id){
-  const p=cafeteriaMenu.find(x=>x.id===id);
-  if(p){p.activo=!p.activo;saveCafeteria();navigate('adminCafeteria');}
+function eliminarProductoCaf(id){
+  if(!confirm('¿Eliminar este producto del menú?'))return;
+  cafeteriaMenu=cafeteriaMenu.filter(x=>x.id!==id);
+  saveCafeteria();navigate('adminCafeteria');
+}
+function openVenderCafe(id){
+  const p=cafeteriaMenu.find(x=>x.id===id);if(!p)return;
+  openModal(`
+    <h3>💰 Vender: ${p.imagen} ${p.nombre}</h3>
+    <div class="formGrid">
+      <div class="formGroup"><label>Cantidad</label><input id="cvCant" type="number" min="1" value="1"/></div>
+      <div class="formGroup"><label>Método de pago</label>
+        <select id="cvMetodo">
+          <option value="efectivo">💵 Efectivo</option>
+          <option value="transferencia">📲 Transferencia</option>
+        </select>
+      </div>
+      <div class="formGroup fullWidth"><label>Socio / Cliente (opcional)</label><input id="cvCliente" placeholder="Nombre del cliente"/></div>
+    </div>
+    <div style="margin-top:8px;padding:10px;background:var(--surface2);border-radius:6px;font-size:.85rem">
+      Precio unitario: <strong style="color:var(--green)">$${Number(p.precio||0).toFixed(2)}</strong>
+      ${p.puntosPorCompra?` · <span style="color:var(--accent)">+${p.puntosPorCompra} pts</span>`:''}
+    </div>
+    <div class="modalActions">
+      <button class="btn btnGhost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btnAccent" onclick="confirmarVentaCafe(${id})">Registrar venta</button>
+    </div>
+  `);
+}
+function confirmarVentaCafe(id){
+  const p=cafeteriaMenu.find(x=>x.id===id);if(!p)return;
+  const cant=Math.max(1,+document.getElementById('cvCant')?.value||1);
+  const metodo=document.getElementById('cvMetodo')?.value||'efectivo';
+  const cliente=document.getElementById('cvCliente')?.value||'';
+  const total=p.precio*cant;
+  const pts=(p.puntosPorCompra||0)*cant;
+  cafeteriaVentas.push({
+    id:Date.now(),productoId:p.id,productoNombre:p.nombre,productoEmoji:p.imagen,
+    userName:cliente||null,cantidad:cant,metodoPago:metodo,
+    precioTotal:total,puntosOtorgados:pts,
+    fecha:new Date().toISOString().slice(0,10)
+  });
+  // Descontar stock si tiene límite
+  if(p.stock!==undefined&&p.stock!==999){p.stock=Math.max(0,p.stock-cant);}
+  saveCafeteria();closeModal();navigate('adminCafeteria');
+}
+function openAgregarStockCafe(id){
+  const p=cafeteriaMenu.find(x=>x.id===id);if(!p)return;
+  openModal(`
+    <h3>📦 +Stock: ${p.imagen} ${p.nombre}</h3>
+    <div class="formGroup"><label>Cantidad a agregar</label><input id="asqCaf" type="number" min="1" value="10"/></div>
+    <div style="margin-top:8px;font-size:.82rem;color:var(--text3)">Stock actual: <strong style="color:var(--text2)">${p.stock===999||p.stock===undefined?'∞':p.stock}</strong></div>
+    <div class="modalActions">
+      <button class="btn btnGhost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btnAccent" onclick="guardarStockCafe(${id})">Agregar</button>
+    </div>
+  `);
+}
+function guardarStockCafe(id){
+  const p=cafeteriaMenu.find(x=>x.id===id);if(!p)return;
+  const qty=+document.getElementById('asqCaf')?.value||0;
+  if(p.stock===999||p.stock===undefined)p.stock=qty;
+  else p.stock=p.stock+qty;
+  saveCafeteria();closeModal();navigate('adminCafeteria');
 }
 function openNuevoProductoCaf(){
   openModal(`
-    <h3>Nuevo producto</h3>
+    <h3>➕ Nuevo producto</h3>
     <div class="formGrid">
       <div class="formGroup"><label>Nombre</label><input id="cpNom" placeholder="Agua 500ml"/></div>
       <div class="formGroup"><label>Categoría</label><input id="cpCat" placeholder="Bebidas"/></div>
+      <div class="formGroup"><label>Emoji/Imagen</label><input id="cpEmoji" placeholder="☕" style="width:70px"/></div>
       <div class="formGroup"><label>Precio ($)</label><input id="cpPre" type="number" step="0.25" placeholder="1.50"/></div>
       <div class="formGroup"><label>Pts por compra</label><input id="cpPts" type="number" placeholder="3"/></div>
-      <div class="formGroup"><label>Emoji/Imagen</label><input id="cpEmoji" placeholder="☕"/></div>
+      <div class="formGroup"><label>Stock (999 = ilimitado)</label><input id="cpStock" type="number" value="999"/></div>
       <div class="formGroup fullWidth"><label>Opciones (separadas por coma)</label><input id="cpOpc" placeholder="Grande, Mediano, Pequeño"/></div>
     </div>
     <div class="modalActions">
@@ -2806,21 +2868,23 @@ function guardarNuevoProductoCaf(){
     id:Date.now(),nombre:get('cpNom'),categoria:get('cpCat')||'General',
     precio:+get('cpPre')||0,imagen:get('cpEmoji')||'🍽️',
     opciones:get('cpOpc')?get('cpOpc').split(',').map(x=>x.trim()).filter(Boolean):[],
-    activo:true,puntosPorCompra:+get('cpPts')||1
+    activo:true,puntosPorCompra:+get('cpPts')||0,
+    stock:+get('cpStock')===0?999:(+get('cpStock')||999)
   });
   saveCafeteria();closeModal();navigate('adminCafeteria');
 }
 function editarProductoCaf(id){
-  const p=cafeteriaMenu.find(x=>x.id===id);
+  const p=cafeteriaMenu.find(x=>x.id===id);if(!p)return;
   openModal(`
     <h3>Editar: ${p.nombre}</h3>
     <div class="formGrid">
       <div class="formGroup"><label>Nombre</label><input id="epNom" value="${p.nombre}"/></div>
       <div class="formGroup"><label>Categoría</label><input id="epCat" value="${p.categoria}"/></div>
+      <div class="formGroup"><label>Emoji</label><input id="epEmoji" value="${p.imagen}" style="width:70px"/></div>
       <div class="formGroup"><label>Precio ($)</label><input id="epPre" type="number" step="0.25" value="${p.precio}"/></div>
-      <div class="formGroup"><label>Pts por compra</label><input id="epPts" type="number" value="${p.puntosPorCompra}"/></div>
-      <div class="formGroup"><label>Emoji</label><input id="epEmoji" value="${p.imagen}"/></div>
-      <div class="formGroup fullWidth"><label>Opciones</label><input id="epOpc" value="${p.opciones.join(', ')}"/></div>
+      <div class="formGroup"><label>Pts por compra</label><input id="epPts" type="number" value="${p.puntosPorCompra||0}"/></div>
+      <div class="formGroup"><label>Stock (999 = ilimitado)</label><input id="epStock" type="number" value="${p.stock===undefined?999:p.stock}"/></div>
+      <div class="formGroup fullWidth"><label>Opciones</label><input id="epOpc" value="${(p.opciones||[]).join(', ')}"/></div>
     </div>
     <div class="modalActions">
       <button class="btn btnGhost" onclick="closeModal()">Cancelar</button>
@@ -2830,9 +2894,10 @@ function editarProductoCaf(id){
 }
 function guardarEditProductoCaf(id){
   const get=i=>document.getElementById(i)?.value||'';
-  const p=cafeteriaMenu.find(x=>x.id===id);
+  const p=cafeteriaMenu.find(x=>x.id===id);if(!p)return;
   p.nombre=get('epNom');p.categoria=get('epCat');p.precio=+get('epPre');
   p.puntosPorCompra=+get('epPts');p.imagen=get('epEmoji');
+  p.stock=+get('epStock')===0?999:(+get('epStock')||999);
   p.opciones=get('epOpc')?get('epOpc').split(',').map(x=>x.trim()).filter(Boolean):[];
   saveCafeteria();closeModal();navigate('adminCafeteria');
 }
