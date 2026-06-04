@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de Control — LIFT Fitness</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0c0e13;
+    --surface: #13161e;
+    --surface2: #1a1e28;
+    --border: rgba(255,255,255,.07);
+    --text: #e8eaf0;
+    --muted: #5a6070;
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --pink: #E5087E;
+    --purple: #a855f7;
+    --cyan: #06b6d4;
+  }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: space-between;
+    padding: 1.75rem 2rem;
+  }
+
+  /* HEADER */
+  .header {
+    width: 100%; max-width: 1200px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+  .header-left { display: flex; align-items: center; gap: 1rem; }
+  .gym-avatar {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--pink), #34388E);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .gym-name { font-size: 1.05rem; font-weight: 700; letter-spacing: -.5px; }
+  .gym-sub  { font-size: .75rem; color: var(--muted); margin-top: .1rem; }
+  .logo { font-size: .85rem; font-weight: 600; color: var(--muted); letter-spacing: -.3px; }
+  .logo span { color: var(--pink); }
+
+  /* KPI GRID — 5 col x 2 rows */
+  .kpi-grid {
+    width: 100%; max-width: 1200px;
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 1.25rem; flex: 1;
+  }
+  .kpi {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 0 1.5rem;
+    transition: border-color .2s, transform .15s;
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center; min-height: 170px;
+  }
+  .kpi::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 3px; border-radius: 20px 20px 0 0;
+    background: var(--accent-color, transparent);
+    opacity: .7;
+  }
+  .kpi:hover { border-color: rgba(255,255,255,.13); transform: translateY(-3px); }
+  .kpi-label {
+    font-size: .62rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--muted); margin-bottom: 1rem;
+  }
+  .kpi-val {
+    font-size: 2.6rem; font-weight: 700; letter-spacing: -2px; line-height: 1;
+    margin-bottom: .5rem;
+  }
+  .kpi-sub { font-size: .75rem; color: var(--muted); }
+  .kpi-sub.up   { color: var(--green); }
+  .kpi-sub.warn { color: var(--yellow); }
+  .kpi-sub.bad  { color: var(--red); }
+
+  /* colores por card */
+  .c-green  { --accent-color: var(--green); }
+  .c-blue   { --accent-color: var(--blue);  }
+  .c-pink   { --accent-color: var(--pink);  }
+  .c-yellow { --accent-color: var(--yellow);}
+  .c-red    { --accent-color: var(--red);   }
+  .c-purple { --accent-color: var(--purple);}
+  .c-cyan   { --accent-color: var(--cyan);  }
+
+  /* ALERTA DE FALLA */
+  .alert-banner {
+    width: 100%; max-width: 1200px;
+    background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25);
+    border-radius: 14px; padding: 1rem 1.5rem;
+    margin-top: 1.25rem;
+    display: none;
+  }
+  .alert-banner.visible { display: block; }
+  .alert-top { display: flex; align-items: center; gap: .6rem; margin-bottom: .75rem; }
+  .alert-title { font-size: .875rem; font-weight: 700; color: var(--red); }
+  .alert-time  { font-size: .7rem; color: var(--muted); margin-left: auto; }
+  .diag-list { display: flex; flex-direction: column; gap: .4rem; }
+  .diag-item {
+    display: flex; align-items: flex-start; gap: .65rem;
+    font-size: .8rem; color: #f0a0a0;
+  }
+  .diag-item::before { content: '→'; color: var(--red); flex-shrink: 0; font-weight: 700; }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 2.5rem; font-size: .75rem; color: var(--muted);
+    display: flex; align-items: center; gap: 1.5rem;
+  }
+  .footer a { color: var(--pink); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+  .footer-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--muted); }
+
+  /* glow animado para estado online */
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: .5; }
+  }
+  .live-dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--green);
+    margin-right: .4rem; vertical-align: middle;
+    animation: pulse 2s infinite;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-left">
+    <div class="gym-avatar">LF</div>
+    <div>
+      <div class="gym-name">LIFT Fitness</div>
+      <div class="gym-sub">Panel de propietario</div>
+    </div>
+  </div>
+  <div class="logo">ctrl<span>gym</span></div>
+</header>
+
+<!-- 10 KPI CARDS -->
+<div class="kpi-grid">
+
+  <!-- 1. ESTADO — lo más crítico -->
+  <div class="kpi c-green">
+    <div class="kpi-label">Estado del sistema</div>
+    <div class="kpi-val" id="kpiEstado" style="color:var(--green)">
+      <span class="live-dot" id="liveDot"></span>Online
+    </div>
+    <div class="kpi-sub up" id="kpiEstadoSub">Operando con normalidad</div>
+  </div>
+
+  <!-- 2. SOCIOS ACTIVOS — miembros con cuota vigente -->
+  <div class="kpi c-green">
+    <div class="kpi-label">Socios activos</div>
+    <div class="kpi-val" style="color:var(--green)">248</div>
+    <div class="kpi-sub up">↑ cuota vigente</div>
+  </div>
+
+  <!-- 3. CUOTAS VENCIDAS -->
+  <div class="kpi c-yellow">
+    <div class="kpi-label">Cuotas vencidas</div>
+    <div class="kpi-val" style="color:var(--yellow)">12</div>
+    <div class="kpi-sub warn">socios sin renovar</div>
+  </div>
+
+  <!-- 4. ACCESOS HOY — gente que entró al gym hoy -->
+  <div class="kpi c-cyan">
+    <div class="kpi-label">Accesos hoy</div>
+    <div class="kpi-val" style="color:var(--cyan)">127</div>
+    <div class="kpi-sub" style="color:var(--cyan)">personas entraron hoy</div>
+  </div>
+
+  <!-- 5. GENTE EN EL GYM — total ahora -->
+  <div class="kpi c-pink">
+    <div class="kpi-label">Ahora</div>
+    <div class="kpi-val" style="color:var(--pink)">34</div>
+    <div class="kpi-sub" style="color:var(--muted)">En la sala</div>
+  </div>
+
+  <!-- 6. CPU — carga del servidor -->
+  <div class="kpi c-yellow">
+    <div class="kpi-label">CPU del servidor</div>
+    <div class="kpi-val" style="color:var(--yellow)">34<span style="font-size:1rem;color:var(--muted)">%</span></div>
+    <div class="kpi-sub warn">Carga normal</div>
+  </div>
+
+  <!-- 7. MEMORIA RAM — recursos -->
+  <div class="kpi c-purple">
+    <div class="kpi-label">Memoria RAM</div>
+    <div class="kpi-val" style="color:var(--purple)">61<span style="font-size:1rem;color:var(--muted)">%</span></div>
+    <div class="kpi-sub" style="color:var(--purple)">512 MB usados</div>
+  </div>
+
+  <!-- 8. LATENCIA DB — base de datos -->
+  <div class="kpi c-blue">
+    <div class="kpi-label">Latencia base de datos</div>
+    <div class="kpi-val" style="color:var(--blue)">12<span style="font-size:1rem;color:var(--muted)"> ms</span></div>
+    <div class="kpi-sub up">↑ Óptima</div>
+  </div>
+
+  <!-- 9. UPTIME DEL SERVIDOR — estabilidad -->
+  <div class="kpi c-green">
+    <div class="kpi-label">Uptime del servidor</div>
+    <div class="kpi-val" style="color:var(--green);font-size:1.6rem">14 días</div>
+    <div class="kpi-sub up">↑ Sin reinicios</div>
+  </div>
+
+  <!-- 10. ERRORES HOY — salud técnica -->
+  <div class="kpi c-green">
+    <div class="kpi-label">Errores hoy</div>
+    <div class="kpi-val" style="color:var(--green)">0</div>
+    <div class="kpi-sub up">↑ Sin fallos registrados</div>
+  </div>
+
+</div>
+
+<!-- ALERTA AUTODIAGNÓSTICO -->
+<div class="alert-banner" id="alertBanner">
+  <div class="alert-top">
+    <span style="font-size:1rem">⚠️</span>
+    <span class="alert-title">Problema detectado — Autodiagnóstico</span>
+    <span class="alert-time" id="alertTime"></span>
+  </div>
+  <div class="diag-list" id="diagList"></div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <span>ctrlgym.org</span>
+  <div class="footer-dot"></div>
+  <a href="https://lift.ctrlgym.org" id="gymLink">Ir al sistema del gimnasio →</a>
+  <div class="footer-dot"></div>
+  <span id="footerTime"></span>
+</footer>
+
+<script>
+  // ── TOKEN / GYM DESDE URL ──────────────────────────────────────
+  const params   = new URLSearchParams(window.location.search);
+  const gymSlug  = params.get('gym') || 'lift';
+  const token    = params.get('token');
+  let gymName    = gymSlug.charAt(0).toUpperCase() + gymSlug.slice(1) + ' Fitness';
+  let gymInitials = gymSlug.slice(0,2).toUpperCase();
+  if (token) {
+    try {
+      const pl = JSON.parse(atob(token.split('.')[1]));
+      if (pl.gym_name) gymName = pl.gym_name;
+    } catch(e) {}
+  }
+  document.querySelector('.gym-name').textContent = gymName;
+  document.querySelector('.gym-avatar').textContent = gymInitials;
+  document.getElementById('gymLink').href = `https://${gymSlug}.ctrlgym.org`;
+
+  // ── FOOTER TIMESTAMP ──────────────────────────────────────────
+  const now = new Date();
+  document.getElementById('footerTime').textContent =
+    'Actualizado ' + now.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+
+  // ── AUTODIAGNÓSTICO (cambiar a true para simular falla) ───────
+  const SIMULAR_FALLA = false;
+  const FALLA_DIAGNOSTICO = [
+    'Base de datos no responde (timeout > 5s)',
+    'Cola de requests acumulada: 47 pendientes',
+    'Memoria del servidor al 94% — posible leak detectado',
+  ];
+  if (SIMULAR_FALLA) {
+    const estadoEl = document.getElementById('kpiEstado');
+    estadoEl.innerHTML = '⚠ Offline';
+    estadoEl.style.color = 'var(--red)';
+    estadoEl.style.fontSize = '1.6rem';
+    document.getElementById('liveDot').style.display = 'none';
+    document.getElementById('kpiEstadoSub').textContent = 'Falla detectada';
+    document.getElementById('kpiEstadoSub').className = 'kpi-sub bad';
+    document.getElementById('kpiPing').innerHTML = '—';
+    document.getElementById('kpiPingSub').textContent = 'Sin respuesta';
+    const banner = document.getElementById('alertBanner');
+    banner.classList.add('visible');
+    document.getElementById('alertTime').textContent =
+      'Detectado a las ' + now.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+    const dl = document.getElementById('diagList');
+    FALLA_DIAGNOSTICO.forEach(d => {
+      const item = document.createElement('div');
+      item.className = 'diag-item'; item.textContent = d;
+      dl.appendChild(item);
+    });
+  }
+</script>
+</body>
+</html>
