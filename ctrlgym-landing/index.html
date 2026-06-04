@@ -379,6 +379,13 @@
           return;
         }
         const payload = JSON.parse(atob(data.token.split('.')[1]));
+        if (payload.role !== 'admin') {
+          errEl.textContent = 'Solo el administrador puede acceder al panel de control.';
+          errEl.classList.add('visible');
+          btn.classList.remove('loading');
+          btn.disabled = false;
+          return;
+        }
         gymSlug = payload.gym_slug || 'lift';
         fakeToken = data.token;
       }
