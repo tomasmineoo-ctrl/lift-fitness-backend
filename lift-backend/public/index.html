@@ -938,7 +938,7 @@ adminLogView:()=>`<div class="pageTitle">Log de Acciones</div><div class="filter
 
 staff:()=>`<div class="pageTitle">Staff & Roles</div><div style="text-align:right;margin-bottom:12px"><button class="btn btnAccent" onclick="openNewStaff()">+ Agregar Staff</button></div><div class="card" style="padding:0;overflow:auto"><table class="tbl"><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>PIN</th><th>Permisos</th><th>Acción</th></tr>${staffAccounts.map(s=>`<tr><td><strong>${s.name}</strong></td><td style="color:var(--text3);font-size:.73rem">${s.email}</td><td><span class="roleTag ${s.role}">${ROLES[s.role]}</span></td><td><span style="font-family:monospace;font-size:.9rem;font-weight:700;letter-spacing:.18em;color:var(--accent);background:var(--surface2);border:1px solid var(--border2);padding:2px 8px;border-radius:3px">${s.pin||'—'}</span></td><td style="font-size:.7rem;color:var(--text3)">${getRolePerms(s.role)}</td><td>${s.email!=='admin@lift.com'?`<button class="btn btnSm btnDanger" onclick="removeStaff('${s.email}')">Eliminar</button>`:'—'}</td></tr>`).join('')}</table></div>`,
 
-notificaciones:()=>{genNotifications();const staffList=(db.staff||[]).map(s=>`<option value="${s.id}">${s.name} — ${s.role||'Staff'}</option>`).join('');const clientList=(db.users||[]).filter(u=>u.role==='user').map(u=>`<option value="${u.id}">${u.name}</option>`).join('');return`
+notificaciones:()=>{genNotifications();const staffList=(staffAccounts||[]).filter(s=>s.role!=='admin').map(s=>`<option value="${s.email}">${s.name} — ${s.role||'Staff'}</option>`).join('');const clientList=(users||[]).map(u=>`<option value="${u.id}">${u.name}</option>`).join('');return`
 <div class="pageTitle">Centro de Alertas</div>
 
 <!-- ALERTAS AUTOMÁTICAS DEL SISTEMA -->
