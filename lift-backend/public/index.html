@@ -1836,7 +1836,18 @@ function saveStaffPin(email){
     }
   }
   if(!val&&!(isAdmin&&document.getElementById('newPin2Input')?.value?.trim())){alert('Ingresá al menos un PIN para guardar');return;}
-  saveDB();closeModal();navigate('staff');
+  // Guardar en Supabase via API
+  const staffId = s._id || s.id;
+  if(staffId && typeof window.apiFetch === 'function'){
+    const body = {};
+    if(val) body.pin = val;
+    if(isAdmin){const v2=(document.getElementById('newPin2Input')?.value||'').trim();if(v2)body.pin2=v2;}
+    window.apiFetch('/api/staff/'+staffId,'PUT',body)
+      .then(()=>{saveDB();closeModal();navigate('staff');})
+      .catch(e=>{alert('Error al guardar PIN: '+(e?.message||e));});
+  } else {
+    saveDB();closeModal();navigate('staff');
+  }
 }
 function saveStaffPerms(email){
   const s=staffAccounts.find(x=>x.email===email);if(!s)return;

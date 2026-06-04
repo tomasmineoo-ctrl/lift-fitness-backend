@@ -384,7 +384,7 @@
     if (k === '⌫') {
       pinBuf = pinBuf.slice(0, -1);
     } else if (k === '✓') {
-      if (pinBuf.length !== 4) { pinBuf = ''; }
+      if (pinBuf.length < 3) { pinBuf = ''; }
       else {
         try {
           const res = await apiFetch('/api/auth/login/pin', 'POST', { pin: pinBuf, gym_slug: GYM_SLUG });
@@ -401,12 +401,14 @@
           closeModal();
           await syncFromBackend();
           startApp();
-        } catch (_) {
-          document.getElementById('pinMsg').textContent = 'PIN incorrecto';
+        } catch (e) {
+          const errMsg = e?.message || 'PIN incorrecto';
+          console.error('[PIN login error]', errMsg, e);
+          document.getElementById('pinMsg').textContent = errMsg;
           pinBuf = '';
         }
       }
-    } else if (pinBuf.length < 4) {
+    } else if (pinBuf.length < 10) {
       pinBuf += k;
     }
     const d = document.getElementById('pinDisplay');
@@ -853,7 +855,7 @@
   ══════════════════════════════════════════════════════ */
   window.savePin = async function (id) {
     const pin = String(document.getElementById('newPin')?.value || '');
-    if (pin.length !== 4 || !/^\d{4}$/.test(pin)) { alert('El PIN debe ser exactamente 4 dígitos'); return; }
+    if (pin.length < 3 || pin.length > 6 || !/^\d+$/.test(pin)) { alert('El PIN debe tener entre 3 y 6 dígitos numéricos'); return; }
     if (users.find(u => u.id !== id && u.pin === pin)) { alert('Ese PIN ya lo usa otro socio'); return; }
     try {
       await apiFetch('/api/members/' + id, 'PUT', { pin });
