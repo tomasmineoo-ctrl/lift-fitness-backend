@@ -4814,20 +4814,6 @@ views.miQR = () => {
       </div>
     </div>
   </div>
-  <div class="card" style="margin-bottom:14px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <h3 style="margin-bottom:0">Check-in / Check-out manual</h3>
-      <span style="font-size:.7rem;color:var(--text3)">Para cuando no hay QR disponible</span>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <button class="btn btnSuccess" onclick="selfCheckIn()" ${dentroAhora?'disabled style="opacity:.4"':''}>🟢 Registrar entrada</button>
-      <button class="btn btnDanger" onclick="selfCheckOut()" ${!dentroAhora?'disabled style="opacity:.4"':''}>🔴 Registrar salida</button>
-    </div>
-    ${entradasHoy.length?`
-    <div style="margin-top:12px;font-size:.72rem;color:var(--text3)">
-      ${entradasHoy.map(e=>`<div style="padding:4px 0;border-bottom:1px solid var(--border)">Entrada ${e.time}${e.exitTime?` · Salida ${e.exitTime} · ${e.duracionMin||0} min`:'· Aún dentro'}</div>`).join('')}
-    </div>`:''}
-  </div>
   <div class="card" style="text-align:center">
     <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px">Mi código de referidos</div>
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;letter-spacing:.15em;color:var(--accent);margin-bottom:6px">${codigoRef}</div>
