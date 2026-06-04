@@ -1441,7 +1441,7 @@ staff:()=>`<div class="pageTitle">Staff & Roles</div>
             </div>`
         }
       </td>
-      <td>${s.email!=='admin@lift.com'?`<button class="btn btnSm btnDanger" onclick="removeStaff('${s.email}')">Eliminar</button>`:'—'}</td>
+      <td style="display:flex;gap:6px;align-items:center">${s.email!=='admin@lift.com'?`<button class="btn btnSm" style="background:var(--surface2);border:1px solid var(--border2)" onclick="openEditPin('${s.email}')">🔢 PIN</button><button class="btn btnSm btnDanger" onclick="removeStaff('${s.email}')">Eliminar</button>`:'—'}</td>
     </tr>`).join('')}
   </table>
 </div>`,
@@ -1772,6 +1772,36 @@ function openEditStaffPerms(email){
       <button class="btn btnAccent" onclick="saveStaffPerms('${email}')">Guardar permisos</button>
     </div>
   `);
+}
+function openEditPin(email){
+  const s=staffAccounts.find(x=>x.email===email);if(!s)return;
+  openModal(`
+    <h3>🔢 Editar PIN — ${s.name}</h3>
+    <p style="font-size:.78rem;color:var(--text3);margin-bottom:14px">El PIN se usa para iniciar sesión rápida desde la pantalla de acceso.</p>
+    <div class="formGroup">
+      <label>PIN actual</label>
+      <span style="font-family:monospace;font-size:1.2rem;font-weight:700;letter-spacing:.25em;color:var(--accent);background:var(--surface2);border:1px solid var(--border2);padding:4px 14px;border-radius:4px">${s.pin||'—'}</span>
+    </div>
+    <div class="formGroup" style="margin-top:12px">
+      <label>Nuevo PIN (4 dígitos)</label>
+      <input id="newPinInput" type="text" maxlength="4" pattern="[0-9]{4}" placeholder="0000"
+        style="font-family:monospace;font-size:1.3rem;font-weight:700;letter-spacing:.3em;text-align:center;width:100px"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)"/>
+    </div>
+    <div class="modalActions">
+      <button class="btn btnGhost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btnAccent" onclick="saveStaffPin('${email}')">Guardar PIN</button>
+    </div>
+  `);
+  setTimeout(()=>document.getElementById('newPinInput')?.focus(),100);
+}
+function saveStaffPin(email){
+  const s=staffAccounts.find(x=>x.email===email);if(!s)return;
+  const val=document.getElementById('newPinInput')?.value||'';
+  if(val.length!==4){alert('El PIN debe tener exactamente 4 dígitos');return;}
+  if(!/^\d{4}$/.test(val)){alert('Solo se permiten números');return;}
+  if(staffAccounts.some(x=>x.email!==email&&x.pin===val)){alert('Ese PIN ya está en uso por otro usuario');return;}
+  s.pin=val;saveDB();closeModal();navigate('staff');
 }
 function saveStaffPerms(email){
   const s=staffAccounts.find(x=>x.email===email);if(!s)return;
