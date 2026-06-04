@@ -117,15 +117,30 @@ router.post('/login/pin', async (req: Request, res: Response) => {
   const gym = await resolveGym(gym_slug, req.headers.host);
   if (!gym) return res.status(404).json({ error: 'Gimnasio no encontrado' });
 
-  // Buscar en staff — por pin principal o pin2
-  const { data: staffRows } = await supabase
+  // Buscar en staff — por pin principal
+  const { data: byPin, error: e1 } = await supabase
     .from('staff')
     .select('id, email, name, role, active')
     .eq('gym_id', gym.id)
     .eq('active', true)
-    .or(`pin.eq.${pin},pin2.eq.${pin}`);
+    .eq('pin', pin)
+    .limit(1);
 
-  const staffRow = staffRows?.[0] ?? null;
+  // Si no se encontró por pin, buscar por pin2
+  let staffRow = byPin?.[0] ?? null;
+  if (!staffRow) {
+    const { data: byPin2, error: e2 } = await supabase
+      .from('staff')
+      .select('id, email, name, role, active')
+      .eq('gym_id', gym.id)
+      .eq('active', true)
+      .eq('pin2', pin)
+      .limit(1);
+    staffRow = byPin2?.[0] ?? null;
+    if (e2) console.error('[auth/pin] pin2 query error:', e2.message);
+  }
+  if (e1) console.error('[auth/pin] pin query error:', e1.message);
+  console.log('[auth/pin] pin recibido:', pin, '| gym:', gym.slug, '| staff encontrado:', staffRow?.name ?? 'ninguno');
 
   if (staffRow) {
     const payload: JWTPayload = { id: staffRow.id, role: staffRow.role, name: staffRow.name, email: staffRow.email, gym_id: gym.id, gym_slug: gym.slug };
