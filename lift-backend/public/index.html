@@ -5942,8 +5942,10 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){if(
           closeModal();
           await syncFromBackend();
           startApp();
-        } catch (_) {
-          document.getElementById('pinMsg').textContent = 'PIN incorrecto';
+        } catch (e) {
+          const errMsg = e?.message || 'PIN incorrecto';
+          console.error('[PIN login error]', errMsg, e);
+          document.getElementById('pinMsg').textContent = errMsg;
           pinBuf = '';
         }
       }

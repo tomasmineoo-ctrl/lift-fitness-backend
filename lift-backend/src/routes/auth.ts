@@ -118,16 +118,16 @@ router.post('/login/pin', async (req: Request, res: Response) => {
   if (!gym) return res.status(404).json({ error: 'Gimnasio no encontrado' });
 
   // Buscar en staff — por pin principal o pin2
-  const { data: allStaff } = await supabase
+  const { data: staffRows } = await supabase
     .from('staff')
-    .select('id, email, name, role, active, pin, pin2')
+    .select('id, email, name, role, active')
     .eq('gym_id', gym.id)
-    .eq('active', true);
+    .eq('active', true)
+    .or(`pin.eq.${pin},pin2.eq.${pin}`);
 
-  const staffRow = (allStaff || []).find((s: any) => s.pin === pin || (s.pin2 && s.pin2 === pin));
+  const staffRow = staffRows?.[0] ?? null;
 
   if (staffRow) {
-    if (!staffRow.active) return res.status(403).json({ error: 'Cuenta desactivada' });
     const payload: JWTPayload = { id: staffRow.id, role: staffRow.role, name: staffRow.name, email: staffRow.email, gym_id: gym.id, gym_slug: gym.slug };
     const token = signToken(payload);
     return res.json({ token, user: { id: staffRow.id, role: staffRow.role, name: staffRow.name, email: staffRow.email, gym_id: gym.id, gym_slug: gym.slug } });
