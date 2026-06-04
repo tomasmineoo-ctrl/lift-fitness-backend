@@ -553,6 +553,137 @@ function today(){return new Date()}
 function getQuotaStatus(u){if(!u)return'inactive';if(u.frozen||u.status==='frozen')return'frozen';const now=today(),d=now.getDate();if(u.status==='blocked')return'blocked';try{const lp=new Date(u.lastPayment);if(u.lastPayment&&!isNaN(lp.getTime())&&lp.getMonth()===now.getMonth()&&lp.getFullYear()===now.getFullYear())return'active';}catch(_){}if(u.status==='inactive'){if(d>10)return'blocked';if(d>7)return'grace';return'inactive';}if(d<=7)return'warning';if(d<=10)return'grace';return'blocked';}
 function statusLabel(s){return{active:'Al día',inactive:'Vencida',warning:'Por vencer',grace:'En gracia',blocked:'Bloqueado',frozen:'Congelada'}[s]||s;}
 function genNotifications(){notifications=[];users.forEach(u=>{const st=getQuotaStatus(u);if(st==='warning')notifications.push({userId:u.id,type:'warn',msg:`${u.name}: cuota vence el día 7`});if(st==='grace')notifications.push({userId:u.id,type:'danger',msg:`${u.name}: en gracia hasta el día 10`});if(st==='blocked')notifications.push({userId:u.id,type:'danger',msg:`${u.name}: acceso BLOQUEADO`});if(!u.medClearance)notifications.push({userId:u.id,type:'info',msg:`${u.name}: apto médico pendiente`});if(u.debt>0)notifications.push({userId:u.id,type:'danger',msg:`${u.name}: deuda $${u.debt.toLocaleString()}`});});const bell=document.getElementById('notifBell');if(bell){let count;if(currentUser&&currentUser.role==='user'){count=unreadCount(currentUser.data.id);}else{count=notifications.length;}bell.textContent=count>0?`🔔(${count})`:'🔔';bell.onclick=()=>navigate(currentUser&&currentUser.role==='user'?'misNotif':'notificaciones');}}
+function openResumenDia(){
+  const hoy=today().toISOString().slice(0,10);
+  const logHoy=[...accessLog].filter(l=>l.date===hoy).sort((a,b)=>a.time.localeCompare(b.time));
+  const adentroAhora=logHoy.filter(l=>l.type==='entry'&&l.allowed&&!l.exitTime);
+  const entradasHoy=logHoy.filter(l=>l.type==='entry'&&l.allowed);
+  const salidasHoy=logHoy.filter(l=>l.type==='exit');
+  const denegadosHoy=logHoy.filter(l=>!l.allowed);
+  const pagosHoy=paymentsDB.filter(p=>{const d=p.payment_date||p.date||'';return d.startsWith(hoy)&&p.status==='approved';});
+  const totalHoy=pagosHoy.reduce((s,p)=>s+(p.amount||0),0);
+  const metodos={};pagosHoy.forEach(p=>{const m=p.brand||p.bank||p.payment_method||p.method||'Efectivo';metodos[m]=(metodos[m]||0)+(p.amount||0);});
+
+  // Unir entradas y salidas por socio para ver duración
+  const historial=[];
+  const vistos=new Set();
+  logHoy.forEach(l=>{
+    if(!vistos.has(l.userId+'_'+l.time)){
+      vistos.add(l.userId+'_'+l.time);
+      const salida=logHoy.find(s=>s.userId===l.userId&&s.type==='exit'&&s.time>=l.time);
+      const pagos=pagosHoy.filter(p=>(p.user_id===l.userId||p.userId===l.userId));
+      historial.push({...l,exitTime:l.exitTime||(salida?salida.time:null),pagos});
+    }
+  });
+  const entradas=historial.filter(l=>l.type==='entry');
+
+  const existing=document.getElementById('modalResumenDia');
+  if(existing)existing.remove();
+
+  const modal=document.createElement('div');
+  modal.id='modalResumenDia';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto';
+  modal.innerHTML=`
+  <div style="background:#111;border:1px solid #222;border-radius:6px;width:100%;max-width:860px;padding:0;overflow:hidden">
+    <!-- Header -->
+    <div style="background:#0a0a0a;border-bottom:1px solid #222;padding:16px 20px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase">RESUMEN DEL DÍA</div>
+        <div style="font-size:.7rem;color:#666;margin-top:2px">${today().toLocaleDateString('es-SV',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+      </div>
+      <button onclick="document.getElementById('modalResumenDia').remove()" style="background:rgba(255,255,255,.06);border:1px solid #333;color:#aaa;padding:6px 14px;border-radius:3px;cursor:pointer;font-size:.8rem">✕ Cerrar</button>
+    </div>
+    <div style="padding:20px">
+
+      <!-- KPIs del día -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+        <div style="background:#0a0a0a;border:1px solid #1a1a1a;border-left:3px solid var(--accent);border-radius:4px;padding:12px 14px">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.6rem;font-weight:900;color:var(--accent)">$${totalHoy>0?(totalHoy/1000).toFixed(1)+'k':totalHoy}</div>
+          <div style="font-size:.65rem;color:#666;text-transform:uppercase;letter-spacing:.06em">Cobrado hoy</div>
+          <div style="font-size:.7rem;color:#888;margin-top:2px">${pagosHoy.length} pago${pagosHoy.length!==1?'s':''}</div>
+        </div>
+        <div style="background:#0a0a0a;border:1px solid #1a1a1a;border-left:3px solid var(--green);border-radius:4px;padding:12px 14px">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.6rem;font-weight:900;color:var(--green)">${entradasHoy.length}</div>
+          <div style="font-size:.65rem;color:#666;text-transform:uppercase;letter-spacing:.06em">Entradas hoy</div>
+          <div style="font-size:.7rem;color:#888;margin-top:2px">${salidasHoy.length} salidas</div>
+        </div>
+        <div style="background:#0a0a0a;border:1px solid #1a1a1a;border-left:3px solid #6c70c4;border-radius:4px;padding:12px 14px">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.6rem;font-weight:900;color:#6c70c4">${adentroAhora.length}</div>
+          <div style="font-size:.65rem;color:#666;text-transform:uppercase;letter-spacing:.06em">Dentro ahora</div>
+          <div style="font-size:.7rem;color:#888;margin-top:2px">en este momento</div>
+        </div>
+        <div style="background:#0a0a0a;border:1px solid #1a1a1a;border-left:3px solid var(--red);border-radius:4px;padding:12px 14px">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.6rem;font-weight:900;color:var(--red)">${denegadosHoy.length}</div>
+          <div style="font-size:.65rem;color:#666;text-transform:uppercase;letter-spacing:.06em">Denegados</div>
+          <div style="font-size:.7rem;color:#888;margin-top:2px">sin acceso</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+        <!-- Socios dentro ahora -->
+        <div style="background:#0a0a0a;border:1px solid #1a1a1a;border-radius:4px;padding:14px">
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;color:#6c70c4;margin-bottom:10px;text-transform:uppercase">🟢 Dentro ahora (${adentroAhora.length})</div>
+          ${adentroAhora.length===0
+            ?'<p style="color:#555;font-size:.78rem;text-align:center;padding:12px 0">Nadie en el gym en este momento</p>'
+            :adentroAhora.map(l=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #1a1a1a;font-size:.78rem">
+              <div><strong style="color:#eee">${l.userName}</strong><span style="color:#555;font-size:.68rem;margin-left:6px">${l.method||'—'}</span></div>
+              <div style="color:#6c70c4;font-size:.7rem">desde ${l.time}</div>
+            </div>`).join('')
+          }
+        </div>
+
+        <!-- Finanzas del día -->
+        <div style="background:#0a0a0a;border:1px solid #1a1a1a;border-radius:4px;padding:14px">
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;color:var(--accent);margin-bottom:10px;text-transform:uppercase">💰 Cobros del día</div>
+          ${pagosHoy.length===0
+            ?'<p style="color:#555;font-size:.78rem;text-align:center;padding:12px 0">Sin cobros registrados hoy</p>'
+            :`${pagosHoy.map(p=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #1a1a1a;font-size:.78rem">
+              <div><strong style="color:#eee">${p.user_name||p.userName||'—'}</strong><span style="color:#555;font-size:.68rem;margin-left:6px">${p.plan||''}</span></div>
+              <div style="color:var(--green);font-weight:700">$${(p.amount||0).toLocaleString()}</div>
+            </div>`).join('')}
+            <div style="display:flex;justify-content:space-between;padding:8px 0 0;font-size:.78rem;font-weight:700;color:#eee;border-top:1px solid #333;margin-top:4px">
+              <span>TOTAL</span><span style="color:var(--accent)">$${totalHoy.toLocaleString()}</span>
+            </div>`
+          }
+          ${Object.keys(metodos).length>0?`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${Object.entries(metodos).map(([m,v])=>`<span style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:2px;padding:2px 8px;font-size:.65rem;color:#aaa">${m}: <strong style="color:var(--green)">$${v.toLocaleString()}</strong></span>`).join('')}</div>`:''}
+        </div>
+      </div>
+
+      <!-- Historial completo del día -->
+      <div style="background:#0a0a0a;border:1px solid #1a1a1a;border-radius:4px;padding:14px">
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;color:#eee;margin-bottom:12px;text-transform:uppercase">📋 Historial completo del día</div>
+        ${entradas.length===0
+          ?'<p style="color:#555;font-size:.78rem;text-align:center;padding:16px 0">Sin registros de acceso hoy</p>'
+          :`<table style="width:100%;border-collapse:collapse;font-size:.76rem">
+            <tr style="color:#555;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #1e1e1e">
+              <th style="text-align:left;padding:6px 8px">Socio</th>
+              <th style="text-align:center;padding:6px 8px">Entrada</th>
+              <th style="text-align:center;padding:6px 8px">Salida</th>
+              <th style="text-align:center;padding:6px 8px">Método</th>
+              <th style="text-align:center;padding:6px 8px">Estado</th>
+              <th style="text-align:right;padding:6px 8px">Gestión $</th>
+            </tr>
+            ${entradas.map(l=>{
+              const pago=l.pagos&&l.pagos.length>0?l.pagos[0]:null;
+              return`<tr style="border-bottom:1px solid #161616">
+                <td style="padding:8px;color:#ddd;font-weight:600">${l.userName}</td>
+                <td style="padding:8px;text-align:center;color:#6c70c4">${l.time}</td>
+                <td style="padding:8px;text-align:center;color:${l.exitTime?'#888':'var(--green)'}">${l.exitTime||'<span style="color:var(--green);font-size:.68rem">EN GYM</span>'}</td>
+                <td style="padding:8px;text-align:center;color:#555;font-size:.68rem">${l.method||'—'}</td>
+                <td style="padding:8px;text-align:center"><span style="background:${l.allowed?'rgba(48,209,88,.1)':'rgba(255,59,48,.1)'};color:${l.allowed?'var(--green)':'var(--red)'};padding:2px 7px;border-radius:2px;font-size:.65rem">${l.allowed?'OK':'DENEGADO'}</span></td>
+                <td style="padding:8px;text-align:right;color:${pago?'var(--green)':'#444'}">${pago?'$'+(pago.amount||0).toLocaleString():'—'}</td>
+              </tr>`;
+            }).join('')}
+          </table>`
+        }
+      </div>
+    </div>
+  </div>`;
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+  document.body.appendChild(modal);
+}
 function sendStaffAlert(){
   const target=document.getElementById('alertStaffTarget').value;
   const type=document.getElementById('alertStaffType').value;
@@ -746,7 +877,7 @@ if(currentUser.role==='reception'){
 const dangerCount=notifications.filter(n=>n.type==='danger').length;
 const pendientes=users.filter(u=>getQuotaStatus(u)==='inactive'||getQuotaStatus(u)==='grace').length;
 return`
-<div class="dashHero">
+<div class="dashHero" onclick="openResumenDia()" style="cursor:pointer" title="Ver resumen del día">
   <div>
     <div style="font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">${today().toLocaleDateString('es-SV',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
     <div style="display:flex;align-items:baseline;gap:14px">
@@ -761,6 +892,7 @@ return`
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.9rem;font-weight:900;letter-spacing:-.02em;color:var(--white)">LIFT<span style="color:var(--accent)">.</span></div>
     <div style="font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-top:2px">Panel Admin</div>
     <div style="font-size:.64rem;color:var(--text3);margin-top:6px">${sociosAdentro} socio${sociosAdentro!==1?'s':''} en gym ahora</div>
+    <div style="font-size:.58rem;color:var(--accent);margin-top:4px;letter-spacing:.08em">VER RESUMEN DEL DÍA →</div>
   </div>
 </div>
 
