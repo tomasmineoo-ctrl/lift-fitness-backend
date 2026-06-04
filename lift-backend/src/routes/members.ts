@@ -175,6 +175,39 @@ router.delete('/:id', authorize('admin'), async (req: Request, res: Response) =>
   return res.json({ ok: true });
 });
 
+// POST /api/members/:id/resend-verification
+router.post('/:id/resend-verification', authorize('admin', 'reception'), async (req: Request, res: Response) => {
+  const { data: user } = await supabase
+    .from('users')
+    .select('id, name, email, email_verified')
+    .eq('id', Number(req.params.id))
+    .eq('gym_id', req.user!.gym_id)
+    .single();
+
+  if (!user) return res.status(404).json({ error: 'Socio no encontrado' });
+  if ((user as any).email_verified) return res.status(400).json({ error: 'El email ya está verificado' });
+
+  // Invalidar tokens anteriores
+  await supabase.from('email_tokens').update({ used: true })
+    .eq('user_id', user.id).eq('type', 'verify').eq('used', false);
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  await supabase.from('email_tokens').insert({
+    user_id: user.id,
+    gym_id: req.user!.gym_id,
+    token,
+    type: 'verify',
+    expires_at: expiresAt.toISOString(),
+  });
+
+  const { data: gym } = await supabase.from('gyms').select('slug, name').eq('id', req.user!.gym_id).single();
+  const gymUrl = process.env.NODE_ENV !== 'production' ? 'http://localhost:3000' : `https://${gym?.slug ?? 'lift'}.ctrlgym.org`;
+  await sendVerificationEmail((user as any).email, (user as any).name, gym?.name ?? 'LIFT Fitness', token, gymUrl);
+
+  return res.json({ ok: true });
+});
+
 // GET /api/members/:id/quota-status
 router.get('/:id/quota-status', authorizeOwnerOrRoles((r) => r.params.id, 'admin', 'reception'), async (req: Request, res: Response) => {
   const { data } = await supabase.from('users').select('frozen, status, last_payment').eq('id', Number(req.params.id)).eq('gym_id', req.user!.gym_id).single();
