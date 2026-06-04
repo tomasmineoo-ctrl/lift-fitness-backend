@@ -5924,7 +5924,7 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){if(
     if (k === '⌫') {
       pinBuf = pinBuf.slice(0, -1);
     } else if (k === '✓') {
-      if (pinBuf.length !== 4) { pinBuf = ''; }
+      if (pinBuf.length < 3) { pinBuf = ''; }
       else {
         try {
           const gymSlug = (()=>{ const p=window.location.hostname.split('.'); return p.length>=3?p[0]:'lift'; })();
@@ -5947,7 +5947,7 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){if(
           pinBuf = '';
         }
       }
-    } else if (pinBuf.length < 4) {
+    } else if (pinBuf.length < 10) {
       pinBuf += k;
     }
     const d = document.getElementById('pinDisplay');
