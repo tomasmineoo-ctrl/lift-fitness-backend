@@ -20,6 +20,7 @@ import nutriRouter        from './nutri';
 import backupRouter       from './backup';
 import auditlogRouter     from './auditlog';
 import gymsRouter         from './gyms';
+import supportRouter      from './support';
 
 export function registerRoutes(app: Express) {
   app.use('/api/gyms', gymsRouter);
@@ -43,4 +44,5 @@ export function registerRoutes(app: Express) {
   app.use('/api/nutri',         nutriRouter);
   app.use('/api/admin/backup',  backupRouter);
   app.use('/api/admin',         auditlogRouter);
+  app.use('/api/support',       supportRouter);
 }
