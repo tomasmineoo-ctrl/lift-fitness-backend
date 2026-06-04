@@ -60,7 +60,35 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
 .logoutBtn{background:none;border:1px solid var(--border2);color:var(--text3);padding:6px 14px;border-radius:3px;cursor:pointer;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;font-weight:600;transition:all .12s}
 .logoutBtn:hover{border-color:var(--red);color:var(--red)}
 .mainLayout{display:flex;flex:1;overflow:hidden}
-.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;padding-bottom:20px}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;overflow:hidden}
+.sidebarNav{flex:1;overflow-y:auto;padding-bottom:8px}
+/* ── SOPORTE 24/7 ── */
+.sidebarSupportBtn{margin:12px 10px 12px;background:linear-gradient(135deg,var(--accent),var(--indigo));border-radius:8px;padding:10px 12px;cursor:pointer;font-size:.75rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:7px;letter-spacing:.3px;transition:opacity .2s;user-select:none;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.1em}
+.sidebarSupportBtn:hover{opacity:.85}
+.sidebarSupportBtn .suppPulse{width:7px;height:7px;border-radius:50%;background:#fff;opacity:.8;animation:suppPulse 2s infinite;flex-shrink:0}
+@keyframes suppPulse{0%,100%{opacity:.8;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.supportChatPanel{position:fixed;bottom:20px;left:235px;width:360px;height:490px;background:var(--surface);border:1px solid var(--border2);border-radius:14px;display:flex;flex-direction:column;z-index:9999;box-shadow:0 12px 48px rgba(0,0,0,.7);transform:scale(.95) translateY(8px);opacity:0;pointer-events:none;transition:transform .18s ease,opacity .18s ease}
+.supportChatPanel.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+.suppHeader{padding:13px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;flex-shrink:0}
+.suppHeaderDot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:suppPulse 2s infinite;flex-shrink:0}
+.suppHeaderTitle{font-size:.82rem;font-weight:700;flex:1;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.08em}
+.suppHeaderSub{font-size:.65rem;color:var(--text2)}
+.suppClose{cursor:pointer;color:var(--text2);font-size:1.1rem;line-height:1;padding:3px 6px;border-radius:4px;transition:color .12s}
+.suppClose:hover{color:var(--text)}
+.suppMessages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}
+.suppMsg{max-width:88%;padding:8px 12px;border-radius:10px;font-size:.78rem;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.suppMsg.user{align-self:flex-end;background:var(--accent);color:#fff;border-radius:10px 10px 2px 10px}
+.suppMsg.ai{align-self:flex-start;background:var(--surface2);border:1px solid var(--border);border-radius:10px 10px 10px 2px;color:var(--text)}
+.suppMsg.typing{align-self:flex-start;background:var(--surface2);border:1px solid var(--border);border-radius:10px 10px 10px 2px;color:var(--text2);font-style:italic;font-size:.75rem}
+.suppInputArea{padding:10px;border-top:1px solid var(--border);display:flex;gap:7px;flex-shrink:0}
+.suppInputArea textarea{flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:7px;color:var(--text);padding:8px 11px;font-size:.78rem;font-family:'Barlow',sans-serif;resize:none;height:38px;max-height:80px;line-height:1.4;outline:none;transition:border-color .15s;overflow:hidden}
+.suppInputArea textarea:focus{border-color:var(--accent)}
+.suppSendBtn{background:var(--accent);color:#fff;border:none;border-radius:7px;padding:0 14px;cursor:pointer;font-size:.95rem;transition:opacity .15s;flex-shrink:0}
+.suppSendBtn:hover{opacity:.85}
+.suppSendBtn:disabled{opacity:.35;cursor:default}
+.suppWelcome{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;gap:8px;color:var(--text2);font-size:.78rem;flex:1}
+.suppWelcome .suppWIcon{font-size:2.2rem;margin-bottom:4px}
+.suppWelcome strong{color:var(--text);font-size:.85rem}
 .sidebar::-webkit-scrollbar{width:3px}
 .sidebar::-webkit-scrollbar-thumb{background:var(--border2)}
 .sideSection{padding:18px 16px 6px;font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);font-weight:600;font-family:'Barlow Condensed',sans-serif}
@@ -304,7 +332,13 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
         <input id="loginPass" type="password" placeholder="Contraseña" value="Lift2025#" style="margin-bottom:18px"/>
         <button id="btnLogin" class="btnPrimary" onclick="doLogin()">INGRESAR →</button>
         <div id="loginError" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.35);border-radius:4px;font-size:.82rem;color:#ff3b30;text-align:center"></div>
-        <div style="margin-top:16px;text-align:center">
+        <div id="loginEmailNotVerified" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(229,8,126,.1);border:1px solid rgba(229,8,126,.3);border-radius:4px;font-size:.82rem;color:var(--accent);text-align:center">
+          📧 Confirmá tu email antes de ingresar. Revisá tu casilla de correo.
+        </div>
+        <div style="margin-top:14px;text-align:center">
+          <span onclick="showForgotPassword()" style="font-size:.75rem;color:var(--text3);cursor:pointer;text-decoration:underline;text-underline-offset:2px">¿Olvidaste tu contraseña?</span>
+        </div>
+        <div style="margin-top:12px;text-align:center">
           <button class="btn btnSm" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text3);border-radius:3px;letter-spacing:.06em" onclick="showPinLogin()">🔢 Ingresar con PIN</button>
         </div>
         <!-- Demo roles eliminados para producción -->
@@ -333,6 +367,31 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
 
 <div class="modalOverlay" id="modalOverlay">
   <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- ── SOPORTE 24/7 CHAT PANEL ── -->
+<div class="supportChatPanel" id="supportChatPanel">
+  <div class="suppHeader">
+    <div class="suppHeaderDot"></div>
+    <div style="flex:1">
+      <div class="suppHeaderTitle">Soporte Técnico 24/7</div>
+      <div class="suppHeaderSub">Agente IA · ctrlgym.org</div>
+    </div>
+    <div class="suppClose" onclick="closeSupportChat()" title="Cerrar">✕</div>
+  </div>
+  <div class="suppMessages" id="suppMessages">
+    <div class="suppWelcome" id="suppWelcome">
+      <div class="suppWIcon">🤖</div>
+      <strong>Hola, ¿en qué puedo ayudarte?</strong>
+      <span>Preguntame cómo usar cualquier función del sistema, dónde encontrar algo, o cómo realizar una tarea específica.</span>
+    </div>
+  </div>
+  <div class="suppInputArea">
+    <textarea id="suppInput" placeholder="Escribí tu consulta..." rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSupportMsg()}"
+      oninput="this.style.height='38px';this.style.height=Math.min(this.scrollHeight,80)+'px'"></textarea>
+    <button class="suppSendBtn" id="suppSendBtn" onclick="sendSupportMsg()">↑</button>
+  </div>
 </div>
 
 <script>
@@ -501,9 +560,11 @@ let shopProductos = [
   {id:6,nombre:'Evaluación física gratis',categoria:'Servicios',precio:0,puntos:1000,imagen:'📊',stock:99,activo:true,tipo:'puntos'}
 ];
 let shopPedidos = [];
+let shopVentas = [];
 try{const sp=localStorage.getItem('gp_shopProductos');if(sp)shopProductos=JSON.parse(sp);}catch(e){}
 try{const sped=localStorage.getItem('gp_shopPedidos');if(sped)shopPedidos=JSON.parse(sped);}catch(e){}
-function saveShop(){try{localStorage.setItem('gp_shopProductos',JSON.stringify(shopProductos));localStorage.setItem('gp_shopPedidos',JSON.stringify(shopPedidos));}catch(e){}}
+try{const sv=localStorage.getItem('gp_shopVentas');if(sv)shopVentas=JSON.parse(sv);}catch(e){}
+function saveShop(){try{localStorage.setItem('gp_shopProductos',JSON.stringify(shopProductos));localStorage.setItem('gp_shopPedidos',JSON.stringify(shopPedidos));localStorage.setItem('gp_shopVentas',JSON.stringify(shopVentas));}catch(e){}}
 
 // ── COMUNIDAD ──
 let comunidadPosts = [
@@ -783,7 +844,7 @@ function buildSidebar(){
   else if(currentUser.role==='reception')nav=receptionNav;
   else if(currentUser.role==='user')nav=userNav;
   else if(currentUser.role==='nutritionist')nav=nutriNav;
-  document.getElementById('sidebar').innerHTML=nav.map(n=>{
+  const navHtml=nav.map(n=>{
     if(n.section)return`<div class="sideSection">${n.section}</div>`;
     if(n.group){
       const sub=n.items.map(i=>`<div class="navItem navSubItem" id="nav_${i.id}" onclick="navigate('${i.id}');_openGrp('${n.gid}')">${i.label}</div>`).join('');
@@ -791,9 +852,71 @@ function buildSidebar(){
     }
     return`<div class="navItem" id="nav_${n.id}" onclick="navigate('${n.id}')"><span class="icon">${n.icon}</span>${n.label}</div>`;
   }).join('');
+  document.getElementById('sidebar').innerHTML=
+    `<div class="sidebarNav">${navHtml}</div>`+
+    `<div class="sidebarSupportBtn" onclick="openSupportChat()"><div class="suppPulse"></div>🤖 Soporte 24/7</div>`;
 }
 window.toggleNavGrp=function(gid){const h=document.querySelector(`#${gid} .navGroupHeader`),it=document.getElementById(`gi_${gid}`);if(!h||!it)return;const op=it.classList.contains('gopen');document.querySelectorAll('.navGroupItems').forEach(e=>e.classList.remove('gopen'));document.querySelectorAll('.navGroupHeader').forEach(e=>e.classList.remove('gopen'));if(!op){it.classList.add('gopen');h.classList.add('gopen');}};
 window._openGrp=function(gid){const h=document.querySelector(`#${gid} .navGroupHeader`),it=document.getElementById(`gi_${gid}`);if(h&&it){it.classList.add('gopen');h.classList.add('gopen');}};
+
+// ── SOPORTE 24/7 ─────────────────────────────────────────────────────────────
+let _suppHistory=[];
+let _suppLoading=false;
+
+function openSupportChat(){
+  document.getElementById('supportChatPanel').classList.add('open');
+  document.getElementById('suppInput').focus();
+}
+function closeSupportChat(){
+  document.getElementById('supportChatPanel').classList.remove('open');
+}
+function _suppAppendMsg(role,text){
+  const welcome=document.getElementById('suppWelcome');
+  if(welcome)welcome.remove();
+  const div=document.createElement('div');
+  div.className='suppMsg '+role;
+  div.textContent=text;
+  const msgs=document.getElementById('suppMessages');
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+  return div;
+}
+async function sendSupportMsg(){
+  if(_suppLoading)return;
+  const input=document.getElementById('suppInput');
+  const text=(input.value||'').trim();
+  if(!text)return;
+  input.value='';
+  input.style.height='38px';
+  document.getElementById('suppSendBtn').disabled=true;
+  _suppLoading=true;
+  // Mostrar mensaje del usuario
+  _suppAppendMsg('user',text);
+  _suppHistory.push({role:'user',content:text});
+  // Indicador de escritura
+  const typingDiv=_suppAppendMsg('typing','Escribiendo...');
+  try{
+    const jwt=sessionStorage.getItem('_lift_jwt')||'';
+    const res=await fetch('/api/support/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},
+      body:JSON.stringify({messages:_suppHistory,currentView:typeof currentView!=='undefined'?currentView:''})
+    });
+    const data=await res.json();
+    const reply=data.response||data.error||'Sin respuesta.';
+    typingDiv.remove();
+    _suppAppendMsg('ai',reply);
+    _suppHistory.push({role:'assistant',content:reply});
+  }catch(e){
+    typingDiv.remove();
+    _suppAppendMsg('ai','Error de conexión. Verificá tu conexión a internet e intentá de nuevo.');
+  }finally{
+    _suppLoading=false;
+    document.getElementById('suppSendBtn').disabled=false;
+    document.getElementById('suppInput').focus();
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function navigate(view){processSlotTimers();if(_qrTimer&&view!=='miQR'&&view!=='miCredencial'){clearInterval(_qrTimer);_qrTimer=null;}document.querySelectorAll('.navItem').forEach(el=>el.classList.remove('active'));const el=document.getElementById('nav_'+view);if(el)el.classList.add('active');const fn=views[view];document.getElementById('content').innerHTML=fn?fn():`<p style="color:var(--text2)">Vista no disponible</p>`;afterRender(view);genNotifications();}
 function exportCSV(data,filename){if(!data.length)return;const keys=Object.keys(data[0]);const rows=[keys.join(','),...data.map(r=>keys.map(k=>JSON.stringify(r[k]??'')).join(','))];const blob=new Blob([rows.join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename+'.csv';a.click();}
@@ -2751,13 +2874,31 @@ function confirmarCanje(prodId){
 // ═══════════════════════════════════════════════════════════
 views.adminShop = () => {
   const pending = shopPedidos.filter(p=>p.estado==='pendiente');
+  const tab = window._shopTab||'productos';
+  const ingresoShop = shopVentas.filter(v=>v.metodoPago!=='puntos').reduce((s,v)=>s+(v.precioTotal||0),0);
+  const ventasHoy = shopVentas.filter(v=>v.fecha===today().toISOString().slice(0,10)).length;
   return `
   <div class="pageTitle">Gestionar Shop 🛍️</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+    <div class="card" style="text-align:center;padding:14px">
+      <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Productos activos</div>
+      <div style="font-size:1.8rem;font-weight:800;font-family:'Barlow Condensed',sans-serif">${shopProductos.filter(p=>p.activo!==false).length}</div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px">
+      <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Ventas totales</div>
+      <div style="font-size:1.8rem;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--green)">${shopVentas.length}</div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px">
+      <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Ingresos totales</div>
+      <div style="font-size:1.8rem;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--accent)">$${ingresoShop.toFixed(2)}</div>
+    </div>
+  </div>
+
   ${pending.length?`
   <div class="card" style="margin-bottom:14px;border-top:2px solid var(--orange)">
-    <h3>Canjes pendientes (${pending.length})</h3>
+    <h3>⏳ Canjes de puntos pendientes (${pending.length})</h3>
     ${pending.map(p=>`
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--surface2);border-radius:2px;border:1px solid var(--border);margin-bottom:6px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--surface2);border-radius:4px;border:1px solid var(--border);margin-bottom:6px">
         <div><div style="font-weight:600;font-size:.85rem">${p.userName}</div><div style="font-size:.72rem;color:var(--text3)">${p.productoNombre} · ${p.fecha}</div></div>
         <div style="display:flex;gap:6px">
           <button class="btn btnSuccess btnXs" onclick="entregarCanje(${p.id})">✓ Entregar</button>
@@ -2765,53 +2906,207 @@ views.adminShop = () => {
         </div>
       </div>`).join('')}
   </div>`:''}
+
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <button class="btn ${tab==='productos'?'btnAccent':'btnGhost'} btnSm" onclick="window._shopTab='productos';navigate('adminShop')">📦 Productos</button>
+    <button class="btn ${tab==='ventas'?'btnAccent':'btnGhost'} btnSm" onclick="window._shopTab='ventas';navigate('adminShop')">🧾 Historial de ventas</button>
+  </div>
+
+  ${tab==='productos'?`
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <h3 style="margin-bottom:0">Productos del Shop</h3>
       <button class="btn btnAccent btnSm" onclick="openNuevoProductoShop()">+ Producto</button>
     </div>
     <table class="tbl">
-      <tr><th>Producto</th><th>Tipo</th><th>Pts/Precio</th><th>Stock</th><th></th></tr>
-      ${shopProductos.map(p=>`<tr>
-        <td>${p.imagen} ${p.nombre}</td>
-        <td><span class="badge ${p.tipo==='puntos'?'active':p.tipo==='dinero'?'warning':'info'}">${p.tipo}</span></td>
-        <td>${p.tipo==='dinero'?'$'+p.precio.toFixed(2):p.puntos.toLocaleString()+' pts'}</td>
-        <td>${p.stock}</td>
-        <td style="display:flex;gap:4px">
-          <button class="btn btnDanger btnXs" onclick="shopProductos=shopProductos.filter(x=>x.id!==${p.id});saveShop();navigate('adminShop')">✕</button>
+      <tr><th>Producto</th><th>Tipo</th><th>Precio</th><th>Puntos</th><th>Pts ganados</th><th>Stock</th><th>Acciones</th></tr>
+      ${shopProductos.map(p=>`<tr style="${(p.stock!==undefined&&p.stock<=3&&p.stock>=0)?'background:rgba(255,59,48,.05)':''}">
+        <td><span style="font-size:1.1rem">${p.imagen}</span> <strong>${p.nombre}</strong><br><span style="font-size:.68rem;color:var(--text3)">${p.categoria||''}</span></td>
+        <td><span class="badge ${p.tipo==='puntos'?'active':p.tipo==='dinero'?'warning':'info'}">${p.tipo==='puntos'?'Puntos':p.tipo==='dinero'?'Dinero':'Mixto'}</span></td>
+        <td>${(p.tipo==='puntos')?'—':'$'+Number(p.precio||0).toFixed(2)}</td>
+        <td>${(p.tipo==='dinero')?'—':Number(p.puntos||0).toLocaleString()+' pts'}</td>
+        <td style="color:var(--green)">${p.ptsGanados?'+'+p.ptsGanados+' pts':'—'}</td>
+        <td><span style="font-weight:700;color:${p.stock<=3?'var(--red)':p.stock<=10?'var(--orange)':'var(--green)'}">${p.stock===999||p.stock===99?'∞':p.stock}</span></td>
+        <td>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <button class="btn btnAccent btnXs" onclick="openRegistrarVenta(${p.id})" ${p.stock===0?'disabled':''}>💰 Vender</button>
+            <button class="btn btnSm btnXs" style="background:var(--surface2);border:1px solid var(--border2)" onclick="openAgregarStock(${p.id})">+Stock</button>
+            <button class="btn btnSm btnXs" style="background:var(--surface2);border:1px solid var(--border2)" onclick="openEditarProductoShop(${p.id})">✏️</button>
+            <button class="btn btnDanger btnXs" onclick="eliminarProductoShop(${p.id})">✕</button>
+          </div>
         </td>
       </tr>`).join('')}
     </table>
-  </div>`;
+  </div>`:`
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="margin-bottom:0">Historial de ventas</h3>
+      <span style="font-size:.75rem;color:var(--text3)">${shopVentas.length} venta${shopVentas.length!==1?'s':''} registrada${shopVentas.length!==1?'s':''}</span>
+    </div>
+    ${shopVentas.length===0?`<div style="text-align:center;padding:32px;color:var(--text3)">No hay ventas registradas aún.</div>`:`
+    <table class="tbl">
+      <tr><th>Fecha</th><th>Producto</th><th>Socio</th><th>Método</th><th>Precio</th><th>Cant.</th><th>Pts otorgados</th></tr>
+      ${[...shopVentas].reverse().map(v=>`<tr>
+        <td style="font-size:.75rem;color:var(--text3)">${v.fecha}</td>
+        <td>${v.productoEmoji||'🎁'} ${v.productoNombre}</td>
+        <td>${v.userName||'<span style="color:var(--text3)">—</span>'}</td>
+        <td><span class="badge ${v.metodoPago==='puntos'?'active':v.metodoPago==='efectivo'?'warning':v.metodoPago==='transferencia'?'info':''}">
+          ${v.metodoPago==='efectivo'?'💵 Efectivo':v.metodoPago==='transferencia'?'📲 Transferencia':v.metodoPago==='puntos'?'⭐ Puntos':'Mixto'}
+        </span></td>
+        <td>${v.metodoPago==='puntos'?'—':'$'+Number(v.precioTotal||0).toFixed(2)}</td>
+        <td>${v.cantidad||1}</td>
+        <td style="color:var(--green)">${v.puntosOtorgados?'+'+v.puntosOtorgados:'—'}</td>
+      </tr>`).join('')}
+    </table>`}
+  </div>`}`;
 };
 function entregarCanje(id){const p=shopPedidos.find(x=>x.id===id);if(p){p.estado='entregado';saveShop();navigate('adminShop');}}
 function rechazarCanje(id){
   const p=shopPedidos.find(x=>x.id===id);
   if(!p)return;
-  // Reembolsar puntos
   const u=users.find(x=>x.id===p.userId);
   if(u) puntosLog.push({id:Date.now(),userId:u.id,userName:u.name,accion:'reto',puntos:p.puntos,fecha:new Date().toISOString().slice(0,10),detalle:'Reembolso canje '+p.productoNombre});
   p.estado='rechazado';savePuntos();saveShop();navigate('adminShop');
 }
+function eliminarProductoShop(id){
+  if(!confirm('¿Eliminar este producto del shop?'))return;
+  shopProductos=shopProductos.filter(x=>x.id!==id);
+  saveShop();navigate('adminShop');
+}
 function openNuevoProductoShop(){
   openModal(`
-    <h3>Nuevo producto shop</h3>
+    <h3>➕ Nuevo producto</h3>
     <div class="formGrid">
       <div class="formGroup"><label>Nombre</label><input id="spNom" placeholder="Remera LIFT"/></div>
       <div class="formGroup"><label>Categoría</label><input id="spCat" placeholder="Indumentaria"/></div>
-      <div class="formGroup"><label>Tipo</label><select id="spTipo"><option value="puntos">Solo puntos</option><option value="dinero">Solo dinero</option><option value="mixto">Mixto</option></select></div>
-      <div class="formGroup"><label>Puntos</label><input id="spPts" type="number" placeholder="2500"/></div>
+      <div class="formGroup"><label>Emoji</label><input id="spEmoji" placeholder="👕" style="width:70px"/></div>
+      <div class="formGroup"><label>Tipo de venta</label>
+        <select id="spTipo">
+          <option value="puntos">Solo puntos</option>
+          <option value="dinero">Solo dinero</option>
+          <option value="mixto">Mixto (puntos o dinero)</option>
+        </select>
+      </div>
       <div class="formGroup"><label>Precio ($)</label><input id="spPre" type="number" step="0.50" placeholder="25.00"/></div>
-      <div class="formGroup"><label>Stock</label><input id="spStock" type="number" value="10"/></div>
-      <div class="formGroup"><label>Emoji</label><input id="spEmoji" placeholder="👕"/></div>
+      <div class="formGroup"><label>Precio en puntos</label><input id="spPts" type="number" placeholder="2500"/></div>
+      <div class="formGroup"><label>Pts ganados al comprar con $</label><input id="spPtsGan" type="number" placeholder="100"/></div>
+      <div class="formGroup"><label>Stock (999 = ilimitado)</label><input id="spStock" type="number" value="10"/></div>
     </div>
     <div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="guardarNuevoShopProducto()">Guardar</button></div>
   `);
 }
 function guardarNuevoShopProducto(){
   const get=i=>document.getElementById(i)?.value||'';
-  shopProductos.push({id:Date.now(),nombre:get('spNom'),categoria:get('spCat'),tipo:get('spTipo'),precio:+get('spPre')||0,puntos:+get('spPts')||0,imagen:get('spEmoji')||'🎁',stock:+get('spStock')||99,activo:true});
+  shopProductos.push({id:Date.now(),nombre:get('spNom'),categoria:get('spCat'),tipo:get('spTipo'),precio:+get('spPre')||0,puntos:+get('spPts')||0,ptsGanados:+get('spPtsGan')||0,imagen:get('spEmoji')||'🎁',stock:+get('spStock')||10,activo:true});
   saveShop();closeModal();navigate('adminShop');
+}
+function openEditarProductoShop(id){
+  const p=shopProductos.find(x=>x.id===id);if(!p)return;
+  openModal(`
+    <h3>✏️ Editar producto</h3>
+    <div class="formGrid">
+      <div class="formGroup"><label>Nombre</label><input id="epNom" value="${p.nombre}"/></div>
+      <div class="formGroup"><label>Categoría</label><input id="epCat" value="${p.categoria||''}"/></div>
+      <div class="formGroup"><label>Emoji</label><input id="epEmoji" value="${p.imagen||'🎁'}" style="width:70px"/></div>
+      <div class="formGroup"><label>Tipo de venta</label>
+        <select id="epTipo">
+          <option value="puntos" ${p.tipo==='puntos'?'selected':''}>Solo puntos</option>
+          <option value="dinero" ${p.tipo==='dinero'?'selected':''}>Solo dinero</option>
+          <option value="mixto" ${p.tipo==='mixto'?'selected':''}>Mixto</option>
+        </select>
+      </div>
+      <div class="formGroup"><label>Precio ($)</label><input id="epPre" type="number" step="0.50" value="${p.precio||0}"/></div>
+      <div class="formGroup"><label>Precio en puntos</label><input id="epPts" type="number" value="${p.puntos||0}"/></div>
+      <div class="formGroup"><label>Pts ganados al comprar con $</label><input id="epPtsGan" type="number" value="${p.ptsGanados||0}"/></div>
+      <div class="formGroup"><label>Stock (999 = ilimitado)</label><input id="epStock" type="number" value="${p.stock}"/></div>
+    </div>
+    <div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="guardarEditarShopProducto(${id})">Guardar cambios</button></div>
+  `);
+}
+function guardarEditarShopProducto(id){
+  const p=shopProductos.find(x=>x.id===id);if(!p)return;
+  const get=i=>document.getElementById(i)?.value||'';
+  p.nombre=get('epNom');p.categoria=get('epCat');p.imagen=get('epEmoji')||p.imagen;
+  p.tipo=get('epTipo');p.precio=+get('epPre')||0;p.puntos=+get('epPts')||0;
+  p.ptsGanados=+get('epPtsGan')||0;p.stock=+get('epStock');
+  saveShop();closeModal();navigate('adminShop');
+}
+function openAgregarStock(id){
+  const p=shopProductos.find(x=>x.id===id);if(!p)return;
+  openModal(`
+    <h3>📦 Agregar stock — ${p.imagen} ${p.nombre}</h3>
+    <div style="margin-bottom:12px;color:var(--text3);font-size:.85rem">Stock actual: <strong style="color:var(--text)">${p.stock}</strong></div>
+    <div class="formGroup"><label>Cantidad a agregar</label><input id="asQty" type="number" value="10" min="1"/></div>
+    <div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="confirmarAgregarStock(${id})">Agregar</button></div>
+  `);
+}
+function confirmarAgregarStock(id){
+  const p=shopProductos.find(x=>x.id===id);if(!p)return;
+  const qty=+document.getElementById('asQty')?.value||0;
+  if(qty<=0)return;
+  p.stock+=qty;
+  saveShop();closeModal();navigate('adminShop');
+}
+function openRegistrarVenta(id){
+  const p=shopProductos.find(x=>x.id===id);if(!p)return;
+  const userOptions=users.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+  openModal(`
+    <h3>💰 Registrar venta — ${p.imagen} ${p.nombre}</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;background:var(--surface2);border-radius:6px;padding:10px;font-size:.8rem">
+      ${p.tipo!=='puntos'?`<div>Precio: <strong>$${Number(p.precio||0).toFixed(2)}</strong></div>`:''}
+      ${p.tipo!=='dinero'?`<div>En puntos: <strong>${Number(p.puntos||0).toLocaleString()} pts</strong></div>`:''}
+      <div>Stock disponible: <strong>${p.stock===999?'∞':p.stock}</strong></div>
+    </div>
+    <div class="formGrid">
+      <div class="formGroup"><label>Método de pago</label>
+        <select id="rvMetodo">
+          ${p.tipo!=='puntos'?'<option value="efectivo">💵 Efectivo</option><option value="transferencia">📲 Transferencia</option>':''}
+          ${p.tipo!=='dinero'?'<option value="puntos">⭐ Puntos</option>':''}
+          ${p.tipo==='mixto'?'<option value="mixto">🔀 Mixto</option>':''}
+        </select>
+      </div>
+      <div class="formGroup"><label>Cantidad</label><input id="rvCant" type="number" value="1" min="1" max="${p.stock===999?999:p.stock}"/></div>
+      <div class="formGroup" style="grid-column:1/-1"><label>Socio (opcional — para sumarle puntos)</label>
+        <select id="rvSocio">
+          <option value="">— Sin socio —</option>
+          ${userOptions}
+        </select>
+      </div>
+    </div>
+    <div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="confirmarVentaShop(${id})">✓ Registrar venta</button></div>
+  `);
+}
+function confirmarVentaShop(id){
+  const p=shopProductos.find(x=>x.id===id);if(!p)return;
+  const metodo=document.getElementById('rvMetodo')?.value||'efectivo';
+  const cant=+document.getElementById('rvCant')?.value||1;
+  const socioId=document.getElementById('rvSocio')?.value||'';
+  const socio=socioId?users.find(x=>x.id===+socioId||x.id===socioId):null;
+  if(p.stock!==999&&p.stock!==999&&p.stock<cant){alert('Stock insuficiente.');return;}
+  // Descontar stock
+  if(p.stock!==999)p.stock=Math.max(0,p.stock-cant);
+  // Calcular precio total
+  const precioTotal = metodo==='puntos'?0:Number(p.precio||0)*cant;
+  // Puntos a otorgar al socio
+  let puntosOtorgados=0;
+  if(socio){
+    if(metodo==='puntos'){
+      // Descontar puntos del socio
+      const ptsDeducir=Number(p.puntos||0)*cant;
+      puntosLog.push({id:Date.now(),userId:socio.id,userName:socio.name,accion:'shop',puntos:-ptsDeducir,fecha:new Date().toISOString().slice(0,10),detalle:'Canje: '+p.nombre});
+      savePuntos();
+    } else if(p.ptsGanados&&p.ptsGanados>0){
+      // Sumar puntos por compra con dinero
+      puntosOtorgados=p.ptsGanados*cant;
+      puntosLog.push({id:Date.now(),userId:socio.id,userName:socio.name,accion:'shop',puntos:puntosOtorgados,fecha:new Date().toISOString().slice(0,10),detalle:'Compra shop: '+p.nombre});
+      savePuntos();
+    }
+  }
+  // Registrar venta
+  shopVentas.push({id:Date.now(),productoId:p.id,productoNombre:p.nombre,productoEmoji:p.imagen,userId:socio?.id||null,userName:socio?.name||null,cantidad:cant,metodoPago:metodo,precioTotal,puntosOtorgados,fecha:new Date().toISOString().slice(0,10)});
+  saveShop();closeModal();
+  window._shopTab='ventas';
+  navigate('adminShop');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -5243,8 +5538,18 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){if(
       }
     } catch (err) {
       console.error('[LIFT] doLogin error:', err);
-      if (btn) { btn.disabled = false; btn.textContent = 'INGRESAR'; }
-      _showLoginError('Error al ingresar: ' + err.message);
+      if (btn) { btn.disabled = false; btn.textContent = 'INGRESAR →'; }
+      // Check for email not verified specifically
+      if (err.message && (err.message.includes('EMAIL_NOT_VERIFIED') || err.message.includes('Confirmá tu email'))) {
+        const errDiv = document.getElementById('loginError');
+        if (errDiv) errDiv.style.display = 'none';
+        const notVerDiv = document.getElementById('loginEmailNotVerified');
+        if (notVerDiv) notVerDiv.style.display = 'block';
+      } else {
+        const notVerDiv = document.getElementById('loginEmailNotVerified');
+        if (notVerDiv) notVerDiv.style.display = 'none';
+        _showLoginError('Error al ingresar: ' + err.message);
+      }
     }
   };
 
@@ -5988,6 +6293,166 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){if(
   }
 
 })();
+
+/* ══════════════════════════════════════════════════════
+   EMAIL VERIFY / PASSWORD RESET — URL param handlers
+══════════════════════════════════════════════════════ */
+(function _emailActions() {
+  const params = new URLSearchParams(window.location.search);
+  const action = params.get('action');
+  const token  = params.get('token');
+
+  if (!action || !token) return;
+
+  // Remove params from URL without reload
+  const cleanUrl = window.location.pathname;
+  window.history.replaceState({}, '', cleanUrl);
+
+  if (action === 'verify-email') {
+    _handleVerifyEmail(token);
+  } else if (action === 'reset-password') {
+    _handleResetPasswordPage(token);
+  }
+
+  async function _handleVerifyEmail(tok) {
+    _showEmailActionScreen('Verificando tu email…', '⏳', '#888');
+    try {
+      const res = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: tok }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        _showEmailActionScreen('¡Email verificado! ✅', data.message || '¡Tu cuenta está activa! Ya podés iniciar sesión.', '#22c55e');
+      } else {
+        _showEmailActionScreen('Error al verificar ❌', data.error || 'El enlace no es válido o ya expiró.', '#ef4444');
+      }
+    } catch (e) {
+      _showEmailActionScreen('Error de conexión ❌', 'No se pudo conectar con el servidor. Intentá de nuevo más tarde.', '#ef4444');
+    }
+  }
+
+  function _handleResetPasswordPage(tok) {
+    // Show a reset-password form overlaid on login screen
+    const loginScreen = document.getElementById('loginScreen');
+    if (loginScreen) loginScreen.style.display = 'flex';
+    const app = document.getElementById('app');
+    if (app) app.style.display = 'none';
+
+    // Inject reset form into the right panel
+    const loginBox = document.querySelector('.loginBox');
+    if (!loginBox) return;
+    loginBox.innerHTML = `
+      <div class="loginCard">
+        <h2>Nueva contraseña</h2>
+        <p class="loginSubhead">Ingresá tu nueva contraseña</p>
+        <input id="resetPass1" type="password" placeholder="Nueva contraseña (mín. 4 caracteres)" style="margin-bottom:10px"/>
+        <input id="resetPass2" type="password" placeholder="Repetir contraseña" style="margin-bottom:18px"/>
+        <button class="btnPrimary" id="btnReset" onclick="window._submitResetPassword('${tok}')">GUARDAR CONTRASEÑA →</button>
+        <div id="resetError" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.35);border-radius:4px;font-size:.82rem;color:#ff3b30;text-align:center"></div>
+        <div id="resetOk" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:4px;font-size:.82rem;color:#22c55e;text-align:center"></div>
+      </div>`;
+  }
+
+  function _showEmailActionScreen(title, msg, color) {
+    const loginScreen = document.getElementById('loginScreen');
+    if (loginScreen) loginScreen.style.display = 'flex';
+    const app = document.getElementById('app');
+    if (app) app.style.display = 'none';
+
+    const loginBox = document.querySelector('.loginBox');
+    if (!loginBox) return;
+    loginBox.innerHTML = `
+      <div class="loginCard" style="text-align:center">
+        <div style="font-size:3rem;margin-bottom:16px">${title.split(' ').pop()}</div>
+        <h2 style="color:${color};font-size:1.2rem;margin-bottom:12px">${title.replace(/\s*\S+$/, '')}</h2>
+        <p style="font-size:.85rem;color:var(--text3);line-height:1.6;margin-bottom:24px">${msg}</p>
+        <button class="btnPrimary" onclick="location.href=location.pathname">Ir al inicio de sesión →</button>
+      </div>`;
+  }
+})();
+
+window._submitResetPassword = async function(token) {
+  const p1 = document.getElementById('resetPass1')?.value;
+  const p2 = document.getElementById('resetPass2')?.value;
+  const errDiv = document.getElementById('resetError');
+  const okDiv  = document.getElementById('resetOk');
+  const btn    = document.getElementById('btnReset');
+
+  if (!p1 || p1.length < 4) { errDiv.textContent = 'La contraseña debe tener al menos 4 caracteres.'; errDiv.style.display='block'; return; }
+  if (p1 !== p2) { errDiv.textContent = 'Las contraseñas no coinciden.'; errDiv.style.display='block'; return; }
+  errDiv.style.display = 'none';
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+
+  try {
+    const res = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, newPassword: p1 }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      okDiv.textContent = '✅ ' + (data.message || '¡Contraseña actualizada! Ya podés iniciar sesión.');
+      okDiv.style.display = 'block';
+      if (btn) btn.style.display = 'none';
+      setTimeout(() => { location.href = location.pathname; }, 3000);
+    } else {
+      errDiv.textContent = data.error || 'Error al actualizar la contraseña.';
+      errDiv.style.display = 'block';
+      if (btn) { btn.disabled = false; btn.textContent = 'GUARDAR CONTRASEÑA →'; }
+    }
+  } catch (e) {
+    errDiv.textContent = 'Error de conexión. Intentá de nuevo.';
+    errDiv.style.display = 'block';
+    if (btn) { btn.disabled = false; btn.textContent = 'GUARDAR CONTRASEÑA →'; }
+  }
+};
+
+window.showForgotPassword = function() {
+  const gymSlug = (()=>{ const p=window.location.hostname.split('.'); return p.length>=3?p[0]:'lift'; })();
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  if (!overlay || !content) return;
+  content.innerHTML = `
+    <div style="padding:28px 32px;min-width:320px">
+      <h3 style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--white);margin-bottom:6px">Recuperar contraseña</h3>
+      <p style="font-size:.82rem;color:var(--text3);margin-bottom:20px">Ingresá tu email y te enviaremos un enlace para crear una nueva contraseña.</p>
+      <input id="forgotEmail" type="email" placeholder="tu@email.com" style="width:100%;padding:12px 14px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-size:.9rem;border-radius:3px;margin-bottom:16px"/>
+      <button class="btnPrimary" id="btnForgot" onclick="window._submitForgotPassword('${gymSlug}')">ENVIAR ENLACE →</button>
+      <div id="forgotError" style="display:none;margin-top:12px;padding:10px;background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.35);border-radius:4px;font-size:.82rem;color:#ff3b30;text-align:center"></div>
+      <div id="forgotOk" style="display:none;margin-top:12px;padding:10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:4px;font-size:.82rem;color:#22c55e;text-align:center"></div>
+      <div style="margin-top:16px;text-align:center"><span onclick="closeModal()" style="font-size:.75rem;color:var(--text3);cursor:pointer">Cancelar</span></div>
+    </div>`;
+  overlay.style.display = 'flex';
+};
+
+window._submitForgotPassword = async function(gymSlug) {
+  const email = document.getElementById('forgotEmail')?.value?.trim();
+  const errDiv = document.getElementById('forgotError');
+  const okDiv  = document.getElementById('forgotOk');
+  const btn    = document.getElementById('btnForgot');
+
+  if (!email) { errDiv.textContent = 'Ingresá tu email.'; errDiv.style.display='block'; return; }
+  errDiv.style.display = 'none';
+  if (btn) { btn.disabled = true; btn.textContent = 'Enviando…'; }
+
+  try {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, gym_slug: gymSlug }),
+    });
+    const data = await res.json();
+    okDiv.textContent = '📧 ' + (data.message || 'Si ese email está registrado, recibirás el enlace en minutos.');
+    okDiv.style.display = 'block';
+    if (btn) btn.style.display = 'none';
+  } catch (e) {
+    errDiv.textContent = 'Error de conexión. Intentá de nuevo.';
+    errDiv.style.display = 'block';
+    if (btn) { btn.disabled = false; btn.textContent = 'ENVIAR ENLACE →'; }
+  }
+};
 
 /* ══════════════════════════════════════════════════════
    AUTO-LOGOUT — cierra sesión tras 30 min de inactividad
