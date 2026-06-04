@@ -553,6 +553,28 @@ function today(){return new Date()}
 function getQuotaStatus(u){if(!u)return'inactive';if(u.frozen||u.status==='frozen')return'frozen';const now=today(),d=now.getDate();if(u.status==='blocked')return'blocked';try{const lp=new Date(u.lastPayment);if(u.lastPayment&&!isNaN(lp.getTime())&&lp.getMonth()===now.getMonth()&&lp.getFullYear()===now.getFullYear())return'active';}catch(_){}if(u.status==='inactive'){if(d>10)return'blocked';if(d>7)return'grace';return'inactive';}if(d<=7)return'warning';if(d<=10)return'grace';return'blocked';}
 function statusLabel(s){return{active:'Al día',inactive:'Vencida',warning:'Por vencer',grace:'En gracia',blocked:'Bloqueado',frozen:'Congelada'}[s]||s;}
 function genNotifications(){notifications=[];users.forEach(u=>{const st=getQuotaStatus(u);if(st==='warning')notifications.push({userId:u.id,type:'warn',msg:`${u.name}: cuota vence el día 7`});if(st==='grace')notifications.push({userId:u.id,type:'danger',msg:`${u.name}: en gracia hasta el día 10`});if(st==='blocked')notifications.push({userId:u.id,type:'danger',msg:`${u.name}: acceso BLOQUEADO`});if(!u.medClearance)notifications.push({userId:u.id,type:'info',msg:`${u.name}: apto médico pendiente`});if(u.debt>0)notifications.push({userId:u.id,type:'danger',msg:`${u.name}: deuda $${u.debt.toLocaleString()}`});});const bell=document.getElementById('notifBell');if(bell){let count;if(currentUser&&currentUser.role==='user'){count=unreadCount(currentUser.data.id);}else{count=notifications.length;}bell.textContent=count>0?`🔔(${count})`:'🔔';bell.onclick=()=>navigate(currentUser&&currentUser.role==='user'?'misNotif':'notificaciones');}}
+function sendStaffAlert(){
+  const target=document.getElementById('alertStaffTarget').value;
+  const type=document.getElementById('alertStaffType').value;
+  const msg=document.getElementById('alertStaffMsg').value.trim();
+  if(!msg){alert('Escribí un mensaje antes de enviar.');return;}
+  const targetLabel=document.getElementById('alertStaffTarget').options[document.getElementById('alertStaffTarget').selectedIndex].text;
+  const typeLabel=document.getElementById('alertStaffType').options[document.getElementById('alertStaffType').selectedIndex].text;
+  logAction('Alerta Staff',`${typeLabel} → ${targetLabel}: "${msg}"`);
+  document.getElementById('alertStaffMsg').value='';
+  alert(`✅ Alerta enviada al staff: ${targetLabel}`);
+}
+function sendClientAlert(){
+  const target=document.getElementById('alertClientTarget').value;
+  const type=document.getElementById('alertClientType').value;
+  const msg=document.getElementById('alertClientMsg').value.trim();
+  if(!msg){alert('Escribí un mensaje antes de enviar.');return;}
+  const targetLabel=document.getElementById('alertClientTarget').options[document.getElementById('alertClientTarget').selectedIndex].text;
+  const typeLabel=document.getElementById('alertClientType').options[document.getElementById('alertClientType').selectedIndex].text;
+  logAction('Alerta Clientes',`${typeLabel} → ${targetLabel}: "${msg}"`);
+  document.getElementById('alertClientMsg').value='';
+  alert(`✅ Alerta enviada a clientes: ${targetLabel}`);
+}
 function logAction(action,detail){adminLog.unshift({id:Date.now(),user:currentUser?.name||'Sistema',action,detail,time:new Date().toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'}),date:new Date().toISOString().slice(0,10)});if(adminLog.length>200)adminLog=adminLog.slice(0,200);saveDB();}
 function fillDemo(e,p){document.getElementById('loginEmail').value=e;document.getElementById('loginPass').value=p;}
 function doLogin(){const em=document.getElementById('loginEmail').value.trim();const pw=document.getElementById('loginPass').value.trim();const staff=staffAccounts.find(s=>s.email===em&&s.pass===pw);if(staff)currentUser={role:staff.role,name:staff.name,email:staff.email};else{const u=users.find(x=>x.email===em&&x.pass===pw);if(!u){alert('Credenciales incorrectas');return;}currentUser={role:'user',name:u.name,data:u,email:u.email};}startApp();}
@@ -745,11 +767,11 @@ return`
 <div class="quickActions">
   <div class="quickAction" onclick="navigate('gestionPagos')">
     <div class="qaIcon">💳</div>
-    <div class="qaText"><strong>Cobrar cuota</strong><span>Gestión de planes & pagos</span></div>
+    <div class="qaText"><strong>Gestión de Planes & Pagos</strong><span>Planes, cuotas y cobros</span></div>
   </div>
-  <div class="quickAction" onclick="openNewUser()">
-    <div class="qaIcon">➕</div>
-    <div class="qaText"><strong>Nuevo socio</strong><span>Registrar miembro</span></div>
+  <div class="quickAction" onclick="navigate('reportes')">
+    <div class="qaIcon">📊</div>
+    <div class="qaText"><strong>Análisis & Reportes</strong><span>Estadísticas y finanzas</span></div>
   </div>
   <div class="quickAction ${dangerCount>0?'qa-urgent qa-danger':'qa-danger'}" onclick="navigate('notificaciones')">
     <div class="qaIcon">${dangerCount>0?'🚨':'🔔'}</div>
@@ -916,7 +938,98 @@ adminLogView:()=>`<div class="pageTitle">Log de Acciones</div><div class="filter
 
 staff:()=>`<div class="pageTitle">Staff & Roles</div><div style="text-align:right;margin-bottom:12px"><button class="btn btnAccent" onclick="openNewStaff()">+ Agregar Staff</button></div><div class="card" style="padding:0;overflow:auto"><table class="tbl"><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>PIN</th><th>Permisos</th><th>Acción</th></tr>${staffAccounts.map(s=>`<tr><td><strong>${s.name}</strong></td><td style="color:var(--text3);font-size:.73rem">${s.email}</td><td><span class="roleTag ${s.role}">${ROLES[s.role]}</span></td><td><span style="font-family:monospace;font-size:.9rem;font-weight:700;letter-spacing:.18em;color:var(--accent);background:var(--surface2);border:1px solid var(--border2);padding:2px 8px;border-radius:3px">${s.pin||'—'}</span></td><td style="font-size:.7rem;color:var(--text3)">${getRolePerms(s.role)}</td><td>${s.email!=='admin@lift.com'?`<button class="btn btnSm btnDanger" onclick="removeStaff('${s.email}')">Eliminar</button>`:'—'}</td></tr>`).join('')}</table></div>`,
 
-notificaciones:()=>{genNotifications();return`<div class="pageTitle">Notificaciones (${notifications.length})</div><div class="card">${notifications.length===0?'<p style="color:var(--text2);font-size:.8rem">Sin alertas ✓</p>':notifications.map(n=>`<div class="notifItem"><div class="notifDot" style="background:${n.type==='danger'?'var(--red)':n.type==='warn'?'var(--accent)':'var(--blue)'}"></div><div style="font-size:.8rem">${n.msg}</div></div>`).join('')}</div>`;},
+notificaciones:()=>{genNotifications();const staffList=(db.staff||[]).map(s=>`<option value="${s.id}">${s.name} — ${s.role||'Staff'}</option>`).join('');const clientList=(db.users||[]).filter(u=>u.role==='user').map(u=>`<option value="${u.id}">${u.name}</option>`).join('');return`
+<div class="pageTitle">Centro de Alertas</div>
+
+<!-- ALERTAS AUTOMÁTICAS DEL SISTEMA -->
+<div class="card" style="margin-bottom:18px">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+    <span style="font-size:1.1rem">🔔</span>
+    <strong style="font-size:.85rem;letter-spacing:.05em;color:var(--text2)">ALERTAS AUTOMÁTICAS DEL SISTEMA</strong>
+    <span style="margin-left:auto;background:${notifications.filter(n=>n.type==='danger').length>0?'var(--red)':'var(--surface2)'};color:white;font-size:.7rem;padding:2px 8px;border-radius:10px">${notifications.length} alertas</span>
+  </div>
+  ${notifications.length===0
+    ?'<p style="color:var(--text3);font-size:.8rem;text-align:center;padding:16px 0">✓ Sin alertas activas</p>'
+    :notifications.map(n=>`<div class="notifItem"><div class="notifDot" style="background:${n.type==='danger'?'var(--red)':n.type==='warn'?'var(--accent)':'var(--blue)'}"></div><div style="font-size:.8rem">${n.msg}</div></div>`).join('')
+  }
+</div>
+
+<!-- DOS PANELES: STAFF y CLIENTES -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+
+  <!-- PANEL STAFF -->
+  <div class="card" style="border:2px solid rgba(52,56,142,.5);background:rgba(52,56,142,.06)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(52,56,142,.3)">
+      <span style="font-size:1.2rem">👔</span>
+      <div>
+        <div style="font-size:.85rem;font-weight:700;color:#6c70c4;letter-spacing:.05em">MENSAJE AL STAFF</div>
+        <div style="font-size:.7rem;color:var(--text3)">Entrenadores, recepción y nutricionistas</div>
+      </div>
+    </div>
+    <div class="formGroup" style="margin-bottom:10px">
+      <label style="font-size:.72rem;color:#6c70c4">DESTINATARIO</label>
+      <select id="alertStaffTarget" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid rgba(52,56,142,.4);border-radius:4px;color:var(--white);font-size:.8rem">
+        <option value="all_staff">📢 Todo el staff</option>
+        ${staffList}
+      </select>
+    </div>
+    <div class="formGroup" style="margin-bottom:10px">
+      <label style="font-size:.72rem;color:#6c70c4">TIPO</label>
+      <select id="alertStaffType" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid rgba(52,56,142,.4);border-radius:4px;color:var(--white);font-size:.8rem">
+        <option value="info">ℹ️ Información</option>
+        <option value="warn">⚠️ Advertencia</option>
+        <option value="urgent">🚨 Urgente</option>
+      </select>
+    </div>
+    <div class="formGroup" style="margin-bottom:14px">
+      <label style="font-size:.72rem;color:#6c70c4">MENSAJE</label>
+      <textarea id="alertStaffMsg" rows="3" placeholder="Escribí el mensaje para el staff..." style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid rgba(52,56,142,.4);border-radius:4px;color:var(--white);font-size:.8rem;resize:vertical;font-family:inherit"></textarea>
+    </div>
+    <button class="btn" onclick="sendStaffAlert()" style="width:100%;background:rgba(52,56,142,.8);color:white;border:1px solid #34388E;padding:10px;font-size:.8rem;letter-spacing:.05em;font-weight:700">
+      📤 ENVIAR AL STAFF
+    </button>
+  </div>
+
+  <!-- PANEL CLIENTES -->
+  <div class="card" style="border:2px solid rgba(229,8,126,.3);background:rgba(229,8,126,.04)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(229,8,126,.2)">
+      <span style="font-size:1.2rem">👤</span>
+      <div>
+        <div style="font-size:.85rem;font-weight:700;color:var(--accent);letter-spacing:.05em">MENSAJE A CLIENTES</div>
+        <div style="font-size:.7rem;color:var(--text3)">Socios activos, inactivos o grupos</div>
+      </div>
+    </div>
+    <div class="formGroup" style="margin-bottom:10px">
+      <label style="font-size:.72rem;color:var(--accent)">DESTINATARIO</label>
+      <select id="alertClientTarget" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid rgba(229,8,126,.3);border-radius:4px;color:var(--white);font-size:.8rem">
+        <option value="all_clients">📢 Todos los socios</option>
+        <option value="active_clients">✅ Solo activos</option>
+        <option value="blocked_clients">🔴 Solo bloqueados</option>
+        <option value="grace_clients">⚠️ En período de gracia</option>
+        ${clientList}
+      </select>
+    </div>
+    <div class="formGroup" style="margin-bottom:10px">
+      <label style="font-size:.72rem;color:var(--accent)">TIPO</label>
+      <select id="alertClientType" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid rgba(229,8,126,.3);border-radius:4px;color:var(--white);font-size:.8rem">
+        <option value="info">ℹ️ Información general</option>
+        <option value="payment">💳 Aviso de pago</option>
+        <option value="promo">🎁 Promoción</option>
+        <option value="urgent">🚨 Urgente</option>
+      </select>
+    </div>
+    <div class="formGroup" style="margin-bottom:14px">
+      <label style="font-size:.72rem;color:var(--accent)">MENSAJE</label>
+      <textarea id="alertClientMsg" rows="3" placeholder="Escribí el mensaje para los clientes..." style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid rgba(229,8,126,.3);border-radius:4px;color:var(--white);font-size:.8rem;resize:vertical;font-family:inherit"></textarea>
+    </div>
+    <button class="btn btnAccent" onclick="sendClientAlert()" style="width:100%;padding:10px;font-size:.8rem;letter-spacing:.05em;font-weight:700">
+      📤 ENVIAR A CLIENTES
+    </button>
+  </div>
+
+</div>
+`;}
+,
 
 usuarios:()=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="pageTitle" style="margin:0">Socios</div><button class="btn btnAccent" onclick="openNewUser()">+ Nuevo Socio</button></div><div class="filterBar"><input id="searchUser" oninput="renderUserTable()" placeholder="Nombre, email o DNI..."/><select id="filterStatus" onchange="renderUserTable()"><option value="">Todos</option><option value="active">Activos</option><option value="inactive">Inactivos</option><option value="grace">En gracia</option><option value="blocked">Bloqueados</option><option value="frozen">Congelados</option></select><select id="filterPlan" onchange="renderUserTable()"><option value="">Todos los planes</option>${Object.keys(PLANS).map(p=>`<option>${p}</option>`).join('')}</select></div><div class="card" style="padding:0;overflow:auto"><table class="tbl" id="userTable"></table></div>`,
 
