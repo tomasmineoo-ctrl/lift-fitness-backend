@@ -405,7 +405,32 @@ function safePlan(p){if(!p||typeof p!=='string')return PLANS.Bronce||{color:'act
 window.PLANS=PLANS; window.safePlan=safePlan;
 
 const PAYMENT_METHODS=['Efectivo','Tarjeta de crédito','Tarjeta de débito','Transferencia bancaria','Pago por Nequi','Pago por Tigo Money','Bitcoin / Cripto','Otro'];
-const ROLES={admin:'Administrador',trainer:'Entrenador',reception:'Recepcionista',user:'Socio',nutritionist:'Nutricionista'};
+const ROLES={admin:'Administrador',trainer:'Entrenador',reception:'Recepcionista',user:'Socio',nutritionist:'Nutricionista',cafeteria:'Cafetería'};
+const PERMS_CATALOG=[
+  {id:'socios',      label:'Socios',        emoji:'👥'},
+  {id:'cuotas',      label:'Cuotas',        emoji:'💳'},
+  {id:'clases',      label:'Clases',        emoji:'📅'},
+  {id:'comunicacion',label:'Comunicación',  emoji:'📢'},
+  {id:'acceso',      label:'Acceso',        emoji:'🚪'},
+  {id:'shop',        label:'Shop',          emoji:'🛍️'},
+  {id:'cafeteria',   label:'Cafetería',     emoji:'☕'},
+  {id:'finanzas',    label:'Finanzas',      emoji:'💰'},
+  {id:'reportes',    label:'Reportes',      emoji:'📊'},
+  {id:'fidelizacion',label:'Fidelización',  emoji:'⭐'},
+  {id:'entrenamiento',label:'Entrenamiento',emoji:'🏋️'},
+  {id:'nutricion',   label:'Nutrición',     emoji:'🥗'},
+  {id:'staff',       label:'Staff',         emoji:'👔'},
+  {id:'maquinas',    label:'Máquinas',      emoji:'⚙️'},
+];
+const DEFAULT_PERMS={
+  admin:      PERMS_CATALOG.map(p=>p.id),
+  reception:  ['socios','cuotas','clases','comunicacion','acceso','shop','cafeteria','fidelizacion'],
+  trainer:    ['socios','clases','entrenamiento','maquinas'],
+  nutritionist:['socios','nutricion'],
+  cafeteria:  ['cafeteria','shop'],
+};
+function getStaffPerms(s){return s.perms||DEFAULT_PERMS[s.role]||[];}
+
 const CLASS_TYPES=['Yoga','Spinning','Funcional','Pilates','Boxeo','CrossFit','Zumba','Natación'];
 const CLASS_COLORS={Yoga:'yoga',Spinning:'spinning',Funcional:'funcional',Pilates:'pilates',Boxeo:'boxeo',CrossFit:'spinning',Zumba:'yoga',Natación:'pilates'};
 const DAYS_ES=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -1397,7 +1422,29 @@ backups:()=>`<div class="pageTitle">Backups</div>
 </div>`,
 adminLogView:()=>`<div class="pageTitle">Log de Acciones</div><div class="filterBar"><input id="logSearch" oninput="renderLog()" placeholder="Buscar..."/></div><div class="card" id="logContainer">${adminLog.slice(0,30).map(logRow).join('')}</div>`,
 
-staff:()=>`<div class="pageTitle">Staff & Roles</div><div style="text-align:right;margin-bottom:12px"><button class="btn btnAccent" onclick="openNewStaff()">+ Agregar Staff</button></div><div class="card" style="padding:0;overflow:auto"><table class="tbl"><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>PIN</th><th>Permisos</th><th>Acción</th></tr>${staffAccounts.map(s=>`<tr><td><strong>${s.name}</strong></td><td style="color:var(--text3);font-size:.73rem">${s.email}</td><td><span class="roleTag ${s.role}">${ROLES[s.role]}</span></td><td><span style="font-family:monospace;font-size:.9rem;font-weight:700;letter-spacing:.18em;color:var(--accent);background:var(--surface2);border:1px solid var(--border2);padding:2px 8px;border-radius:3px">${s.pin||'—'}</span></td><td style="font-size:.7rem;color:var(--text3)">${getRolePerms(s.role)}</td><td>${s.email!=='admin@lift.com'?`<button class="btn btnSm btnDanger" onclick="removeStaff('${s.email}')">Eliminar</button>`:'—'}</td></tr>`).join('')}</table></div>`,
+staff:()=>`<div class="pageTitle">Staff & Roles</div>
+<div style="text-align:right;margin-bottom:12px"><button class="btn btnAccent" onclick="openNewStaff()">+ Agregar Staff</button></div>
+<div class="card" style="padding:0;overflow:auto">
+  <table class="tbl">
+    <tr><th>Nombre</th><th>Email</th><th>Rol</th><th>PIN</th><th>Permisos <span style="font-size:.65rem;color:var(--text3);font-weight:400">(clic para editar)</span></th><th>Acción</th></tr>
+    ${staffAccounts.map(s=>`<tr>
+      <td><strong>${s.name}</strong></td>
+      <td style="color:var(--text3);font-size:.73rem">${s.email}</td>
+      <td><span class="roleTag ${s.role}">${ROLES[s.role]||s.role}</span></td>
+      <td><span style="font-family:monospace;font-size:.9rem;font-weight:700;letter-spacing:.18em;color:var(--accent);background:var(--surface2);border:1px solid var(--border2);padding:2px 8px;border-radius:3px">${s.pin||'—'}</span></td>
+      <td style="max-width:280px">
+        ${s.role==='admin'
+          ?'<span style="color:var(--text3);font-size:.72rem">Acceso total</span>'
+          :`<div style="display:flex;align-items:flex-start;gap:6px;cursor:pointer" onclick="openEditStaffPerms('${s.email}')" title="Editar permisos">
+              <div style="flex:1;line-height:1.6">${getRolePerms(s)}</div>
+              <span style="flex-shrink:0;font-size:.75rem;color:var(--accent);background:rgba(229,8,126,.1);border:1px solid rgba(229,8,126,.25);border-radius:3px;padding:1px 6px;white-space:nowrap;margin-top:1px">✏️ Editar</span>
+            </div>`
+        }
+      </td>
+      <td>${s.email!=='admin@lift.com'?`<button class="btn btnSm btnDanger" onclick="removeStaff('${s.email}')">Eliminar</button>`:'—'}</td>
+    </tr>`).join('')}
+  </table>
+</div>`,
 
 notificaciones:()=>{genNotifications();const staffList=(staffAccounts||[]).filter(s=>s.role!=='admin').map(s=>`<option value="${s.email}">${s.name} — ${s.role||'Staff'}</option>`).join('');const clientList=(users||[]).map(u=>`<option value="${u.id}">${u.name}</option>`).join('');return`
 <div class="pageTitle">Centro de Alertas</div>
@@ -1533,7 +1580,12 @@ function renderPaymentsTable(){const q=(document.getElementById('searchPayment')
 function renderAccessLog(){const type=(document.getElementById('accType')||{}).value||'';const res=(document.getElementById('accResult')||{}).value||'';const filtered=accessLog.filter(l=>(!type||l.type===type)&&(!res||(res==='ok'?l.allowed:!l.allowed)));const el=document.getElementById('accessLogList');if(!el)return;el.innerHTML=filtered.slice().reverse().map(l=>`<div class="accessItem"><div class="accessDot" style="background:${l.allowed?'var(--green)':'var(--red)'}"></div><div style="flex:1;font-size:.77rem"><strong>${l.userName}</strong> — ${l.type==='entry'?'Entrada':'Salida'}<div style="color:var(--text3);font-size:.68rem">${l.date} ${l.time} · ${l.method}</div></div><span class="badge ${l.allowed?'active':'blocked'}">${l.allowed?'OK':'Denegado'}</span></div>`).join('');}
 function logRow(l){const user=l.user||l.admin_email||'Sistema';const detail=l.detail||'';const action=l.action||'';const date=l.date||(l.log_timestamp?new Date(l.log_timestamp).toISOString().slice(0,10):'');const time=l.time||(l.log_timestamp?new Date(l.log_timestamp).toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'}):'');return`<div class="logItem"><span style="width:22px;text-align:center">📝</span><div style="flex:1"><strong>${action}</strong> — ${detail}<div style="color:var(--text3);font-size:.68rem">${user} · ${date} ${time}</div></div></div>`;}
 async function renderLog(){const q=(document.getElementById('logSearch')||{}).value||'';const el=document.getElementById('logContainer');if(!el){return;}el.innerHTML='<div style="color:var(--text3);padding:8px">Cargando registros del servidor...</div>';let apiData=[];try{const token=sessionStorage.getItem('_lift_jwt')||localStorage.getItem('token');console.log('[AUDIT] Token:', token?'✓ presente':'✗ falta');if(!token){console.warn('[AUDIT] No token found, usando solo datos locales');apiData=[];}else{try{const response=await fetch('/api/admin/log?limit=100',{headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'}});console.log('[AUDIT] API Response status:', response.status);if(!response.ok){console.warn('[AUDIT] API error status:', response.status);const errorText=await response.text();console.warn('[AUDIT] API error:', errorText);apiData=[];}else{const result=await response.json();apiData=result.data||[];console.log('[AUDIT] API Data count:', apiData.length);}}catch(fetchErr){console.error('[AUDIT] Fetch error:', fetchErr.message);apiData=[];}}}catch(err){console.error('[AUDIT] General error:', err);}let combinedLog=[...apiData,...adminLog];console.log('[AUDIT] Combined log count:', combinedLog.length);if(q){combinedLog=combinedLog.filter(l=>!q||(l.action||'').toLowerCase().includes(q.toLowerCase())||(l.user||l.admin_email||'').toLowerCase().includes(q.toLowerCase())||(l.detail||'').toLowerCase().includes(q.toLowerCase()));}const sorted=combinedLog.sort((a,b)=>{const aTime=new Date(a.log_timestamp||`${a.date}T${a.time||'00:00'}`).getTime();const bTime=new Date(b.log_timestamp||`${b.date}T${b.time||'00:00'}`).getTime();return bTime-aTime;});if(sorted.length===0){el.innerHTML='<div style="color:var(--text2);padding:12px;text-align:center">Sin registros de auditoría</div>';}else{el.innerHTML=sorted.slice(0,100).map(logRow).join('');console.log('[AUDIT] Mostrados '+Math.min(sorted.length,100)+' de '+sorted.length+' registros');}}
-function getRolePerms(r){return{admin:'Acceso total',trainer:'Alumnos, clases, progreso, máquinas',reception:'Socios, cuotas, clases, comunicación, acceso, PINs'}[r]||'—';}
+function getRolePerms(s){
+  if(s.role==='admin')return'<span style="color:var(--text3);font-size:.72rem">Acceso total</span>';
+  const perms=getStaffPerms(s);
+  if(!perms.length)return'<span style="color:var(--text3);font-size:.72rem">Sin permisos</span>';
+  return perms.map(pid=>{const p=PERMS_CATALOG.find(x=>x.id===pid);return p?`<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(52,56,142,.18);border:1px solid rgba(52,56,142,.35);border-radius:3px;padding:1px 6px;font-size:.65rem;color:#8b8fe8;margin:1px">${p.emoji} ${p.label}</span>`:''}).join('');
+}
 function blockUser(id){const u=users.find(x=>x.id===id);if(!u)return;const isBlocked=getQuotaStatus(u)==='blocked';if(isBlocked){u.status='active';u.lastPayment=new Date().toISOString().slice(0,10);}else u.status='blocked';logAction(isBlocked?'Socio desbloqueado':'Socio bloqueado',u.name);saveDB();if(document.getElementById('psTable'))renderPS();else renderAdminPanel();}
 function pinAccessPress(k){if(k==='⌫')pinAccessBuffer=pinAccessBuffer.slice(0,-1);else if(k==='✓')validateAccess('pin');else if(pinAccessBuffer.length<4)pinAccessBuffer+=k;const d=document.getElementById('pinAccessDisplay');if(d)d.textContent=pinAccessBuffer?'●'.repeat(pinAccessBuffer.length):'—';}
 function validateAccess(method='email'){let u=null;if(method==='email'){const em=document.getElementById('accessEmail').value.trim();u=users.find(x=>x.email===em);}else{u=users.find(x=>x.pin===pinAccessBuffer);pinAccessBuffer='';const d=document.getElementById('pinAccessDisplay');if(d)d.textContent='—';}const res=document.getElementById('accessResult');if(!u){res.innerHTML=`<div style="color:var(--red);font-size:.8rem;padding:8px;background:rgba(255,59,48,.08);border:1px solid rgba(255,59,48,.2);border-radius:2px">❌ ${method==='pin'?'PIN incorrecto':'Socio no encontrado'}</div>`;return;}const st=getQuotaStatus(u);const allowed=['active','warning','grace'].includes(st);const now=new Date();accessLog.push({id:Date.now(),userId:u.id,userName:u.name,type:'entry',time:now.toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'}),date:now.toISOString().slice(0,10),method:method==='pin'?'PIN':'Manual',allowed});logAction('Ingreso validado',`${u.name} — ${allowed?'Permitido':'Denegado'}`);saveDB();res.innerHTML=allowed?`<div style="background:rgba(48,209,88,.08);border:1px solid rgba(48,209,88,.2);border-radius:2px;padding:12px;text-align:center"><div style="font-size:1.4rem">✅</div><div style="font-weight:700;color:var(--green);font-family:'Barlow Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase">${u.name}</div><div style="font-size:.72rem;color:var(--text3)">Acceso permitido · Plan ${u.plan}</div></div>`:`<div style="background:rgba(255,59,48,.08);border:1px solid rgba(255,59,48,.2);border-radius:2px;padding:12px;text-align:center"><div style="font-size:1.4rem">🚫</div><div style="font-weight:700;color:var(--red);font-family:'Barlow Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase">${u.name}</div><div style="font-size:.72rem;color:var(--text3)">Acceso denegado · ${statusLabel(st)}</div></div>`;}
@@ -1690,11 +1742,42 @@ function saveStaff(){
     const to=document.getElementById(`ws_${d}_to`)?.value||'';
     return from&&to?{day:d,from,to}:null;
   }).filter(Boolean);
-  staffAccounts.push({email:get('sEmail'),pass:get('sPass'),role:get('sRole'),name:get('sName'),phone:get('sPhone'),workSchedule});
+  const newRole=get('sRole');
+  staffAccounts.push({email:get('sEmail'),pass:get('sPass'),role:newRole,name:get('sName'),phone:get('sPhone'),workSchedule,perms:DEFAULT_PERMS[newRole]||[]});
   logAction('Staff agregado',get('sName'));
   saveDB();closeModal();navigate('staff');
 }
 function removeStaff(email){if(confirm('¿Eliminar?')){staffAccounts=staffAccounts.filter(s=>s.email!==email);saveDB();navigate('staff');}}
+function openEditStaffPerms(email){
+  const s=staffAccounts.find(x=>x.email===email);if(!s)return;
+  const current=getStaffPerms(s);
+  openModal(`
+    <h3>Permisos — ${s.name}</h3>
+    <p style="font-size:.78rem;color:var(--text3);margin-bottom:14px">Seleccioná los módulos a los que tiene acceso este usuario.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      ${PERMS_CATALOG.map(p=>`
+        <label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border:1px solid ${current.includes(p.id)?'rgba(229,8,126,.4)':'var(--border)'};border-radius:6px;cursor:pointer;transition:.15s"
+          onmouseenter="this.style.borderColor='rgba(229,8,126,.4)'" onmouseleave="this.style.borderColor=document.getElementById('perm_${p.id}').checked?'rgba(229,8,126,.4)':'var(--border)'">
+          <input type="checkbox" id="perm_${p.id}" value="${p.id}" ${current.includes(p.id)?'checked':''} style="accent-color:var(--accent);width:15px;height:15px;cursor:pointer" onchange="this.closest('label').style.borderColor=this.checked?'rgba(229,8,126,.4)':'var(--border)'"/>
+          <span style="font-size:.82rem">${p.emoji} ${p.label}</span>
+        </label>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btnSm" style="background:var(--surface2);border:1px solid var(--border2);font-size:.75rem" onclick="(function(){PERMS_CATALOG.forEach(p=>{const el=document.getElementById('perm_'+p.id);if(el){el.checked=true;el.closest('label').style.borderColor='rgba(229,8,126,.4)';}})})()">Seleccionar todo</button>
+      <button class="btn btnSm" style="background:var(--surface2);border:1px solid var(--border2);font-size:.75rem" onclick="(function(){PERMS_CATALOG.forEach(p=>{const el=document.getElementById('perm_'+p.id);if(el){el.checked=false;el.closest('label').style.borderColor='var(--border)';}})})()">Limpiar</button>
+      <button class="btn btnSm" style="background:var(--surface2);border:1px solid var(--border2);font-size:.75rem" onclick="(function(){const def=DEFAULT_PERMS['${s.role}']||[];PERMS_CATALOG.forEach(p=>{const el=document.getElementById('perm_'+p.id);if(el){el.checked=def.includes(p.id);el.closest('label').style.borderColor=el.checked?'rgba(229,8,126,.4)':'var(--border)';}})})()">Restaurar por rol</button>
+    </div>
+    <div class="modalActions">
+      <button class="btn btnGhost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btnAccent" onclick="saveStaffPerms('${email}')">Guardar permisos</button>
+    </div>
+  `);
+}
+function saveStaffPerms(email){
+  const s=staffAccounts.find(x=>x.email===email);if(!s)return;
+  s.perms=PERMS_CATALOG.map(p=>p.id).filter(id=>{const el=document.getElementById('perm_'+id);return el&&el.checked;});
+  saveDB();closeModal();navigate('staff');
+}
 function openRoutine(id){const u=users.find(x=>x.id===id);if(!u)return;const days=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];const r=u.routine||[];openModal(`<h3>Rutina de ${u.name}</h3><div id="routineEditor">${days.map((d,i)=>{const day=r.find(x=>x.day===d)||{day:d,exercises:[]};return`<div class="routineDay" style="margin-bottom:6px"><div class="dayHeader" style="cursor:default;font-size:.8rem">${d}</div><div style="padding:8px"><div id="exList_${i}">${day.exercises.map(ex=>`<div class="exerciseItem"><input style="flex:1;padding:3px 5px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" value="${ex.name}"/><input style="width:42px;padding:3px 4px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" value="${ex.sets}"/><input style="width:42px;padding:3px 4px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" value="${ex.reps}"/><input style="width:46px;padding:3px 4px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" value="${ex.rest}"/><button class="btn btnXs btnDanger" onclick="removeEx(this)">✕</button></div>`).join('')}</div><button class="btn btnSm btnGhost" style="margin-top:5px;font-size:.7rem" onclick="addEx(${i})">+ Ejercicio</button></div></div>`;}).join('')}</div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="saveRoutine(${id})">Guardar</button></div>`);}
 function addEx(di){const list=document.getElementById('exList_'+di);const div=document.createElement('div');div.className='exerciseItem';div.innerHTML=`<input style="flex:1;padding:3px 5px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" placeholder="Ejercicio"/><input style="width:42px;padding:3px 4px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" placeholder="Series"/><input style="width:42px;padding:3px 4px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" placeholder="Reps"/><input style="width:46px;padding:3px 4px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" placeholder="Desc(s)"/><button class="btn btnXs btnDanger" onclick="removeEx(this)">✕</button>`;list.appendChild(div);}
 function removeEx(btn){btn.closest('.exerciseItem').remove();}
