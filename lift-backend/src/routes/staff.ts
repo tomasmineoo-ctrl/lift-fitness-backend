@@ -39,10 +39,17 @@ router.post('/', authorize('admin'), async (req: Request, res: Response) => {
     pin:      z.string().min(3).max(10).regex(/^\d+$/).optional(),
     pin2:     z.string().min(3).max(10).regex(/^\d+$/).optional().nullable(),
     phone:    z.string().optional(),
+    dni:      z.string().optional(),
   });
-  const { password, ...rest } = schema.parse(req.body);
+  const { password, ...rest } = schema.parse(req.body) as Record<string, unknown> & { password?: string };
 
-  const { data: hashed } = await supabase.rpc('hash_password', { plain: password }).single();
+  // Auto-set PIN from DNI digits if no explicit PIN provided
+  const pinFromDni = (rest.dni as string | undefined) ? (rest.dni as string).replace(/\D/g, '') : undefined;
+  if (!rest.pin && pinFromDni && pinFromDni.length >= 3) {
+    rest.pin = pinFromDni;
+  }
+
+  const { data: hashed } = await supabase.rpc('hash_password', { plain: password! }).single();
   const { data, error } = await supabase
     .from('staff')
     .insert({ ...rest, password_hash: hashed, gym_id: req.user!.gym_id })

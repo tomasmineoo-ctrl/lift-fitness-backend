@@ -71,7 +71,7 @@ router.post('/', authorize('admin', 'reception'), async (req: Request, res: Resp
     name:         z.string().min(2),
     email:        z.string().email(),
     password:     z.string().min(4),
-    pin:          z.string().min(3).max(6).regex(/^\d+$/).optional(),
+    pin:          z.string().min(3).max(10).regex(/^\d+$/).optional(),
     phone:        z.string().min(1).optional(),
     dni:          z.string().min(1).optional(),
     nationality:  z.string().min(1).optional(),
@@ -86,9 +86,15 @@ router.post('/', authorize('admin', 'reception'), async (req: Request, res: Resp
     pay_method:   z.string().optional(),
     insc_date:    z.string().optional(),
   });
-  const { password, ...rest } = schema.parse(req.body);
+  const { password, ...rest } = schema.parse(req.body) as Record<string, unknown> & { password?: string };
 
-  const { data: hashedPass } = await supabase.rpc('hash_password', { plain: password }).single();
+  // Auto-set PIN from DNI digits if no explicit PIN provided
+  if (!rest.pin && rest.dni) {
+    const pinFromDni = (rest.dni as string).replace(/\D/g, '');
+    if (pinFromDni.length >= 3) rest.pin = pinFromDni;
+  }
+
+  const { data: hashedPass } = await supabase.rpc('hash_password', { plain: password! }).single();
 
   const { data, error } = await supabase
     .from('users')
@@ -153,10 +159,16 @@ router.put('/:id', authorizeOwnerOrRoles((r) => r.params.id, 'admin', 'reception
     debt:          z.number().min(0).optional(),
     last_payment:  z.string().optional().nullable(),
     password:      z.string().min(4).optional(),
-    pin:           z.string().min(3).max(6).regex(/^\d+$/).optional(),
+    pin:           z.string().min(3).max(10).regex(/^\d+$/).optional(),
   });
   const { password, ...rest } = schema.parse(req.body);
   const updates: Record<string, unknown> = { ...rest };
+
+  // Auto-update PIN from new DNI digits if no explicit PIN provided
+  if (rest.dni && !rest.pin) {
+    const pinFromDni = rest.dni.replace(/\D/g, '');
+    if (pinFromDni.length >= 3) updates.pin = pinFromDni;
+  }
 
   if (password) {
     const { data: h } = await supabase.rpc('hash_password', { plain: password }).single();
