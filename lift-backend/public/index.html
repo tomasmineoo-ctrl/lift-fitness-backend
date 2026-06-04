@@ -332,7 +332,13 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
         <input id="loginPass" type="password" placeholder="Contraseña" value="Lift2025#" style="margin-bottom:18px"/>
         <button id="btnLogin" class="btnPrimary" onclick="doLogin()">INGRESAR →</button>
         <div id="loginError" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.35);border-radius:4px;font-size:.82rem;color:#ff3b30;text-align:center"></div>
-        <div style="margin-top:16px;text-align:center">
+        <div id="loginEmailNotVerified" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(229,8,126,.1);border:1px solid rgba(229,8,126,.3);border-radius:4px;font-size:.82rem;color:var(--accent);text-align:center">
+          📧 Confirmá tu email antes de ingresar. Revisá tu casilla de correo.
+        </div>
+        <div style="margin-top:14px;text-align:center">
+          <span onclick="showForgotPassword()" style="font-size:.75rem;color:var(--text3);cursor:pointer;text-decoration:underline;text-underline-offset:2px">¿Olvidaste tu contraseña?</span>
+        </div>
+        <div style="margin-top:12px;text-align:center">
           <button class="btn btnSm" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text3);border-radius:3px;letter-spacing:.06em" onclick="showPinLogin()">🔢 Ingresar con PIN</button>
         </div>
         <!-- Demo roles eliminados para producción -->
@@ -5127,8 +5133,18 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){if(
       }
     } catch (err) {
       console.error('[LIFT] doLogin error:', err);
-      if (btn) { btn.disabled = false; btn.textContent = 'INGRESAR'; }
-      _showLoginError('Error al ingresar: ' + err.message);
+      if (btn) { btn.disabled = false; btn.textContent = 'INGRESAR →'; }
+      // Check for email not verified specifically
+      if (err.message && (err.message.includes('EMAIL_NOT_VERIFIED') || err.message.includes('Confirmá tu email'))) {
+        const errDiv = document.getElementById('loginError');
+        if (errDiv) errDiv.style.display = 'none';
+        const notVerDiv = document.getElementById('loginEmailNotVerified');
+        if (notVerDiv) notVerDiv.style.display = 'block';
+      } else {
+        const notVerDiv = document.getElementById('loginEmailNotVerified');
+        if (notVerDiv) notVerDiv.style.display = 'none';
+        _showLoginError('Error al ingresar: ' + err.message);
+      }
     }
   };
 
@@ -5872,6 +5888,166 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){if(
   }
 
 })();
+
+/* ══════════════════════════════════════════════════════
+   EMAIL VERIFY / PASSWORD RESET — URL param handlers
+══════════════════════════════════════════════════════ */
+(function _emailActions() {
+  const params = new URLSearchParams(window.location.search);
+  const action = params.get('action');
+  const token  = params.get('token');
+
+  if (!action || !token) return;
+
+  // Remove params from URL without reload
+  const cleanUrl = window.location.pathname;
+  window.history.replaceState({}, '', cleanUrl);
+
+  if (action === 'verify-email') {
+    _handleVerifyEmail(token);
+  } else if (action === 'reset-password') {
+    _handleResetPasswordPage(token);
+  }
+
+  async function _handleVerifyEmail(tok) {
+    _showEmailActionScreen('Verificando tu email…', '⏳', '#888');
+    try {
+      const res = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: tok }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        _showEmailActionScreen('¡Email verificado! ✅', data.message || '¡Tu cuenta está activa! Ya podés iniciar sesión.', '#22c55e');
+      } else {
+        _showEmailActionScreen('Error al verificar ❌', data.error || 'El enlace no es válido o ya expiró.', '#ef4444');
+      }
+    } catch (e) {
+      _showEmailActionScreen('Error de conexión ❌', 'No se pudo conectar con el servidor. Intentá de nuevo más tarde.', '#ef4444');
+    }
+  }
+
+  function _handleResetPasswordPage(tok) {
+    // Show a reset-password form overlaid on login screen
+    const loginScreen = document.getElementById('loginScreen');
+    if (loginScreen) loginScreen.style.display = 'flex';
+    const app = document.getElementById('app');
+    if (app) app.style.display = 'none';
+
+    // Inject reset form into the right panel
+    const loginBox = document.querySelector('.loginBox');
+    if (!loginBox) return;
+    loginBox.innerHTML = `
+      <div class="loginCard">
+        <h2>Nueva contraseña</h2>
+        <p class="loginSubhead">Ingresá tu nueva contraseña</p>
+        <input id="resetPass1" type="password" placeholder="Nueva contraseña (mín. 4 caracteres)" style="margin-bottom:10px"/>
+        <input id="resetPass2" type="password" placeholder="Repetir contraseña" style="margin-bottom:18px"/>
+        <button class="btnPrimary" id="btnReset" onclick="window._submitResetPassword('${tok}')">GUARDAR CONTRASEÑA →</button>
+        <div id="resetError" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.35);border-radius:4px;font-size:.82rem;color:#ff3b30;text-align:center"></div>
+        <div id="resetOk" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:4px;font-size:.82rem;color:#22c55e;text-align:center"></div>
+      </div>`;
+  }
+
+  function _showEmailActionScreen(title, msg, color) {
+    const loginScreen = document.getElementById('loginScreen');
+    if (loginScreen) loginScreen.style.display = 'flex';
+    const app = document.getElementById('app');
+    if (app) app.style.display = 'none';
+
+    const loginBox = document.querySelector('.loginBox');
+    if (!loginBox) return;
+    loginBox.innerHTML = `
+      <div class="loginCard" style="text-align:center">
+        <div style="font-size:3rem;margin-bottom:16px">${title.split(' ').pop()}</div>
+        <h2 style="color:${color};font-size:1.2rem;margin-bottom:12px">${title.replace(/\s*\S+$/, '')}</h2>
+        <p style="font-size:.85rem;color:var(--text3);line-height:1.6;margin-bottom:24px">${msg}</p>
+        <button class="btnPrimary" onclick="location.href=location.pathname">Ir al inicio de sesión →</button>
+      </div>`;
+  }
+})();
+
+window._submitResetPassword = async function(token) {
+  const p1 = document.getElementById('resetPass1')?.value;
+  const p2 = document.getElementById('resetPass2')?.value;
+  const errDiv = document.getElementById('resetError');
+  const okDiv  = document.getElementById('resetOk');
+  const btn    = document.getElementById('btnReset');
+
+  if (!p1 || p1.length < 4) { errDiv.textContent = 'La contraseña debe tener al menos 4 caracteres.'; errDiv.style.display='block'; return; }
+  if (p1 !== p2) { errDiv.textContent = 'Las contraseñas no coinciden.'; errDiv.style.display='block'; return; }
+  errDiv.style.display = 'none';
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+
+  try {
+    const res = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, newPassword: p1 }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      okDiv.textContent = '✅ ' + (data.message || '¡Contraseña actualizada! Ya podés iniciar sesión.');
+      okDiv.style.display = 'block';
+      if (btn) btn.style.display = 'none';
+      setTimeout(() => { location.href = location.pathname; }, 3000);
+    } else {
+      errDiv.textContent = data.error || 'Error al actualizar la contraseña.';
+      errDiv.style.display = 'block';
+      if (btn) { btn.disabled = false; btn.textContent = 'GUARDAR CONTRASEÑA →'; }
+    }
+  } catch (e) {
+    errDiv.textContent = 'Error de conexión. Intentá de nuevo.';
+    errDiv.style.display = 'block';
+    if (btn) { btn.disabled = false; btn.textContent = 'GUARDAR CONTRASEÑA →'; }
+  }
+};
+
+window.showForgotPassword = function() {
+  const gymSlug = (()=>{ const p=window.location.hostname.split('.'); return p.length>=3?p[0]:'lift'; })();
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  if (!overlay || !content) return;
+  content.innerHTML = `
+    <div style="padding:28px 32px;min-width:320px">
+      <h3 style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--white);margin-bottom:6px">Recuperar contraseña</h3>
+      <p style="font-size:.82rem;color:var(--text3);margin-bottom:20px">Ingresá tu email y te enviaremos un enlace para crear una nueva contraseña.</p>
+      <input id="forgotEmail" type="email" placeholder="tu@email.com" style="width:100%;padding:12px 14px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-size:.9rem;border-radius:3px;margin-bottom:16px"/>
+      <button class="btnPrimary" id="btnForgot" onclick="window._submitForgotPassword('${gymSlug}')">ENVIAR ENLACE →</button>
+      <div id="forgotError" style="display:none;margin-top:12px;padding:10px;background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.35);border-radius:4px;font-size:.82rem;color:#ff3b30;text-align:center"></div>
+      <div id="forgotOk" style="display:none;margin-top:12px;padding:10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:4px;font-size:.82rem;color:#22c55e;text-align:center"></div>
+      <div style="margin-top:16px;text-align:center"><span onclick="closeModal()" style="font-size:.75rem;color:var(--text3);cursor:pointer">Cancelar</span></div>
+    </div>`;
+  overlay.style.display = 'flex';
+};
+
+window._submitForgotPassword = async function(gymSlug) {
+  const email = document.getElementById('forgotEmail')?.value?.trim();
+  const errDiv = document.getElementById('forgotError');
+  const okDiv  = document.getElementById('forgotOk');
+  const btn    = document.getElementById('btnForgot');
+
+  if (!email) { errDiv.textContent = 'Ingresá tu email.'; errDiv.style.display='block'; return; }
+  errDiv.style.display = 'none';
+  if (btn) { btn.disabled = true; btn.textContent = 'Enviando…'; }
+
+  try {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, gym_slug: gymSlug }),
+    });
+    const data = await res.json();
+    okDiv.textContent = '📧 ' + (data.message || 'Si ese email está registrado, recibirás el enlace en minutos.');
+    okDiv.style.display = 'block';
+    if (btn) btn.style.display = 'none';
+  } catch (e) {
+    errDiv.textContent = 'Error de conexión. Intentá de nuevo.';
+    errDiv.style.display = 'block';
+    if (btn) { btn.disabled = false; btn.textContent = 'ENVIAR ENLACE →'; }
+  }
+};
 
 /* ══════════════════════════════════════════════════════
    AUTO-LOGOUT — cierra sesión tras 30 min de inactividad

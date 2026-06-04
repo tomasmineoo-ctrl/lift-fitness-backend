@@ -1,10 +1,12 @@
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import { supabase } from '../config/supabase';
 import { authenticate } from '../middleware/auth';
 import { JWTPayload } from '../types';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../services/email';
 
 const router = Router();
 
@@ -96,6 +98,10 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
   if (!check) return res.status(401).json({ error: 'Credenciales incorrectas' });
 
+  if (!user.email_verified) {
+    return res.status(403).json({ error: 'EMAIL_NOT_VERIFIED', message: 'Confirmá tu email antes de iniciar sesión. Revisá tu casilla de correo.' });
+  }
+
   const payload: JWTPayload = { id: String(user.id), role: 'user', name: user.name, email: user.email, gym_id: gym.id, gym_slug: gym.slug };
   const token = signToken(payload);
   return res.json({ token, user: { id: String(user.id), role: 'user', name: user.name, email: user.email, gym_id: gym.id, gym_slug: gym.slug } });
@@ -178,6 +184,104 @@ router.post('/change-password', authenticate, async (req: Request, res: Response
   }
 
   return res.json({ ok: true });
+});
+
+// ─── Helper: build gym URL for email links ─────────────────────────────────
+function buildGymUrl(gymSlug: string): string {
+  const isLocal = process.env.NODE_ENV !== 'production';
+  if (isLocal) return `http://localhost:3000`;
+  return `https://${gymSlug}.ctrlgym.org`;
+}
+
+// POST /api/auth/verify-email  { token }
+router.post('/verify-email', async (req: Request, res: Response) => {
+  const { token } = z.object({ token: z.string().min(10) }).parse(req.body);
+
+  const { data: row } = await supabase
+    .from('email_tokens')
+    .select('*')
+    .eq('token', token)
+    .eq('type', 'verify')
+    .single();
+
+  if (!row) return res.status(400).json({ error: 'El enlace no es válido o ya fue usado.' });
+  if (row.used) return res.status(400).json({ error: 'Este enlace ya fue utilizado.' });
+  if (new Date(row.expires_at) < new Date()) return res.status(400).json({ error: 'El enlace expiró. Contactá al gimnasio para que te reenvíen la verificación.' });
+
+  await supabase.from('users').update({ email_verified: true }).eq('id', row.user_id);
+  await supabase.from('email_tokens').update({ used: true }).eq('id', row.id);
+
+  return res.json({ ok: true, message: '¡Email verificado! Ya podés iniciar sesión.' });
+});
+
+// POST /api/auth/forgot-password  { email, gym_slug? }
+router.post('/forgot-password', async (req: Request, res: Response) => {
+  const { email, gym_slug } = z.object({
+    email:    z.string().email(),
+    gym_slug: z.string().optional(),
+  }).parse(req.body);
+
+  const gym = await resolveGym(gym_slug, req.headers.host);
+  if (!gym) return res.status(404).json({ error: 'Gimnasio no encontrado' });
+
+  // Always return ok to avoid email enumeration
+  const { data: user } = await supabase
+    .from('users')
+    .select('id, name, email')
+    .eq('email', email)
+    .eq('gym_id', gym.id)
+    .single();
+
+  if (user) {
+    // Invalidate previous reset tokens
+    await supabase.from('email_tokens').update({ used: true })
+      .eq('user_id', user.id).eq('type', 'reset').eq('used', false);
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await supabase.from('email_tokens').insert({
+      user_id: user.id,
+      gym_id: gym.id,
+      token,
+      type: 'reset',
+      expires_at: expiresAt.toISOString(),
+    });
+
+    const gymUrl = buildGymUrl(gym.slug);
+    try {
+      await sendPasswordResetEmail(user.email, user.name, gym.name ?? 'LIFT Fitness', token, gymUrl);
+    } catch (e) {
+      console.error('[forgot-password] Email send failed:', e);
+    }
+  }
+
+  return res.json({ ok: true, message: 'Si ese email está registrado, recibirás un enlace para restablecer tu contraseña.' });
+});
+
+// POST /api/auth/reset-password  { token, newPassword }
+router.post('/reset-password', async (req: Request, res: Response) => {
+  const { token, newPassword } = z.object({
+    token:       z.string().min(10),
+    newPassword: z.string().min(4),
+  }).parse(req.body);
+
+  const { data: row } = await supabase
+    .from('email_tokens')
+    .select('*')
+    .eq('token', token)
+    .eq('type', 'reset')
+    .single();
+
+  if (!row) return res.status(400).json({ error: 'El enlace no es válido.' });
+  if (row.used) return res.status(400).json({ error: 'Este enlace ya fue utilizado.' });
+  if (new Date(row.expires_at) < new Date()) return res.status(400).json({ error: 'El enlace expiró. Solicitá uno nuevo.' });
+
+  const { data: newHash } = await supabase.rpc('hash_password', { plain: newPassword }).single();
+  await supabase.from('users').update({ pass: newHash }).eq('id', row.user_id);
+  await supabase.from('email_tokens').update({ used: true }).eq('id', row.id);
+
+  return res.json({ ok: true, message: '¡Contraseña actualizada! Ya podés iniciar sesión.' });
 });
 
 export default router;

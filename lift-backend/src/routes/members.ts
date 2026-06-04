@@ -1,9 +1,11 @@
 // Tabla en Supabase: "users" (id bigint, pass, pin, etc.)
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+import crypto from 'crypto';
 import QRCode from 'qrcode';
 import { supabase } from '../config/supabase';
 import { authenticate, authorize, authorizeOwnerOrRoles } from '../middleware/auth';
+import { sendVerificationEmail } from '../services/email';
 
 const router = Router();
 router.use(authenticate);
@@ -105,6 +107,27 @@ router.post('/', authorize('admin', 'reception'), async (req: Request, res: Resp
     details: `${data.name} — Plan ${data.plan}`,
     gym_id: req.user!.gym_id,
   });
+
+  // Send verification email
+  try {
+    const verifyToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    await supabase.from('email_tokens').insert({
+      user_id: data.id,
+      gym_id: req.user!.gym_id,
+      token: verifyToken,
+      type: 'verify',
+      expires_at: expiresAt.toISOString(),
+    });
+    // Resolve gym slug for URL
+    const { data: gym } = await supabase.from('gyms').select('slug, name').eq('id', req.user!.gym_id).single();
+    const isLocal = process.env.NODE_ENV !== 'production';
+    const gymUrl = isLocal ? 'http://localhost:3000' : `https://${gym?.slug ?? 'lift'}.ctrlgym.org`;
+    await sendVerificationEmail(data.email, data.name, gym?.name ?? 'LIFT Fitness', verifyToken, gymUrl);
+  } catch (e) {
+    console.error('[members] Verification email failed:', e);
+    // Don't fail the request if email can't be sent
+  }
 
   return res.status(201).json({ ...data, pass: undefined });
 });
