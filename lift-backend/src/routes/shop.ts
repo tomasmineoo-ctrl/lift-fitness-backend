@@ -119,4 +119,41 @@ router.post('/orders', async (req: Request, res: Response) => {
   return res.status(201).json(order);
 });
 
+// GET /api/shop/ventas
+router.get('/ventas', authorize('admin', 'reception'), async (req: Request, res: Response) => {
+  const gymId = req.user!.gym_id;
+  const { data, error } = await supabase
+    .from('shop_ventas')
+    .select('*')
+    .eq('gym_id', gymId)
+    .order('created_at', { ascending: false })
+    .limit(500);
+  if (error) throw error;
+  return res.json(data || []);
+});
+
+// POST /api/shop/ventas
+router.post('/ventas', authorize('admin', 'reception'), async (req: Request, res: Response) => {
+  const schema = z.object({
+    producto_id:      z.string().optional().nullable(),
+    producto_nombre:  z.string().min(1),
+    producto_emoji:   z.string().optional().nullable(),
+    user_id:          z.number().int().optional().nullable(),
+    user_name:        z.string().optional().nullable(),
+    cantidad:         z.number().int().positive().default(1),
+    metodo_pago:      z.string().min(1),
+    precio_total:     z.number().nonnegative().default(0),
+    puntos_otorgados: z.number().int().nonnegative().default(0),
+    fecha:            z.string().optional(),
+  });
+  const body = schema.parse(req.body);
+  const { data, error } = await supabase
+    .from('shop_ventas')
+    .insert({ ...body, gym_id: req.user!.gym_id })
+    .select()
+    .single();
+  if (error) throw error;
+  return res.status(201).json(data);
+});
+
 export default router;

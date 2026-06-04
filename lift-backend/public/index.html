@@ -1509,7 +1509,8 @@ window.descargarBackup=async function(){const btn=document.getElementById('btnBa
 window.guardarBackupNube=async function(){const btn=document.getElementById('btnBackupSave');if(btn){btn.disabled=true;btn.textContent='⏳ Guardando...';}try{const res=await apiFetch('/api/admin/backup/save','POST');alert('✅ Backup guardado: '+res.filename);cargarListaBackups();}catch(e){alert('Error: '+e.message);}finally{if(btn){btn.disabled=false;btn.textContent='☁️ Guardar en nube';}}};
 window.cargarListaBackups=async function(){const el=document.getElementById('backupList');if(!el)return;el.innerHTML='<p style="color:var(--text3);font-size:.8rem">Cargando...</p>';try{const list=await apiFetch('/api/admin/backup/list');if(!list||!list.length){el.innerHTML='<p style="color:var(--text3);font-size:.8rem">Sin backups en la nube aún. El primero se creará esta noche a las 3:00 AM.</p>';return;}el.innerHTML='<table class="tbl"><tr><th>Archivo</th><th>Tamaño</th><th>Fecha</th><th></th></tr>'+list.map(f=>`<tr><td style="font-family:monospace;font-size:.72rem">${f.name}</td><td style="font-size:.72rem;color:var(--text3)">${f.metadata?.size?Math.round(f.metadata.size/1024)+' KB':'—'}</td><td style="font-size:.72rem;color:var(--text3)">${f.created_at?f.created_at.slice(0,19).replace('T',' '):'—'}</td><td><a href="/api/admin/backup/fetch/${f.name}" download="${f.name}" class="btn btnXs btnGhost">⬇️</a></td></tr>`).join('')+'</table>';}catch(e){el.innerHTML='<p style="color:var(--red);font-size:.8rem">Error al cargar backups: '+e.message+'</p>';}};
 async function refreshPayments(){try{const res=await apiFetch('/api/payments?limit=500');if(res&&res.data){paymentsDB=(res.data||[]).map(p=>({...p,userName:p.user_name||p.userName||'—',date:p.payment_date||p.date||''}));}}catch(e){console.warn('[refreshPayments]',e.message);}renderPaymentsTable();}
-function afterRender(view){if(view==='usuarios')renderUserTable();if(view==='adminPanel')renderAdminPanel();if(view==='panelSocios')renderPS();if(view==='backups')cargarListaBackups();if(view==='acceso')renderAccessLog();if(view==='pagos'||view==='gestionPagos')refreshPayments();if(view==='adminLogView'){setTimeout(()=>renderLog(),50);}if(view==='miQR'||view==='miCredencial')setTimeout(()=>startQRRotation(view),80);if(['mensajes','misMensajes'].includes(view))setTimeout(()=>{const el=document.getElementById('chatMsgs');if(el)el.scrollTop=el.scrollHeight;},50);}
+async function refreshShopVentas(){try{const data=await apiFetch('/api/shop/ventas');if(Array.isArray(data)){shopVentas=data.map(v=>({id:v.id,productoId:v.producto_id,productoNombre:v.producto_nombre,productoEmoji:v.producto_emoji||'🎁',userId:v.user_id,userName:v.user_name,cantidad:v.cantidad,metodoPago:v.metodo_pago,precioTotal:+v.precio_total,puntosOtorgados:v.puntos_otorgados,fecha:v.fecha}));document.getElementById('content').innerHTML=views.adminShop();afterRender('_adminShopInner');}}catch(e){console.warn('[refreshShopVentas]',e.message);}}
+function afterRender(view){if(view==='usuarios')renderUserTable();if(view==='adminPanel')renderAdminPanel();if(view==='panelSocios')renderPS();if(view==='backups')cargarListaBackups();if(view==='acceso')renderAccessLog();if(view==='pagos'||view==='gestionPagos')refreshPayments();if(view==='adminShop')refreshShopVentas();if(view==='adminLogView'){setTimeout(()=>renderLog(),50);}if(view==='miQR'||view==='miCredencial')setTimeout(()=>startQRRotation(view),80);if(['mensajes','misMensajes'].includes(view))setTimeout(()=>{const el=document.getElementById('chatMsgs');if(el)el.scrollTop=el.scrollHeight;},50);}
 let _qrTimer=null;
 // Genera el token temporal rotativo: epoch//30 XOR con id o email para ser único por usuario
 function getTOTPSlot(){return Math.floor(Date.now()/30000);}
@@ -3105,8 +3106,12 @@ function confirmarVentaShop(id){
     }
   }
   // Registrar venta
-  shopVentas.push({id:Date.now(),productoId:p.id,productoNombre:p.nombre,productoEmoji:p.imagen,userId:socio?.id||null,userName:socio?.name||null,cantidad:cant,metodoPago:metodo,precioTotal,puntosOtorgados,fecha:new Date().toISOString().slice(0,10)});
-  saveShop();closeModal();
+  const ventaLocal={id:Date.now(),productoId:p.id,productoNombre:p.nombre,productoEmoji:p.imagen,userId:socio?.id||null,userName:socio?.name||null,cantidad:cant,metodoPago:metodo,precioTotal,puntosOtorgados,fecha:new Date().toISOString().slice(0,10)};
+  shopVentas.push(ventaLocal);
+  saveShop();
+  // Persistir en backend
+  apiFetch('/api/shop/ventas','POST',{producto_id:String(p.id),producto_nombre:p.nombre,producto_emoji:p.imagen||null,user_id:socio?.id||null,user_name:socio?.name||null,cantidad:cant,metodo_pago:metodo,precio_total:precioTotal,puntos_otorgados:puntosOtorgados,fecha:new Date().toISOString().slice(0,10)}).catch(e=>console.warn('[shop/ventas POST]',e.message));
+  closeModal();
   window._shopTab='ventas';
   navigate('adminShop');
 }
