@@ -60,9 +60,10 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
 .logoutBtn{background:none;border:1px solid var(--border2);color:var(--text3);padding:6px 14px;border-radius:3px;cursor:pointer;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;font-weight:600;transition:all .12s}
 .logoutBtn:hover{border-color:var(--red);color:var(--red)}
 .mainLayout{display:flex;flex:1;overflow:hidden}
-.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;padding-bottom:20px}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;overflow:hidden}
+.sidebarNav{flex:1;overflow-y:auto;padding-bottom:8px}
 /* ── SOPORTE 24/7 ── */
-.sidebarSupportBtn{position:sticky;bottom:0;margin:12px 10px 0;background:linear-gradient(135deg,var(--accent),var(--indigo));border-radius:8px;padding:10px 12px;cursor:pointer;font-size:.75rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:7px;letter-spacing:.3px;transition:opacity .2s;user-select:none;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.1em}
+.sidebarSupportBtn{margin:12px 10px 12px;background:linear-gradient(135deg,var(--accent),var(--indigo));border-radius:8px;padding:10px 12px;cursor:pointer;font-size:.75rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:7px;letter-spacing:.3px;transition:opacity .2s;user-select:none;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.1em}
 .sidebarSupportBtn:hover{opacity:.85}
 .sidebarSupportBtn .suppPulse{width:7px;height:7px;border-radius:50%;background:#fff;opacity:.8;animation:suppPulse 2s infinite;flex-shrink:0}
 @keyframes suppPulse{0%,100%{opacity:.8;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
@@ -817,7 +818,7 @@ function buildSidebar(){
   else if(currentUser.role==='reception')nav=receptionNav;
   else if(currentUser.role==='user')nav=userNav;
   else if(currentUser.role==='nutritionist')nav=nutriNav;
-  document.getElementById('sidebar').innerHTML=nav.map(n=>{
+  const navHtml=nav.map(n=>{
     if(n.section)return`<div class="sideSection">${n.section}</div>`;
     if(n.group){
       const sub=n.items.map(i=>`<div class="navItem navSubItem" id="nav_${i.id}" onclick="navigate('${i.id}');_openGrp('${n.gid}')">${i.label}</div>`).join('');
@@ -825,8 +826,9 @@ function buildSidebar(){
     }
     return`<div class="navItem" id="nav_${n.id}" onclick="navigate('${n.id}')"><span class="icon">${n.icon}</span>${n.label}</div>`;
   }).join('');
-  // Botón soporte 24/7 al fondo del sidebar
-  document.getElementById('sidebar').innerHTML+='<div class="sidebarSupportBtn" onclick="openSupportChat()"><div class="suppPulse"></div>🤖 Soporte 24/7</div>';
+  document.getElementById('sidebar').innerHTML=
+    `<div class="sidebarNav">${navHtml}</div>`+
+    `<div class="sidebarSupportBtn" onclick="openSupportChat()"><div class="suppPulse"></div>🤖 Soporte 24/7</div>`;
 }
 window.toggleNavGrp=function(gid){const h=document.querySelector(`#${gid} .navGroupHeader`),it=document.getElementById(`gi_${gid}`);if(!h||!it)return;const op=it.classList.contains('gopen');document.querySelectorAll('.navGroupItems').forEach(e=>e.classList.remove('gopen'));document.querySelectorAll('.navGroupHeader').forEach(e=>e.classList.remove('gopen'));if(!op){it.classList.add('gopen');h.classList.add('gopen');}};
 window._openGrp=function(gid){const h=document.querySelector(`#${gid} .navGroupHeader`),it=document.getElementById(`gi_${gid}`);if(h&&it){it.classList.add('gopen');h.classList.add('gopen');}};
