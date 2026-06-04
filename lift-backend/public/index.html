@@ -554,9 +554,11 @@ let shopProductos = [
   {id:6,nombre:'Evaluación física gratis',categoria:'Servicios',precio:0,puntos:1000,imagen:'📊',stock:99,activo:true,tipo:'puntos'}
 ];
 let shopPedidos = [];
+let shopVentas = [];
 try{const sp=localStorage.getItem('gp_shopProductos');if(sp)shopProductos=JSON.parse(sp);}catch(e){}
 try{const sped=localStorage.getItem('gp_shopPedidos');if(sped)shopPedidos=JSON.parse(sped);}catch(e){}
-function saveShop(){try{localStorage.setItem('gp_shopProductos',JSON.stringify(shopProductos));localStorage.setItem('gp_shopPedidos',JSON.stringify(shopPedidos));}catch(e){}}
+try{const sv=localStorage.getItem('gp_shopVentas');if(sv)shopVentas=JSON.parse(sv);}catch(e){}
+function saveShop(){try{localStorage.setItem('gp_shopProductos',JSON.stringify(shopProductos));localStorage.setItem('gp_shopPedidos',JSON.stringify(shopPedidos));localStorage.setItem('gp_shopVentas',JSON.stringify(shopVentas));}catch(e){}}
 
 // ── COMUNIDAD ──
 let comunidadPosts = [
@@ -2461,13 +2463,31 @@ function confirmarCanje(prodId){
 // ═══════════════════════════════════════════════════════════
 views.adminShop = () => {
   const pending = shopPedidos.filter(p=>p.estado==='pendiente');
+  const tab = window._shopTab||'productos';
+  const ingresoShop = shopVentas.filter(v=>v.metodoPago!=='puntos').reduce((s,v)=>s+(v.precioTotal||0),0);
+  const ventasHoy = shopVentas.filter(v=>v.fecha===today().toISOString().slice(0,10)).length;
   return `
   <div class="pageTitle">Gestionar Shop 🛍️</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+    <div class="card" style="text-align:center;padding:14px">
+      <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Productos activos</div>
+      <div style="font-size:1.8rem;font-weight:800;font-family:'Barlow Condensed',sans-serif">${shopProductos.filter(p=>p.activo!==false).length}</div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px">
+      <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Ventas totales</div>
+      <div style="font-size:1.8rem;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--green)">${shopVentas.length}</div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px">
+      <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Ingresos totales</div>
+      <div style="font-size:1.8rem;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--accent)">$${ingresoShop.toFixed(2)}</div>
+    </div>
+  </div>
+
   ${pending.length?`
   <div class="card" style="margin-bottom:14px;border-top:2px solid var(--orange)">
-    <h3>Canjes pendientes (${pending.length})</h3>
+    <h3>⏳ Canjes de puntos pendientes (${pending.length})</h3>
     ${pending.map(p=>`
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--surface2);border-radius:2px;border:1px solid var(--border);margin-bottom:6px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--surface2);border-radius:4px;border:1px solid var(--border);margin-bottom:6px">
         <div><div style="font-weight:600;font-size:.85rem">${p.userName}</div><div style="font-size:.72rem;color:var(--text3)">${p.productoNombre} · ${p.fecha}</div></div>
         <div style="display:flex;gap:6px">
           <button class="btn btnSuccess btnXs" onclick="entregarCanje(${p.id})">✓ Entregar</button>
@@ -2475,53 +2495,207 @@ views.adminShop = () => {
         </div>
       </div>`).join('')}
   </div>`:''}
+
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <button class="btn ${tab==='productos'?'btnAccent':'btnGhost'} btnSm" onclick="window._shopTab='productos';navigate('adminShop')">📦 Productos</button>
+    <button class="btn ${tab==='ventas'?'btnAccent':'btnGhost'} btnSm" onclick="window._shopTab='ventas';navigate('adminShop')">🧾 Historial de ventas</button>
+  </div>
+
+  ${tab==='productos'?`
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <h3 style="margin-bottom:0">Productos del Shop</h3>
       <button class="btn btnAccent btnSm" onclick="openNuevoProductoShop()">+ Producto</button>
     </div>
     <table class="tbl">
-      <tr><th>Producto</th><th>Tipo</th><th>Pts/Precio</th><th>Stock</th><th></th></tr>
-      ${shopProductos.map(p=>`<tr>
-        <td>${p.imagen} ${p.nombre}</td>
-        <td><span class="badge ${p.tipo==='puntos'?'active':p.tipo==='dinero'?'warning':'info'}">${p.tipo}</span></td>
-        <td>${p.tipo==='dinero'?'$'+p.precio.toFixed(2):p.puntos.toLocaleString()+' pts'}</td>
-        <td>${p.stock}</td>
-        <td style="display:flex;gap:4px">
-          <button class="btn btnDanger btnXs" onclick="shopProductos=shopProductos.filter(x=>x.id!==${p.id});saveShop();navigate('adminShop')">✕</button>
+      <tr><th>Producto</th><th>Tipo</th><th>Precio</th><th>Puntos</th><th>Pts ganados</th><th>Stock</th><th>Acciones</th></tr>
+      ${shopProductos.map(p=>`<tr style="${(p.stock!==undefined&&p.stock<=3&&p.stock>=0)?'background:rgba(255,59,48,.05)':''}">
+        <td><span style="font-size:1.1rem">${p.imagen}</span> <strong>${p.nombre}</strong><br><span style="font-size:.68rem;color:var(--text3)">${p.categoria||''}</span></td>
+        <td><span class="badge ${p.tipo==='puntos'?'active':p.tipo==='dinero'?'warning':'info'}">${p.tipo==='puntos'?'Puntos':p.tipo==='dinero'?'Dinero':'Mixto'}</span></td>
+        <td>${(p.tipo==='puntos')?'—':'$'+Number(p.precio||0).toFixed(2)}</td>
+        <td>${(p.tipo==='dinero')?'—':Number(p.puntos||0).toLocaleString()+' pts'}</td>
+        <td style="color:var(--green)">${p.ptsGanados?'+'+p.ptsGanados+' pts':'—'}</td>
+        <td><span style="font-weight:700;color:${p.stock<=3?'var(--red)':p.stock<=10?'var(--orange)':'var(--green)'}">${p.stock===999||p.stock===99?'∞':p.stock}</span></td>
+        <td>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <button class="btn btnAccent btnXs" onclick="openRegistrarVenta(${p.id})" ${p.stock===0?'disabled':''}>💰 Vender</button>
+            <button class="btn btnSm btnXs" style="background:var(--surface2);border:1px solid var(--border2)" onclick="openAgregarStock(${p.id})">+Stock</button>
+            <button class="btn btnSm btnXs" style="background:var(--surface2);border:1px solid var(--border2)" onclick="openEditarProductoShop(${p.id})">✏️</button>
+            <button class="btn btnDanger btnXs" onclick="eliminarProductoShop(${p.id})">✕</button>
+          </div>
         </td>
       </tr>`).join('')}
     </table>
-  </div>`;
+  </div>`:`
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="margin-bottom:0">Historial de ventas</h3>
+      <span style="font-size:.75rem;color:var(--text3)">${shopVentas.length} venta${shopVentas.length!==1?'s':''} registrada${shopVentas.length!==1?'s':''}</span>
+    </div>
+    ${shopVentas.length===0?`<div style="text-align:center;padding:32px;color:var(--text3)">No hay ventas registradas aún.</div>`:`
+    <table class="tbl">
+      <tr><th>Fecha</th><th>Producto</th><th>Socio</th><th>Método</th><th>Precio</th><th>Cant.</th><th>Pts otorgados</th></tr>
+      ${[...shopVentas].reverse().map(v=>`<tr>
+        <td style="font-size:.75rem;color:var(--text3)">${v.fecha}</td>
+        <td>${v.productoEmoji||'🎁'} ${v.productoNombre}</td>
+        <td>${v.userName||'<span style="color:var(--text3)">—</span>'}</td>
+        <td><span class="badge ${v.metodoPago==='puntos'?'active':v.metodoPago==='efectivo'?'warning':v.metodoPago==='transferencia'?'info':''}">
+          ${v.metodoPago==='efectivo'?'💵 Efectivo':v.metodoPago==='transferencia'?'📲 Transferencia':v.metodoPago==='puntos'?'⭐ Puntos':'Mixto'}
+        </span></td>
+        <td>${v.metodoPago==='puntos'?'—':'$'+Number(v.precioTotal||0).toFixed(2)}</td>
+        <td>${v.cantidad||1}</td>
+        <td style="color:var(--green)">${v.puntosOtorgados?'+'+v.puntosOtorgados:'—'}</td>
+      </tr>`).join('')}
+    </table>`}
+  </div>`}`;
 };
 function entregarCanje(id){const p=shopPedidos.find(x=>x.id===id);if(p){p.estado='entregado';saveShop();navigate('adminShop');}}
 function rechazarCanje(id){
   const p=shopPedidos.find(x=>x.id===id);
   if(!p)return;
-  // Reembolsar puntos
   const u=users.find(x=>x.id===p.userId);
   if(u) puntosLog.push({id:Date.now(),userId:u.id,userName:u.name,accion:'reto',puntos:p.puntos,fecha:new Date().toISOString().slice(0,10),detalle:'Reembolso canje '+p.productoNombre});
   p.estado='rechazado';savePuntos();saveShop();navigate('adminShop');
 }
+function eliminarProductoShop(id){
+  if(!confirm('¿Eliminar este producto del shop?'))return;
+  shopProductos=shopProductos.filter(x=>x.id!==id);
+  saveShop();navigate('adminShop');
+}
 function openNuevoProductoShop(){
   openModal(`
-    <h3>Nuevo producto shop</h3>
+    <h3>➕ Nuevo producto</h3>
     <div class="formGrid">
       <div class="formGroup"><label>Nombre</label><input id="spNom" placeholder="Remera LIFT"/></div>
       <div class="formGroup"><label>Categoría</label><input id="spCat" placeholder="Indumentaria"/></div>
-      <div class="formGroup"><label>Tipo</label><select id="spTipo"><option value="puntos">Solo puntos</option><option value="dinero">Solo dinero</option><option value="mixto">Mixto</option></select></div>
-      <div class="formGroup"><label>Puntos</label><input id="spPts" type="number" placeholder="2500"/></div>
+      <div class="formGroup"><label>Emoji</label><input id="spEmoji" placeholder="👕" style="width:70px"/></div>
+      <div class="formGroup"><label>Tipo de venta</label>
+        <select id="spTipo">
+          <option value="puntos">Solo puntos</option>
+          <option value="dinero">Solo dinero</option>
+          <option value="mixto">Mixto (puntos o dinero)</option>
+        </select>
+      </div>
       <div class="formGroup"><label>Precio ($)</label><input id="spPre" type="number" step="0.50" placeholder="25.00"/></div>
-      <div class="formGroup"><label>Stock</label><input id="spStock" type="number" value="10"/></div>
-      <div class="formGroup"><label>Emoji</label><input id="spEmoji" placeholder="👕"/></div>
+      <div class="formGroup"><label>Precio en puntos</label><input id="spPts" type="number" placeholder="2500"/></div>
+      <div class="formGroup"><label>Pts ganados al comprar con $</label><input id="spPtsGan" type="number" placeholder="100"/></div>
+      <div class="formGroup"><label>Stock (999 = ilimitado)</label><input id="spStock" type="number" value="10"/></div>
     </div>
     <div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="guardarNuevoShopProducto()">Guardar</button></div>
   `);
 }
 function guardarNuevoShopProducto(){
   const get=i=>document.getElementById(i)?.value||'';
-  shopProductos.push({id:Date.now(),nombre:get('spNom'),categoria:get('spCat'),tipo:get('spTipo'),precio:+get('spPre')||0,puntos:+get('spPts')||0,imagen:get('spEmoji')||'🎁',stock:+get('spStock')||99,activo:true});
+  shopProductos.push({id:Date.now(),nombre:get('spNom'),categoria:get('spCat'),tipo:get('spTipo'),precio:+get('spPre')||0,puntos:+get('spPts')||0,ptsGanados:+get('spPtsGan')||0,imagen:get('spEmoji')||'🎁',stock:+get('spStock')||10,activo:true});
   saveShop();closeModal();navigate('adminShop');
+}
+function openEditarProductoShop(id){
+  const p=shopProductos.find(x=>x.id===id);if(!p)return;
+  openModal(`
+    <h3>✏️ Editar producto</h3>
+    <div class="formGrid">
+      <div class="formGroup"><label>Nombre</label><input id="epNom" value="${p.nombre}"/></div>
+      <div class="formGroup"><label>Categoría</label><input id="epCat" value="${p.categoria||''}"/></div>
+      <div class="formGroup"><label>Emoji</label><input id="epEmoji" value="${p.imagen||'🎁'}" style="width:70px"/></div>
+      <div class="formGroup"><label>Tipo de venta</label>
+        <select id="epTipo">
+          <option value="puntos" ${p.tipo==='puntos'?'selected':''}>Solo puntos</option>
+          <option value="dinero" ${p.tipo==='dinero'?'selected':''}>Solo dinero</option>
+          <option value="mixto" ${p.tipo==='mixto'?'selected':''}>Mixto</option>
+        </select>
+      </div>
+      <div class="formGroup"><label>Precio ($)</label><input id="epPre" type="number" step="0.50" value="${p.precio||0}"/></div>
+      <div class="formGroup"><label>Precio en puntos</label><input id="epPts" type="number" value="${p.puntos||0}"/></div>
+      <div class="formGroup"><label>Pts ganados al comprar con $</label><input id="epPtsGan" type="number" value="${p.ptsGanados||0}"/></div>
+      <div class="formGroup"><label>Stock (999 = ilimitado)</label><input id="epStock" type="number" value="${p.stock}"/></div>
+    </div>
+    <div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="guardarEditarShopProducto(${id})">Guardar cambios</button></div>
+  `);
+}
+function guardarEditarShopProducto(id){
+  const p=shopProductos.find(x=>x.id===id);if(!p)return;
+  const get=i=>document.getElementById(i)?.value||'';
+  p.nombre=get('epNom');p.categoria=get('epCat');p.imagen=get('epEmoji')||p.imagen;
+  p.tipo=get('epTipo');p.precio=+get('epPre')||0;p.puntos=+get('epPts')||0;
+  p.ptsGanados=+get('epPtsGan')||0;p.stock=+get('epStock');
+  saveShop();closeModal();navigate('adminShop');
+}
+function openAgregarStock(id){
+  const p=shopProductos.find(x=>x.id===id);if(!p)return;
+  openModal(`
+    <h3>📦 Agregar stock — ${p.imagen} ${p.nombre}</h3>
+    <div style="margin-bottom:12px;color:var(--text3);font-size:.85rem">Stock actual: <strong style="color:var(--text)">${p.stock}</strong></div>
+    <div class="formGroup"><label>Cantidad a agregar</label><input id="asQty" type="number" value="10" min="1"/></div>
+    <div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="confirmarAgregarStock(${id})">Agregar</button></div>
+  `);
+}
+function confirmarAgregarStock(id){
+  const p=shopProductos.find(x=>x.id===id);if(!p)return;
+  const qty=+document.getElementById('asQty')?.value||0;
+  if(qty<=0)return;
+  p.stock+=qty;
+  saveShop();closeModal();navigate('adminShop');
+}
+function openRegistrarVenta(id){
+  const p=shopProductos.find(x=>x.id===id);if(!p)return;
+  const userOptions=users.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+  openModal(`
+    <h3>💰 Registrar venta — ${p.imagen} ${p.nombre}</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;background:var(--surface2);border-radius:6px;padding:10px;font-size:.8rem">
+      ${p.tipo!=='puntos'?`<div>Precio: <strong>$${Number(p.precio||0).toFixed(2)}</strong></div>`:''}
+      ${p.tipo!=='dinero'?`<div>En puntos: <strong>${Number(p.puntos||0).toLocaleString()} pts</strong></div>`:''}
+      <div>Stock disponible: <strong>${p.stock===999?'∞':p.stock}</strong></div>
+    </div>
+    <div class="formGrid">
+      <div class="formGroup"><label>Método de pago</label>
+        <select id="rvMetodo">
+          ${p.tipo!=='puntos'?'<option value="efectivo">💵 Efectivo</option><option value="transferencia">📲 Transferencia</option>':''}
+          ${p.tipo!=='dinero'?'<option value="puntos">⭐ Puntos</option>':''}
+          ${p.tipo==='mixto'?'<option value="mixto">🔀 Mixto</option>':''}
+        </select>
+      </div>
+      <div class="formGroup"><label>Cantidad</label><input id="rvCant" type="number" value="1" min="1" max="${p.stock===999?999:p.stock}"/></div>
+      <div class="formGroup" style="grid-column:1/-1"><label>Socio (opcional — para sumarle puntos)</label>
+        <select id="rvSocio">
+          <option value="">— Sin socio —</option>
+          ${userOptions}
+        </select>
+      </div>
+    </div>
+    <div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="confirmarVentaShop(${id})">✓ Registrar venta</button></div>
+  `);
+}
+function confirmarVentaShop(id){
+  const p=shopProductos.find(x=>x.id===id);if(!p)return;
+  const metodo=document.getElementById('rvMetodo')?.value||'efectivo';
+  const cant=+document.getElementById('rvCant')?.value||1;
+  const socioId=document.getElementById('rvSocio')?.value||'';
+  const socio=socioId?users.find(x=>x.id===+socioId||x.id===socioId):null;
+  if(p.stock!==999&&p.stock!==999&&p.stock<cant){alert('Stock insuficiente.');return;}
+  // Descontar stock
+  if(p.stock!==999)p.stock=Math.max(0,p.stock-cant);
+  // Calcular precio total
+  const precioTotal = metodo==='puntos'?0:Number(p.precio||0)*cant;
+  // Puntos a otorgar al socio
+  let puntosOtorgados=0;
+  if(socio){
+    if(metodo==='puntos'){
+      // Descontar puntos del socio
+      const ptsDeducir=Number(p.puntos||0)*cant;
+      puntosLog.push({id:Date.now(),userId:socio.id,userName:socio.name,accion:'shop',puntos:-ptsDeducir,fecha:new Date().toISOString().slice(0,10),detalle:'Canje: '+p.nombre});
+      savePuntos();
+    } else if(p.ptsGanados&&p.ptsGanados>0){
+      // Sumar puntos por compra con dinero
+      puntosOtorgados=p.ptsGanados*cant;
+      puntosLog.push({id:Date.now(),userId:socio.id,userName:socio.name,accion:'shop',puntos:puntosOtorgados,fecha:new Date().toISOString().slice(0,10),detalle:'Compra shop: '+p.nombre});
+      savePuntos();
+    }
+  }
+  // Registrar venta
+  shopVentas.push({id:Date.now(),productoId:p.id,productoNombre:p.nombre,productoEmoji:p.imagen,userId:socio?.id||null,userName:socio?.name||null,cantidad:cant,metodoPago:metodo,precioTotal,puntosOtorgados,fecha:new Date().toISOString().slice(0,10)});
+  saveShop();closeModal();
+  window._shopTab='ventas';
+  navigate('adminShop');
 }
 
 // ═══════════════════════════════════════════════════════════
