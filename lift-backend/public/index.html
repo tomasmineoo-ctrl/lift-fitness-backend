@@ -1373,7 +1373,86 @@ trainerDashboard:()=>{const tp=getMyTrainerProfile()||{students:[]};const myStud
 
 trainerStudents:()=>{const tp=getMyTrainerProfile()||{students:[]};const myStudents=tp.students||[];return`<div class="pageTitle">Mis Alumnos</div><div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btnAccent" onclick="openAddStudent()">+ Nuevo alumno</button></div>${myStudents.length===0?`<div class="card" style="text-align:center;padding:32px"><p style="color:var(--text2)">No tenés alumnos aún.</p></div>`:''}${myStudents.map(s=>{const last=s.metrics&&s.metrics.length?s.metrics[s.metrics.length-1]:null;const first=s.metrics&&s.metrics.length?s.metrics[0]:null;const diff=first&&last&&s.metrics.length>1?+(last.weight-first.weight).toFixed(1):null;return`<div class="trainerStudentCard"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><h4 style="font-size:.95rem">${s.name}</h4><div style="font-size:.73rem;color:var(--text3);margin-top:2px">${s.goal}</div><span class="badge active" style="margin-top:4px">${s.level}</span></div><div style="display:flex;gap:5px"><button class="btn btnSm btnInfo" onclick="openStudentDetail(${s.id})">Ver perfil</button><button class="btn btnSm btnAccent" onclick="openAddMetric(${s.id})">+ Medición</button><button class="btn btnSm btnDanger" onclick="deleteStudent(${s.id})">✕</button></div></div>${s.notes?`<div style="font-size:.74rem;color:var(--text3);background:var(--surface3);padding:6px 10px;border-radius:2px;margin-bottom:8px">📝 ${s.notes}</div>`:''}<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:6px;margin-bottom:8px">${last?`<div class="healthItem"><div class="hVal">${last.weight}kg</div><div class="hLbl">Peso</div></div><div class="healthItem"><div class="hVal">${last.bf||'—'}%</div><div class="hLbl">Grasa</div></div><div class="healthItem"><div class="hVal">${last.muscle||'—'}kg</div><div class="hLbl">Músculo</div></div><div class="healthItem"><div class="hVal">${last.waist||'—'}cm</div><div class="hLbl">Cintura</div></div><div class="healthItem"><div class="hVal">${last.arm||'—'}cm</div><div class="hLbl">Brazo</div></div>${diff!==null?`<div class="healthItem"><div class="hVal" style="color:${diff<0?'var(--green)':diff>0?'var(--red)':'var(--text2)'}">${diff>0?'+':''}${diff}kg</div><div class="hLbl">Variación</div></div>`:''}`:`<div style="color:var(--text3);font-size:.76rem;grid-column:1/-1">Sin mediciones todavía</div>`}</div><div style="display:flex;flex-wrap:wrap;gap:3px">${(s.customFields||[]).map(f=>`<span class="metricTag">${f.key}: ${f.value}</span>`).join('')}</div></div>`;}).join('')}`;},
 
-maquinas:()=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="pageTitle" style="margin:0">Máquinas</div>${currentUser.role!=='user'?`<button class="btn btnAccent" onclick="openNewMachine()">+ Máquina</button>`:''}</div><div class="machineGrid">${renderMachines()}</div>`,
+maquinas:()=>{
+  const canEdit=currentUser.role==='admin';
+  const canReport=['admin','reception','trainer','nutritionist','user','cafeteria'].includes(currentUser.role);
+  const STATUS_MAQUINA={disponible:{label:'Disponible',color:'var(--green)',icon:'✅'},reportada:{label:'Reportada',color:'var(--orange)',icon:'⚠️'},reparacion:{label:'En reparación',color:'var(--blue)',icon:'🔧'},fuera:{label:'Fuera de servicio',color:'var(--red)',icon:'❌'}};
+  const MUSCULOS=['Pecho','Espalda','Hombros','Bíceps','Tríceps','Piernas','Glúteos','Core/Abdomen','Cardio','Full Body'];
+  // Filtro activo
+  const filtroStatus=window._maqFiltro||'';
+  const filtroSearch=window._maqSearch||'';
+  const lista=machines.filter(m=>{
+    const st=m.status||'disponible';
+    const ok=(!filtroStatus||st===filtroStatus)&&(!filtroSearch||m.name.toLowerCase().includes(filtroSearch.toLowerCase())||( m.category||'').toLowerCase().includes(filtroSearch.toLowerCase()));
+    return ok;
+  });
+  // Stats inventario
+  const total=machines.length;
+  const disp=machines.filter(m=>!m.status||m.status==='disponible').length;
+  const report=machines.filter(m=>m.status==='reportada').length;
+  const rep=machines.filter(m=>m.status==='reparacion').length;
+  const fuera=machines.filter(m=>m.status==='fuera').length;
+  return`
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+  <div class="pageTitle" style="margin:0">🏋️ Máquinas</div>
+  ${canEdit?`<button class="btn btnAccent" onclick="openNewMachine()">+ Nueva Máquina</button>`:''}
+</div>
+
+<!-- INVENTARIO KPIs -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
+  <div onclick="window._maqFiltro='';navigate('maquinas')" style="background:var(--surface);border:1px solid ${!filtroStatus?'var(--accent)':'#1a1a1a'};border-radius:4px;padding:10px;text-align:center;cursor:pointer">
+    <div style="font-size:1.3rem;font-weight:700;font-family:'Barlow Condensed',sans-serif;color:var(--white)">${total}</div>
+    <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Total</div>
+  </div>
+  <div onclick="window._maqFiltro='disponible';navigate('maquinas')" style="background:var(--surface);border:1px solid ${filtroStatus==='disponible'?'var(--green)':'#1a1a1a'};border-radius:4px;padding:10px;text-align:center;cursor:pointer">
+    <div style="font-size:1.3rem;font-weight:700;font-family:'Barlow Condensed',sans-serif;color:var(--green)">${disp}</div>
+    <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Disponibles</div>
+  </div>
+  <div onclick="window._maqFiltro='reportada';navigate('maquinas')" style="background:var(--surface);border:1px solid ${filtroStatus==='reportada'?'var(--orange)':'#1a1a1a'};border-radius:4px;padding:10px;text-align:center;cursor:pointer">
+    <div style="font-size:1.3rem;font-weight:700;font-family:'Barlow Condensed',sans-serif;color:var(--orange)">${report}</div>
+    <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Reportadas</div>
+  </div>
+  <div onclick="window._maqFiltro='fuera';navigate('maquinas')" style="background:var(--surface);border:1px solid ${filtroStatus==='fuera'?'var(--red)':'#1a1a1a'};border-radius:4px;padding:10px;text-align:center;cursor:pointer">
+    <div style="font-size:1.3rem;font-weight:700;font-family:'Barlow Condensed',sans-serif;color:var(--red)">${fuera}</div>
+    <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Fuera servicio</div>
+  </div>
+</div>
+
+<!-- BUSCADOR -->
+<div style="margin-bottom:12px">
+  <input placeholder="🔍 Buscar por nombre o categoría..." value="${filtroSearch}" oninput="window._maqSearch=this.value;navigate('maquinas')" style="width:100%;padding:9px 14px;background:var(--surface);border:1px solid #2a2a2a;border-radius:4px;color:var(--text);font-size:.82rem;font-family:'Barlow',sans-serif"/>
+</div>
+
+<!-- GRILLA DE MÁQUINAS -->
+${lista.length===0?`<div class="card" style="text-align:center;padding:32px;color:var(--text3)">Sin máquinas${filtroStatus||filtroSearch?' con ese filtro':' cargadas'}</div>`
+:`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+${lista.map(m=>{
+  const st=STATUS_MAQUINA[m.status||'disponible']||STATUS_MAQUINA.disponible;
+  const muscs=(m.muscles||[]).slice(0,3).join(', ');
+  return`<div class="card" style="padding:0;overflow:hidden;border-top:3px solid ${st.color}">
+    ${m.photo?`<div style="width:100%;height:130px;overflow:hidden;background:#0a0a0a"><img src="${m.photo}" style="width:100%;height:100%;object-fit:cover"/></div>`
+      :`<div style="width:100%;height:80px;background:#0d0d0d;display:flex;align-items:center;justify-content:center;font-size:2rem">🏋️</div>`}
+    <div style="padding:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div>
+          <div style="font-size:.6rem;color:var(--text3);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px">${m.category||'Sin categoría'}</div>
+          <div style="font-size:.88rem;font-weight:700;color:var(--white)">${m.name}</div>
+        </div>
+        <span style="font-size:.6rem;background:${st.color}22;color:${st.color};border:1px solid ${st.color}55;padding:2px 7px;border-radius:2px;white-space:nowrap;font-weight:700">${st.icon} ${st.label}</span>
+      </div>
+      ${muscs?`<div style="font-size:.65rem;color:var(--accent);margin-bottom:8px">💪 ${muscs}</div>`:''}
+      ${m.description?`<p style="font-size:.72rem;color:var(--text3);margin-bottom:10px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${m.description}</p>`:''}
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn btnSm btnInfo" onclick="viewMachine(${m.id})" style="font-size:.7rem">👁 Ver</button>
+        <button class="btn btnSm btnGhost" onclick="showMachineQR(${m.id})" style="font-size:.7rem">📱 QR</button>
+        ${canReport&&(m.status||'disponible')==='disponible'?`<button class="btn btnSm" onclick="reportarMaquina(${m.id})" style="background:rgba(255,159,10,.1);color:var(--orange);border:1px solid rgba(255,159,10,.3);font-size:.7rem">⚠️ Reportar</button>`:''}
+        ${canEdit?`<button class="btn btnSm btnGhost" onclick="editMachine(${m.id})" style="font-size:.7rem">✏️</button><button class="btn btnSm btnDanger" onclick="deleteMachine(${m.id})" style="font-size:.7rem">✕</button>`:''}
+        ${canEdit&&m.status&&m.status!=='disponible'?`<button class="btn btnSm" onclick="cambiarEstadoMaquina(${m.id},'disponible')" style="background:rgba(48,209,88,.1);color:var(--green);border:1px solid rgba(48,209,88,.3);font-size:.7rem">✅ Disponible</button>`:''}
+      </div>
+    </div>
+  </div>`;}).join('')}
+</div>`}
+`;},
 
 acceso:()=>`<div class="pageTitle">Control de Acceso</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px"><div class="card"><h3>Validar ingreso</h3><div class="tabs" style="margin-bottom:10px"><div class="tab active" onclick="switchAccessTab(this,'atEmail')">Por Email</div><div class="tab" onclick="switchAccessTab(this,'atPin')">Por PIN</div></div><div id="atEmail"><input id="accessEmail" placeholder="Email del socio..." style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.82rem;margin-bottom:8px;font-family:'Barlow',sans-serif"/><button class="btn btnAccent" style="width:100%" onclick="validateAccess('email')">✓ Validar</button></div><div id="atPin" style="display:none"><div class="pinDisplay" id="pinAccessDisplay">—</div><div class="pinGrid">${[1,2,3,4,5,6,7,8,9,'⌫',0,'✓'].map(k=>`<div class="pinBtn" onclick="pinAccessPress('${k}')">${k}</div>`).join('')}</div></div><div id="accessResult" style="margin-top:10px"></div></div><div class="card"><h3>Hoy</h3><div class="healthGrid"><div class="healthItem"><div class="hVal" style="color:var(--green)">${accessLog.filter(l=>l.date===today().toISOString().slice(0,10)&&l.allowed&&l.type==='entry').length}</div><div class="hLbl">Entradas</div></div><div class="healthItem"><div class="hVal" style="color:var(--red)">${accessLog.filter(l=>l.date===today().toISOString().slice(0,10)&&!l.allowed).length}</div><div class="hLbl">Denegados</div></div><div class="healthItem"><div class="hVal">${accessLog.filter(l=>l.date===today().toISOString().slice(0,10)&&l.type==='exit').length}</div><div class="hLbl">Salidas</div></div></div></div></div><div class="card"><h3>Registro</h3><div class="filterBar"><select id="accType" onchange="renderAccessLog()"><option value="">Todos</option><option value="entry">Entradas</option><option value="exit">Salidas</option></select><select id="accResult" onchange="renderAccessLog()"><option value="">Todos</option><option value="ok">Permitidos</option><option value="denied">Denegados</option></select></div><div id="accessLogList"></div></div>`,
 
@@ -1858,11 +1937,196 @@ function openRoutine(id){const u=users.find(x=>x.id===id);if(!u)return;const day
 function addEx(di){const list=document.getElementById('exList_'+di);const div=document.createElement('div');div.className='exerciseItem';div.innerHTML=`<input style="flex:1;padding:3px 5px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" placeholder="Ejercicio"/><input style="width:42px;padding:3px 4px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" placeholder="Series"/><input style="width:42px;padding:3px 4px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" placeholder="Reps"/><input style="width:46px;padding:3px 4px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-size:.75rem;font-family:'Barlow',sans-serif" placeholder="Desc(s)"/><button class="btn btnXs btnDanger" onclick="removeEx(this)">✕</button>`;list.appendChild(div);}
 function removeEx(btn){btn.closest('.exerciseItem').remove();}
 function saveRoutine(id){const u=users.find(x=>x.id===id);const days=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];u.routine=days.map((d,i)=>{const list=document.getElementById('exList_'+i);const items=[...list.querySelectorAll('.exerciseItem')];return{day:d,exercises:items.map(el=>{const ins=[...el.querySelectorAll('input')];return{name:ins[0]?.value||'',sets:ins[1]?.value||'3',reps:ins[2]?.value||'10',rest:ins[3]?.value||'60'};}).filter(e=>e.name)};}).filter(d=>d.exercises.length>0);saveDB();closeModal();alert(`Rutina guardada para ${u.name}`);}
-function openNewMachine(){openModal(`<h3>Nueva Máquina</h3><div class="formGrid"><div class="formGroup"><label>Nombre *</label><input id="mName" placeholder="Nombre"/></div><div class="formGroup"><label>Categoría</label><input id="mCat" placeholder="Pecho, Espalda..."/></div><div class="formGroup fullWidth"><label>Descripción</label><textarea id="mDesc"></textarea></div><div class="formGroup fullWidth"><label>Instrucciones</label><textarea id="mUsage"></textarea></div><div class="formGroup fullWidth"><label>URL video YouTube</label><input id="mVideo" placeholder="https://youtube.com/..."/></div></div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="saveNewMachine()">Guardar</button></div>`);}
-function saveNewMachine(){const get=i=>document.getElementById(i)?.value||'';if(!get('mName')){alert('Nombre requerido');return;}machines.push({id:Date.now(),name:get('mName'),category:get('mCat'),description:get('mDesc'),usage:get('mUsage'),videoUrl:get('mVideo')});saveDB();closeModal();navigate('maquinas');}
-function deleteMachine(id){if(confirm('¿Eliminar?')){machines=machines.filter(m=>m.id!==id);saveDB();navigate('maquinas');}}
-function viewMachine(id){const m=machines.find(x=>x.id===id);const ytId=m.videoUrl.match(/(?:v=|youtu\.be\/)([^&\s]+)/)?.[1]||'';openModal(`<h3>${m.name}</h3><p style="font-size:.8rem;margin-bottom:10px;color:var(--text3)">${m.description}</p><div class="card" style="margin-bottom:10px"><h3>Instrucciones</h3><p style="font-size:.78rem;line-height:1.7;white-space:pre-line">${m.usage}</p></div>${ytId?`<div class="card"><h3>Video</h3><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:2px"><iframe src="https://www.youtube.com/embed/${ytId}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen></iframe></div></div>`:''}<div class="modalActions"><button class="btn btnAccent" onclick="closeModal()">Cerrar</button></div>`);}
-function showMachineQR(id){const m=machines.find(x=>x.id===id);openModal(`<h3>QR — ${m.name}</h3><div style="text-align:center"><div class="qrWrap"><canvas id="mqrCanvas"></canvas></div>${m.videoUrl?`<a href="${m.videoUrl}" target="_blank" style="display:inline-block;margin-top:8px;font-size:.73rem;color:var(--blue)">Abrir video</a>`:''}</div><div class="modalActions"><button class="btn btnAccent" onclick="closeModal()">Cerrar</button></div>`);setTimeout(()=>{const canvas=document.getElementById('mqrCanvas');if(!canvas)return;const size=155;canvas.width=canvas.height=size;const ctx=canvas.getContext('2d');const data=`LIFT_MACHINE|${m.id}|${m.name}`;ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);ctx.fillStyle='#000';const grid=15;const cell=size/grid;for(let i=0;i<grid;i++)for(let j=0;j<grid;j++){const val=(data.charCodeAt((i*grid+j)%data.length)+i*7+j*13)%2;if(val)ctx.fillRect(i*cell,j*cell,cell-1,cell-1);}[[0,0],[9,0],[0,9]].forEach(([x,y])=>{ctx.fillStyle='#000';ctx.fillRect(x*cell,y*cell,cell*5,cell*5);ctx.fillStyle='#fff';ctx.fillRect(x*cell+cell,y*cell+cell,cell*3,cell*3);ctx.fillStyle='#000';ctx.fillRect(x*cell+cell*1.5,y*cell+cell*1.5,cell*2,cell*2);});},80);}
+const MUSCULOS_LISTA=['Pecho','Espalda','Hombros','Bíceps','Tríceps','Piernas','Glúteos','Core/Abdomen','Cardio','Full Body'];
+function _maqFormHTML(m){
+  const muscs=m?m.muscles||[]:[];
+  return`
+<div style="max-height:70vh;overflow-y:auto;padding-right:4px">
+<div class="formGrid">
+  <div class="formGroup"><label>Nombre *</label><input id="mName" value="${m?m.name:''}" placeholder="Ej: Press de Banca"/></div>
+  <div class="formGroup"><label>Categoría</label><input id="mCat" value="${m?m.category||'':''}" placeholder="Pecho, Piernas, Cardio..."/></div>
+  <div class="formGroup" style="grid-column:1/-1"><label>Descripción</label><textarea id="mDesc" rows="2" style="resize:vertical">${m?m.description||'':''}</textarea></div>
+  <div class="formGroup" style="grid-column:1/-1"><label>Instrucciones de uso</label><textarea id="mUsage" rows="3" style="resize:vertical" placeholder="1. Ajustar el asiento...\n2. ...">${m?m.usage||'':''}</textarea></div>
+  <div class="formGroup" style="grid-column:1/-1"><label>Grupos musculares</label>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+      ${MUSCULOS_LISTA.map(mu=>`<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:.75rem;color:var(--text2)"><input type="checkbox" value="${mu}" ${muscs.includes(mu)?'checked':''} style="accent-color:var(--accent)"/>${mu}</label>`).join('')}
+    </div>
+  </div>
+  <div class="formGroup" style="grid-column:1/-1"><label>URL Video (YouTube o directo)</label><input id="mVideo" value="${m?m.videoUrl||'':''}" placeholder="https://youtube.com/watch?v=..."/></div>
+  <div class="formGroup" style="grid-column:1/-1">
+    <label>Foto de la máquina</label>
+    ${m&&m.photo?`<div style="margin-bottom:8px"><img src="${m.photo}" style="max-height:120px;border-radius:4px;border:1px solid #2a2a2a"/></div>`:''}
+    <input type="file" id="mPhotoFile" accept="image/*" style="font-size:.75rem;color:var(--text2)" onchange="previewMaqPhoto(this)"/>
+    <div id="mPhotoPreview" style="margin-top:6px"></div>
+    <input type="hidden" id="mPhotoData" value="${m?m.photo||'':''}" />
+  </div>
+</div>
+</div>
+<div class="modalActions">
+  <button class="btn btnGhost" onclick="closeModal()">Cancelar</button>
+  <button class="btn btnAccent" onclick="${m?`saveEditMachine(${m.id})`:'saveNewMachine()'}">💾 Guardar</button>
+</div>`;
+}
+function previewMaqPhoto(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    document.getElementById('mPhotoData').value=e.target.result;
+    document.getElementById('mPhotoPreview').innerHTML=`<img src="${e.target.result}" style="max-height:100px;border-radius:4px;border:1px solid #2a2a2a;margin-top:4px"/>`;
+  };
+  reader.readAsDataURL(file);
+}
+function _readMaqForm(id){
+  const get=i=>document.getElementById(i)?.value||'';
+  const muscles=[...document.querySelectorAll('#maqModal input[type=checkbox]:checked')].map(c=>c.value);
+  return{name:get('mName'),category:get('mCat'),description:get('mDesc'),usage:get('mUsage'),videoUrl:get('mVideo'),photo:get('mPhotoData'),muscles,status:id?(machines.find(x=>x.id===id)||{}).status||'disponible':'disponible'};
+}
+function openNewMachine(){
+  openModal(`<h3 style="margin-bottom:14px">Nueva Máquina</h3><div id="maqModal">${_maqFormHTML(null)}</div>`);
+}
+function saveNewMachine(){
+  const data=_readMaqForm(null);
+  if(!data.name){alert('El nombre es requerido');return;}
+  machines.push({id:Date.now(),...data});
+  saveDB();closeModal();navigate('maquinas');
+}
+function editMachine(id){
+  const m=machines.find(x=>x.id===id);
+  if(!m)return;
+  openModal(`<h3 style="margin-bottom:14px">Editar — ${m.name}</h3><div id="maqModal">${_maqFormHTML(m)}</div>`);
+}
+function saveEditMachine(id){
+  const m=machines.find(x=>x.id===id);
+  if(!m)return;
+  const data=_readMaqForm(id);
+  if(!data.name){alert('El nombre es requerido');return;}
+  Object.assign(m,data);
+  saveDB();closeModal();navigate('maquinas');
+}
+function deleteMachine(id){if(confirm('¿Eliminar esta máquina?')){machines=machines.filter(m=>m.id!==id);saveDB();navigate('maquinas');}}
+function cambiarEstadoMaquina(id,nuevoEstado){
+  const m=machines.find(x=>x.id===id);
+  if(!m)return;
+  m.status=nuevoEstado;
+  saveDB();
+  logAction('Estado máquina',`${m.name} → ${nuevoEstado}`);
+  navigate('maquinas');
+}
+function reportarMaquina(id){
+  const m=machines.find(x=>x.id===id);
+  if(!m)return;
+  openModal(`
+<h3 style="margin-bottom:10px">⚠️ Reportar avería — ${m.name}</h3>
+<div class="formGroup"><label>Descripción del problema *</label><textarea id="reportDesc" rows="3" placeholder="Describí qué está fallando..." style="resize:vertical"></textarea></div>
+<div class="formGroup"><label>Urgencia</label>
+  <select id="reportUrg">
+    <option value="baja">Baja — Puede seguir usándose con cuidado</option>
+    <option value="media" selected>Media — Requiere revisión pronto</option>
+    <option value="alta">Alta — Fuera de servicio inmediato</option>
+  </select>
+</div>
+<div class="modalActions">
+  <button class="btn btnGhost" onclick="closeModal()">Cancelar</button>
+  <button class="btn" style="background:var(--orange);color:#fff;border:none" onclick="confirmarReporteMaquina(${id})">⚠️ Enviar reporte</button>
+</div>`);
+}
+function confirmarReporteMaquina(id){
+  const m=machines.find(x=>x.id===id);
+  const desc=document.getElementById('reportDesc')?.value||'';
+  const urg=document.getElementById('reportUrg')?.value||'media';
+  if(!desc.trim()){alert('Describí el problema');return;}
+  // Cambiar estado según urgencia
+  m.status=urg==='alta'?'fuera':'reportada';
+  if(!m.reportes)m.reportes=[];
+  m.reportes.push({id:Date.now(),fecha:new Date().toISOString().slice(0,10),hora:new Date().toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'}),reportadoPor:currentUser.name||currentUser.email,rol:currentUser.role,descripcion:desc,urgencia:urg,estado:'pendiente'});
+  saveDB();
+  // Notificar a admin y recepción
+  [...staffAccounts.filter(s=>s.role==='admin'||s.role==='reception')].forEach(s=>{
+    pushUserNotif(s.id,{type:'maquina',titulo:`⚠️ Avería reportada: ${m.name}`,mensaje:`${currentUser.name} reportó: "${desc}" — Urgencia: ${urg}`});
+  });
+  logAction('Avería reportada',`${m.name} — ${desc} (${urg})`);
+  saveDB();
+  closeModal();
+  navigate('maquinas');
+  alert(`✅ Reporte enviado. La máquina quedó marcada como "${m.status==='fuera'?'Fuera de servicio':'Reportada'}".`);
+}
+function viewMachine(id){
+  const m=machines.find(x=>x.id===id);
+  if(!m)return;
+  const ytId=(m.videoUrl||'').match(/(?:v=|youtu\.be\/)([^&\s]+)/)?.[1]||'';
+  const st={disponible:{label:'Disponible',color:'var(--green)',icon:'✅'},reportada:{label:'Reportada',color:'var(--orange)',icon:'⚠️'},reparacion:{label:'En reparación',color:'var(--blue)',icon:'🔧'},fuera:{label:'Fuera de servicio',color:'var(--red)',icon:'❌'}}[m.status||'disponible']||{label:'Disponible',color:'var(--green)',icon:'✅'};
+  const canEdit=currentUser.role==='admin';
+  const reportes=(m.reportes||[]).slice().reverse();
+  openModal(`
+<div style="max-height:75vh;overflow-y:auto">
+  ${m.photo?`<img src="${m.photo}" style="width:100%;max-height:180px;object-fit:cover;border-radius:4px;margin-bottom:12px"/>`:''}
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+    <div>
+      <div style="font-size:.6rem;color:var(--text3);font-weight:700;letter-spacing:.08em;text-transform:uppercase">${m.category||'Sin categoría'}</div>
+      <h3 style="margin:2px 0 4px">${m.name}</h3>
+    </div>
+    <span style="font-size:.7rem;background:${st.color}22;color:${st.color};border:1px solid ${st.color}55;padding:3px 10px;border-radius:2px;font-weight:700">${st.icon} ${st.label}</span>
+  </div>
+  ${m.description?`<p style="font-size:.78rem;color:var(--text2);margin-bottom:12px">${m.description}</p>`:''}
+  ${(m.muscles||[]).length?`<div style="margin-bottom:12px"><div style="font-size:.62rem;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">💪 Grupos musculares</div><div style="display:flex;flex-wrap:wrap;gap:5px">${m.muscles.map(mu=>`<span style="background:rgba(229,8,126,.1);color:var(--accent);border:1px solid rgba(229,8,126,.25);padding:2px 9px;border-radius:2px;font-size:.7rem">${mu}</span>`).join('')}</div></div>`:''}
+  ${m.usage?`<div class="card" style="padding:10px;margin-bottom:12px"><div style="font-size:.62rem;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📋 Instrucciones</div><p style="font-size:.76rem;line-height:1.7;white-space:pre-line;color:var(--text2)">${m.usage}</p></div>`:''}
+  ${ytId?`<div class="card" style="padding:10px;margin-bottom:12px"><div style="font-size:.62rem;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">🎥 Video de uso</div><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:2px"><iframe src="https://www.youtube.com/embed/${ytId}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen></iframe></div></div>`:m.videoUrl?`<a href="${m.videoUrl}" target="_blank" class="btn" style="margin-bottom:12px;display:inline-block;font-size:.75rem">🎥 Ver video</a>`:''}
+  ${reportes.length?`<div class="card" style="padding:10px;margin-bottom:12px"><div style="font-size:.62rem;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">⚠️ Historial de reportes (${reportes.length})</div>${reportes.slice(0,5).map(r=>`<div style="padding:7px 0;border-bottom:1px solid #1a1a1a;font-size:.72rem"><div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">${r.descripcion}</span><span style="color:${r.urgencia==='alta'?'var(--red)':r.urgencia==='media'?'var(--orange)':'var(--text3)'};font-size:.65rem">${r.urgencia}</span></div><div style="font-size:.65rem;color:var(--text3);margin-top:2px">${r.fecha} · ${r.reportadoPor} (${r.rol})</div></div>`).join('')}</div>`:''}
+</div>
+<div class="modalActions">
+  <button class="btn btnGhost btnSm" onclick="showMachineQR(${m.id})">📱 QR</button>
+  ${canEdit?`<button class="btn btnGhost btnSm" onclick="closeModal();editMachine(${m.id})">✏️ Editar</button>`:''}
+  ${(m.status||'disponible')==='disponible'?`<button class="btn btnSm" onclick="closeModal();reportarMaquina(${m.id})" style="background:rgba(255,159,10,.1);color:var(--orange);border:1px solid rgba(255,159,10,.3)">⚠️ Reportar avería</button>`:''}
+  ${canEdit&&m.status&&m.status!=='disponible'?`<button class="btn btnSm" onclick="closeModal();cambiarEstadoMaquina(${m.id},'disponible')" style="background:rgba(48,209,88,.1);color:var(--green);border:1px solid rgba(48,209,88,.3)">✅ Marcar disponible</button>`:''}
+  <button class="btn btnAccent" onclick="closeModal()">Cerrar</button>
+</div>`);
+}
+function showMachineQR(id){
+  const m=machines.find(x=>x.id===id);
+  if(!m)return;
+  // URL pública de la máquina (cuando el QR sea escaneado abre el detalle)
+  const qrUrl=`${window.location.origin}/?machine=${m.id}`;
+  openModal(`
+<div style="text-align:center;padding:8px 0">
+  <div style="font-size:.65rem;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">${m.category||'Máquina'}</div>
+  <h3 style="margin:0 0 14px">${m.name}</h3>
+  <div class="qrWrap" style="display:inline-block;background:#fff;padding:12px;border-radius:8px;margin-bottom:12px"><canvas id="mqrCanvas"></canvas></div>
+  <div style="font-size:.65rem;color:var(--text3);margin-bottom:12px">Escaneá para ver instrucciones y video</div>
+  ${(m.muscles||[]).length?`<div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-bottom:10px">${m.muscles.map(mu=>`<span style="background:rgba(229,8,126,.1);color:var(--accent);border:1px solid rgba(229,8,126,.25);padding:2px 8px;border-radius:2px;font-size:.65rem">${mu}</span>`).join('')}</div>`:''}
+  ${m.videoUrl?`<a href="${m.videoUrl}" target="_blank" class="btn" style="font-size:.73rem;display:inline-block;margin-bottom:8px">🎥 Ver video de uso</a>`:''}
+</div>
+<div class="modalActions"><button class="btn btnAccent" onclick="closeModal()">Cerrar</button></div>`);
+  setTimeout(()=>{
+    const canvas=document.getElementById('mqrCanvas');
+    if(!canvas)return;
+    // Usar qrcode.js si está disponible, sino fallback visual
+    if(window.QRCode){
+      canvas.style.display='none';
+      const div=document.createElement('div');
+      div.id='mqrDiv';
+      canvas.parentNode.insertBefore(div,canvas);
+      new QRCode(div,{text:qrUrl,width:160,height:160,colorDark:'#000',colorLight:'#fff'});
+    } else {
+      // Fallback: QR decorativo con datos reales encodados
+      const size=160;canvas.width=canvas.height=size;
+      const ctx=canvas.getContext('2d');
+      const data=qrUrl;
+      ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);
+      ctx.fillStyle='#000';
+      const grid=21;const cell=size/grid;
+      for(let i=0;i<grid;i++)for(let j=0;j<grid;j++){
+        const val=(data.charCodeAt((i*grid+j)%data.length)*31+i*17+j*7)%2;
+        if(val)ctx.fillRect(i*cell+.5,j*cell+.5,cell-1,cell-1);
+      }
+      [[0,0],[14,0],[0,14]].forEach(([x,y])=>{
+        ctx.fillStyle='#000';ctx.fillRect(x*cell,y*cell,cell*7,cell*7);
+        ctx.fillStyle='#fff';ctx.fillRect(x*cell+cell,y*cell+cell,cell*5,cell*5);
+        ctx.fillStyle='#000';ctx.fillRect(x*cell+cell*2,y*cell+cell*2,cell*3,cell*3);
+      });
+    }
+  },80);
+}
 // ============================================================
 // AGENDA UNIFICADA — FUNCIONES
 // ============================================================
