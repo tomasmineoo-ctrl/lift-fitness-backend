@@ -1432,7 +1432,96 @@ ${(()=>{
 
 reservarClase:()=>`<div class="pageTitle">Reservar Clase a Alumno</div><div class="card"><div class="formGrid"><div class="formGroup"><label>Alumno</label><select id="reserveUserId">${users.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select></div><div class="formGroup"><label>Clase</label><select id="reserveClassId">${classes.map(c=>`<option value="${c.id}">${c.type} — ${c.day} ${c.time} (${c.enrolled.length}/${c.capacity}${(c.waitlist||[]).length?` · ${c.waitlist.length} en espera`:''})</option>`).join('')}</select></div></div><div style="margin-top:12px"><button class="btn btnAccent" onclick="trainerReserveClass()">✓ Confirmar reserva</button></div><div id="reserveResult" style="margin-top:10px"></div><div style="font-size:.7rem;color:var(--text3);margin-top:8px;font-style:italic">ℹ Si la clase está llena, el alumno será agregado a la lista de espera automáticamente.</div></div><div class="card"><h3>Reservas y listas de espera</h3>${classes.map(c=>{const wl=c.waitlist||[];return`<div style="margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><strong style="font-size:.83rem;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.04em">${c.type} — ${c.day} ${c.time}</strong><span style="font-size:.76rem;color:${c.enrolled.length>=c.capacity?'var(--red)':'var(--green)'}">${c.enrolled.length}/${c.capacity}${wl.length?` · ${wl.length} en espera`:''}</span></div><div style="font-size:.68rem;color:var(--text3);margin-bottom:3px;letter-spacing:.05em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif">Inscriptos</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">${c.enrolled.map(id=>{const u=users.find(x=>x.id===id);return u?`<span style="background:var(--surface2);border:1px solid var(--border);border-radius:2px;padding:2px 7px;font-size:.72rem">${u.name}<span onclick="trainerCancelReservation(${c.id},${id})" style="cursor:pointer;color:var(--red);margin-left:3px">✕</span></span>`:''}).join('')}${c.enrolled.length===0?'<span style="color:var(--text3);font-size:.72rem">Sin inscriptos</span>':''}</div>${wl.length?`<div style="font-size:.68rem;color:var(--orange);margin-bottom:3px;letter-spacing:.05em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif">Lista de espera</div><div style="display:flex;flex-wrap:wrap;gap:4px">${wl.map((id,idx)=>{const u=users.find(x=>x.id===id);return u?`<span style="background:rgba(255,159,10,.08);border:1px solid rgba(255,159,10,.3);border-radius:2px;padding:2px 7px;font-size:.72rem;color:var(--orange)">#${idx+1} ${u.name}<span onclick="trainerCancelReservation(${c.id},${id})" style="cursor:pointer;color:var(--red);margin-left:3px">✕</span></span>`:''}).join('')}</div>`:''}</div>`;}).join('')}</div>`,
 
-trainerDashboard:()=>{const tp=getMyTrainerProfile()||{students:[]};const myStudents=tp.students||[];return`<div class="pageTitle">Mi Dashboard</div><div class="statsGrid"><div class="statCard"><div class="num" style="color:var(--accent)">${myStudents.length}</div><div class="lbl">Mis alumnos</div></div><div class="statCard"><div class="num" style="color:var(--teal)">${classes.filter(c=>c.trainer===currentUser.name).length}</div><div class="lbl">Mis clases</div></div><div class="statCard"><div class="num" style="color:var(--green)">${myStudents.filter(s=>s.metrics&&s.metrics.length>1).length}</div><div class="lbl">Con progreso</div></div><div class="statCard"><div class="num" style="color:var(--blue)">${myStudents.reduce((s,st)=>s+(st.metrics||[]).length,0)}</div><div class="lbl">Mediciones</div></div></div><div class="card"><h3>Mis alumnos</h3>${myStudents.length===0?'<p style="color:var(--text2);font-size:.8rem">Aún no tenés alumnos.</p>':myStudents.map(s=>{const last=s.metrics&&s.metrics.length?s.metrics[s.metrics.length-1]:null;const first=s.metrics&&s.metrics.length?s.metrics[0]:null;const diff=first&&last&&first!==last?+(last.weight-first.weight).toFixed(1):null;return`<div class="trainerStudentCard" onclick="navigate('trainerStudents')" style="cursor:pointer"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h4>${s.name}</h4><div style="font-size:.73rem;color:var(--text3);margin-top:2px">${s.goal} · <span class="badge active" style="font-size:.62rem">${s.level}</span></div></div><div style="text-align:right;font-size:.76rem">${last?`<div>Peso: <strong>${last.weight}kg</strong></div>`:''}${diff!==null?`<div style="color:${diff<0?'var(--green)':diff>0?'var(--red)':'var(--text2)'}">${diff>0?'+':''}${diff}kg</div>`:''}</div></div><div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:3px">${(s.customFields||[]).map(f=>`<span class="metricTag">${f.key}: ${f.value}</span>`).join('')}</div></div>`;}).join('')}</div>`;},
+trainerDashboard:()=>{
+  const tp=getMyTrainerProfile()||{students:[]};
+  const myStudents=tp.students||[];
+  const myClasses=classes.filter(c=>c.trainer===currentUser.name);
+  const clasesHoy=getClassesForDay(DAYS_FULL[today().getDay()]).filter(c=>c.trainer===currentUser.name);
+  const conProgreso=myStudents.filter(s=>s.metrics&&s.metrics.length>1).length;
+  const sinRutina=myStudents.filter(s=>!s.metrics||s.metrics.length===0);
+  const totalMediciones=myStudents.reduce((s,st)=>s+(st.metrics||[]).length,0);
+  return`
+<div class="dashHero">
+  <div>
+    <div style="font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">${today().toLocaleDateString('es-SV',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+    <div style="display:flex;align-items:baseline;gap:14px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:2.8rem;font-weight:900;letter-spacing:-.02em;color:var(--white)">${myStudents.length}<span style="font-size:1.1rem;color:var(--text3);margin-left:6px;font-weight:400">alumnos</span></div>
+    </div>
+    <div style="font-size:.76rem;font-weight:700;margin-top:4px;color:var(--teal)">${myClasses.length} clase${myClasses.length!==1?'s':''} asignadas · ${clasesHoy.length} hoy · ${conProgreso} con progreso</div>
+  </div>
+  <div style="text-align:right">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.9rem;font-weight:900;letter-spacing:-.02em;color:var(--white)">LIFT<span style="color:var(--accent)">.</span></div>
+    <div style="font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-top:2px">Entrenador</div>
+    <div style="font-size:.64rem;color:var(--text3);margin-top:6px">${currentUser.name}</div>
+    ${sinRutina.length?`<div style="font-size:.58rem;color:var(--orange);margin-top:4px;letter-spacing:.08em">⚠ ${sinRutina.length} ALUMNO${sinRutina.length!==1?'S':''} SIN MEDICIONES</div>`:'<div style="font-size:.58rem;color:var(--green);margin-top:4px;letter-spacing:.08em">✓ TODOS CON SEGUIMIENTO</div>'}
+  </div>
+</div>
+
+<div class="quickActions">
+  <div class="quickAction" onclick="navigate('trainerStudents')">
+    <div class="qaIcon">👥</div>
+    <div class="qaText"><strong>Mis Alumnos</strong><span>Ver perfiles y progreso</span></div>
+  </div>
+  <div class="quickAction" onclick="navigate('agenda')">
+    <div class="qaIcon">📅</div>
+    <div class="qaText"><strong>Clases</strong><span>${clasesHoy.length} clase${clasesHoy.length!==1?'s':''} hoy</span></div>
+  </div>
+  <div class="quickAction" onclick="navigate('trainerProgreso')">
+    <div class="qaIcon">📈</div>
+    <div class="qaText"><strong>Progreso Físico</strong><span>Mediciones y evolución</span></div>
+  </div>
+  <div class="quickAction" onclick="navigate('trainerMensajes')">
+    <div class="qaIcon">💬</div>
+    <div class="qaText"><strong>Mensajes</strong><span>Chat con alumnos</span></div>
+  </div>
+</div>
+
+<div class="statsGrid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
+  <div class="statCard" style="border-left-color:var(--accent);cursor:pointer" onclick="navigate('trainerStudents')">
+    <div class="num" style="color:var(--accent)">${myStudents.length}</div>
+    <div class="lbl">Mis alumnos</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${conProgreso} con progreso registrado</div>
+  </div>
+  <div class="statCard" style="border-left-color:var(--teal);cursor:pointer" onclick="navigate('agenda')">
+    <div class="num" style="color:var(--teal)">${clasesHoy.length}</div>
+    <div class="lbl">Clases hoy</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${myClasses.length} clases en total</div>
+  </div>
+  <div class="statCard" style="border-left-color:var(--blue);cursor:pointer" onclick="navigate('trainerProgreso')">
+    <div class="num" style="color:var(--blue)">${totalMediciones}</div>
+    <div class="lbl">Mediciones</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">Entre todos los alumnos</div>
+  </div>
+  <div class="statCard" style="border-left-color:var(--orange)">
+    <div class="num" style="color:var(--orange)">${sinRutina.length}</div>
+    <div class="lbl">Sin mediciones</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">Requieren primera medición</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+  <div class="card">
+    <h3>Clases hoy — ${DAYS_FULL[today().getDay()]}</h3>
+    ${clasesHoy.length===0?'<p style="color:var(--text2);font-size:.78rem">Sin clases asignadas hoy.</p>':
+    clasesHoy.map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;color:var(--white);min-width:44px">${c.time}</div><div style="flex:1"><div style="font-size:.8rem;font-weight:600">${c.type}</div><div style="font-size:.68rem;color:var(--text3)">${c.duration} min</div></div><div style="font-size:.78rem;font-weight:700;color:${c.enrolled.length>=c.capacity?'var(--red)':'var(--green)'}">${c.enrolled.length}/${c.capacity}</div></div>`).join('')}
+    <div style="margin-top:8px"><button class="btn btnSm btnGhost" style="width:100%" onclick="navigate('agenda')">Ver agenda completa →</button></div>
+  </div>
+  <div class="card">
+    <h3>Alumnos sin mediciones (${sinRutina.length})</h3>
+    ${sinRutina.length===0?'<p style="color:var(--text3);font-size:.78rem">Todos los alumnos tienen mediciones ✓</p>':
+    `<div style="max-height:200px;overflow-y:auto">${sinRutina.slice(0,6).map(s=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.78rem"><div><div style="font-weight:600">${s.name}</div><div style="font-size:.68rem;color:var(--text3)">${s.goal||'Sin objetivo definido'} · ${s.level||'—'}</div></div><button class="btn btnXs btnAccent" onclick="openAddMetric(${s.id})">+ Medición</button></div>`).join('')}</div>`}
+  </div>
+</div>
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h3>Mis Alumnos</h3>
+    <button class="btn btnSm btnAccent" onclick="navigate('trainerStudents')">Ver todos →</button>
+  </div>
+  ${myStudents.length===0?'<p style="color:var(--text2);font-size:.8rem">Aún no tenés alumnos.</p>':
+  `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">${myStudents.slice(0,6).map(s=>{const last=s.metrics&&s.metrics.length?s.metrics[s.metrics.length-1]:null;const first=s.metrics&&s.metrics.length?s.metrics[0]:null;const diff=first&&last&&s.metrics.length>1?+(last.weight-first.weight).toFixed(1):null;return`<div class="trainerStudentCard" onclick="navigate('trainerStudents')" style="cursor:pointer;margin:0"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h4 style="font-size:.85rem">${s.name}</h4><div style="font-size:.7rem;color:var(--text3);margin-top:2px"><span class="badge active" style="font-size:.6rem">${s.level||'—'}</span></div></div><div style="text-align:right;font-size:.75rem">${last?`<div style="font-weight:700">${last.weight}kg</div>`:'<div style="color:var(--text3)">sin datos</div>'}${diff!==null?`<div style="color:${diff<0?'var(--green)':diff>0?'var(--red)':'var(--text3)'};font-size:.7rem">${diff>0?'+':''}${diff}kg</div>`:''}</div></div></div>`;}).join('')}</div>`}
+</div>`;
+},
 
 trainerStudents:()=>{const tp=getMyTrainerProfile()||{students:[]};const myStudents=tp.students||[];return`<div class="pageTitle">Mis Alumnos</div><div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btnAccent" onclick="openAddStudent()">+ Nuevo alumno</button></div>${myStudents.length===0?`<div class="card" style="text-align:center;padding:32px"><p style="color:var(--text2)">No tenés alumnos aún.</p></div>`:''}${myStudents.map(s=>{const last=s.metrics&&s.metrics.length?s.metrics[s.metrics.length-1]:null;const first=s.metrics&&s.metrics.length?s.metrics[0]:null;const diff=first&&last&&s.metrics.length>1?+(last.weight-first.weight).toFixed(1):null;return`<div class="trainerStudentCard"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><h4 style="font-size:.95rem">${s.name}</h4><div style="font-size:.73rem;color:var(--text3);margin-top:2px">${s.goal}</div><span class="badge active" style="margin-top:4px">${s.level}</span></div><div style="display:flex;gap:5px"><button class="btn btnSm btnInfo" onclick="openStudentDetail(${s.id})">Ver perfil</button><button class="btn btnSm btnAccent" onclick="openAddMetric(${s.id})">+ Medición</button><button class="btn btnSm btnDanger" onclick="deleteStudent(${s.id})">✕</button></div></div>${s.notes?`<div style="font-size:.74rem;color:var(--text3);background:var(--surface3);padding:6px 10px;border-radius:2px;margin-bottom:8px">📝 ${s.notes}</div>`:''}<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:6px;margin-bottom:8px">${last?`<div class="healthItem"><div class="hVal">${last.weight}kg</div><div class="hLbl">Peso</div></div><div class="healthItem"><div class="hVal">${last.bf||'—'}%</div><div class="hLbl">Grasa</div></div><div class="healthItem"><div class="hVal">${last.muscle||'—'}kg</div><div class="hLbl">Músculo</div></div><div class="healthItem"><div class="hVal">${last.waist||'—'}cm</div><div class="hLbl">Cintura</div></div><div class="healthItem"><div class="hVal">${last.arm||'—'}cm</div><div class="hLbl">Brazo</div></div>${diff!==null?`<div class="healthItem"><div class="hVal" style="color:${diff<0?'var(--green)':diff>0?'var(--red)':'var(--text2)'}">${diff>0?'+':''}${diff}kg</div><div class="hLbl">Variación</div></div>`:''}`:`<div style="color:var(--text3);font-size:.76rem;grid-column:1/-1">Sin mediciones todavía</div>`}</div><div style="display:flex;flex-wrap:wrap;gap:3px">${(s.customFields||[]).map(f=>`<span class="metricTag">${f.key}: ${f.value}</span>`).join('')}</div></div>`;}).join('')}`;},
 
@@ -2688,40 +2777,103 @@ function saveMyNutriProfile(p){
 // ═══════════════════════════════════════════════════════════════════
 views.nutriDashboard = () => {
   const np = getMyNutriProfile();
+  const todayStr = today().toISOString().slice(0,10);
   const totalClientes = np.clientes.length;
-  const citasHoy = nutriCitas.filter(c=>c.nutriEmail===currentUser.email&&c.fecha===new Date().toISOString().slice(0,10));
-  const nuevosHoy = users.filter(u=>u.nutriEmail===currentUser.email&&u.inscDate===new Date().toISOString().slice(0,10));
+  const misClientes = users.filter(u=>u.nutriEmail===currentUser.email);
+  const citasHoy = nutriCitas.filter(c=>c.nutriEmail===currentUser.email&&c.fecha===todayStr);
+  const nuevosHoy = users.filter(u=>u.nutriEmail===currentUser.email&&u.inscDate===todayStr);
+  const pendientesConfirmar = nutriCitas.filter(c=>c.nutriEmail===currentUser.email&&!c.confirmada);
+  const sinPlan = misClientes.filter(u=>!u.nutritionPlan);
+  const citasProximas = nutriCitas.filter(c=>c.nutriEmail===currentUser.email&&c.fecha>todayStr).sort((a,b)=>a.fecha.localeCompare(b.fecha));
   return `
-  <div class="pageTitle">Mi Panel — Nutrición</div>
-  <div class="statsGrid">
-    <div class="statCard"><div class="num" style="color:var(--green)">${totalClientes}</div><div class="lbl">Clientes asignados</div></div>
-    <div class="statCard"><div class="num" style="color:var(--accent)">${citasHoy.length}</div><div class="lbl">Citas hoy</div></div>
-    <div class="statCard"><div class="num" style="color:var(--blue)">${nuevosHoy.length}</div><div class="lbl">Nuevos hoy</div></div>
-    <div class="statCard"><div class="num" style="color:var(--orange)">${nutriCitas.filter(c=>c.nutriEmail===currentUser.email&&!c.confirmada).length}</div><div class="lbl">Pendientes confirmar</div></div>
+<div class="dashHero">
+  <div>
+    <div style="font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">${today().toLocaleDateString('es-SV',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+    <div style="display:flex;align-items:baseline;gap:14px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:2.8rem;font-weight:900;letter-spacing:-.02em;color:var(--white)">${totalClientes}<span style="font-size:1.1rem;color:var(--text3);margin-left:6px;font-weight:400">clientes</span></div>
+    </div>
+    <div style="font-size:.76rem;font-weight:700;margin-top:4px;color:var(--green)">${citasHoy.length} cita${citasHoy.length!==1?'s':''} hoy · ${pendientesConfirmar.length} pendiente${pendientesConfirmar.length!==1?'s':''} de confirmar</div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-    <div class="card">
-      <h3>Citas de hoy</h3>
-      ${citasHoy.length?citasHoy.map(c=>{
-        const u=users.find(x=>x.id===c.userId);
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--surface2);border-radius:2px;border:1px solid var(--border);margin-bottom:6px">
-          <div><div style="font-weight:600;font-size:.85rem">${u?.name||c.userName}</div><div style="font-size:.7rem;color:var(--text3)">${c.hora} · ${c.motivo||'Consulta'}</div></div>
-          <div style="display:flex;gap:4px">
-            ${!c.confirmada?`<button class="btn btnSuccess btnXs" onclick="confirmarCitaPin(${c.id})">✓ Confirmar</button>`:`<span class="badge active">Confirmada</span>`}
-          </div>
-        </div>`;
-      }).join(''):'<p style="font-size:.78rem;color:var(--text3)">Sin citas programadas para hoy.</p>'}
-      <button class="btn btnAccent btnSm" style="margin-top:8px" onclick="navigate('nutriAgenda')">Ver agenda completa</button>
+  <div style="text-align:right">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.9rem;font-weight:900;letter-spacing:-.02em;color:var(--white)">LIFT<span style="color:var(--accent)">.</span></div>
+    <div style="font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-top:2px">Nutricionista</div>
+    <div style="font-size:.64rem;color:var(--text3);margin-top:6px">${currentUser.name}</div>
+    ${sinPlan.length?`<div style="font-size:.58rem;color:var(--orange);margin-top:4px;letter-spacing:.08em">⚠ ${sinPlan.length} CLIENTE${sinPlan.length!==1?'S':''} SIN PLAN NUTRICIONAL</div>`:'<div style="font-size:.58rem;color:var(--green);margin-top:4px;letter-spacing:.08em">✓ TODOS CON PLAN</div>'}
+  </div>
+</div>
+
+<div class="quickActions">
+  <div class="quickAction" onclick="navigate('nutriClientes')">
+    <div class="qaIcon">👥</div>
+    <div class="qaText"><strong>Mis Clientes</strong><span>${totalClientes} asignados</span></div>
+  </div>
+  <div class="quickAction" onclick="navigate('nutriAgenda')">
+    <div class="qaIcon">📅</div>
+    <div class="qaText"><strong>Agenda de Citas</strong><span>${citasHoy.length} cita${citasHoy.length!==1?'s':''} hoy</span></div>
+  </div>
+  <div class="quickAction" onclick="navigate('nutriPlanes')">
+    <div class="qaIcon">📋</div>
+    <div class="qaText"><strong>Planes Nutricionales</strong><span>${sinPlan.length} sin plan</span></div>
+  </div>
+  <div class="quickAction" onclick="navigate('mensajes')">
+    <div class="qaIcon">💬</div>
+    <div class="qaText"><strong>Mensajes</strong><span>Chat con clientes</span></div>
+  </div>
+</div>
+
+<div class="statsGrid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
+  <div class="statCard" style="border-left-color:var(--green);cursor:pointer" onclick="navigate('nutriClientes')">
+    <div class="num" style="color:var(--green)">${totalClientes}</div>
+    <div class="lbl">Clientes</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${nuevosHoy.length} nuevos hoy</div>
+  </div>
+  <div class="statCard" style="border-left-color:var(--accent);cursor:pointer" onclick="navigate('nutriAgenda')">
+    <div class="num" style="color:var(--accent)">${citasHoy.length}</div>
+    <div class="lbl">Citas hoy</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${citasProximas.length} próximas</div>
+  </div>
+  <div class="statCard" style="border-left-color:var(--orange)">
+    <div class="num" style="color:var(--orange)">${pendientesConfirmar.length}</div>
+    <div class="lbl">Pendientes confirmar</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">Requieren confirmación</div>
+  </div>
+  <div class="statCard" style="border-left-color:var(--blue);cursor:pointer" onclick="navigate('nutriPlanes')">
+    <div class="num" style="color:var(--blue)">${sinPlan.length}</div>
+    <div class="lbl">Sin plan</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">Necesitan plan nutricional</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+  <div class="card">
+    <h3>Citas de hoy</h3>
+    ${citasHoy.length===0?'<p style="color:var(--text3);font-size:.78rem">Sin citas programadas para hoy.</p>':
+    citasHoy.map(c=>{const u=users.find(x=>x.id===c.userId);return`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--surface2);border-radius:2px;border:1px solid var(--border);margin-bottom:6px"><div><div style="font-weight:600;font-size:.85rem">${u?.name||c.userName}</div><div style="font-size:.7rem;color:var(--text3)">${c.hora} · ${c.motivo||'Consulta'}</div></div><div style="display:flex;gap:4px">${!c.confirmada?`<button class="btn btnSuccess btnXs" onclick="confirmarCitaPin(${c.id})">✓ Confirmar</button>`:`<span class="badge active">Confirmada</span>`}</div></div>`;}).join('')}
+    <div style="margin-top:8px"><button class="btn btnSm btnGhost" style="width:100%" onclick="navigate('nutriAgenda')">Ver agenda completa →</button></div>
+  </div>
+  <div class="card">
+    <h3>Próximas citas</h3>
+    ${citasProximas.length===0?'<p style="color:var(--text3);font-size:.78rem">Sin citas próximas.</p>':
+    citasProximas.slice(0,5).map(c=>{const u=users.find(x=>x.id===c.userId);return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:.78rem"><div><div style="font-weight:600">${u?.name||c.userName}</div><div style="font-size:.68rem;color:var(--text3)">${c.fecha} ${c.hora} · ${c.motivo||'Consulta'}</div></div><span class="badge ${c.confirmada?'active':'warning'}">${c.confirmada?'Confirmada':'Pendiente'}</span></div>`;}).join('')}
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:14px">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3>Clientes sin plan nutricional (${sinPlan.length})</h3>
+      <button class="btn btnSm btnAccent" onclick="navigate('nutriPlanes')">Gestionar planes →</button>
     </div>
-    <div class="card">
-      <h3>Clientes nuevos del día</h3>
-      ${nuevosHoy.length?nuevosHoy.map(u=>`
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--surface2);border-radius:2px;border:1px solid var(--border);margin-bottom:6px">
-          <div><div style="font-weight:600;font-size:.85rem">${u.name}</div><div style="font-size:.7rem;color:var(--text3)">Plan ${u.plan} · Inscripto hoy</div></div>
-          <button class="btn btnInfo btnXs" onclick="openNutriClienteDetalle(${u.id})">Ver</button>
-        </div>`).join(''):'<p style="font-size:.78rem;color:var(--text3)">Sin nuevos clientes hoy.</p>'}
-    </div>
-  </div>`;
+    ${sinPlan.length===0?'<p style="color:var(--text3);font-size:.78rem">Todos los clientes tienen plan ✓</p>':
+    `<div style="max-height:200px;overflow-y:auto">${sinPlan.slice(0,8).map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:.78rem"><div><div style="font-weight:600">${u.name}</div><div style="font-size:.68rem;color:var(--text3)">Plan ${u.plan} · Inscripto ${u.inscDate||'—'}</div></div><button class="btn btnXs btnAccent" onclick="openNutriClienteDetalle(${u.id})">Asignar plan</button></div>`).join('')}</div>`}
+  </div>
+  <div class="card">
+    <h3>Mis Clientes</h3>
+    ${misClientes.length===0?'<p style="color:var(--text3);font-size:.78rem">Sin clientes asignados.</p>':
+    misClientes.slice(0,6).map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.78rem"><div style="font-weight:600">${u.name}</div><span class="badge ${u.nutritionPlan?'active':'inactive'}" style="font-size:.6rem">${u.nutritionPlan?'Con plan':'Sin plan'}</span></div>`).join('')}
+    <div style="margin-top:8px"><button class="btn btnSm btnGhost" style="width:100%" onclick="navigate('nutriClientes')">Ver todos →</button></div>
+  </div>
+</div>`;
 };
 
 views.nutriClientes = () => {
@@ -5729,60 +5881,154 @@ views.encuestas = () => {
 // ═══════════════════════════════════════════════════════════
 const _origMiPerfil = views.miPerfil;
 views.miPerfil = () => {
-  const base = _origMiPerfil ? _origMiPerfil() : '';
   const u = currentUser.data;
-  if(!u) return base;
+  if(!u) return _origMiPerfil ? _origMiPerfil() : '<div class="pageTitle">Mi Perfil</div><div class="card"><p style="color:var(--text3)">Datos no disponibles.</p></div>';
   const hoy = new Date();
+  const todayStr = hoy.toISOString().slice(0,10);
   const semana = Array.from({length:7},(_, i)=>{
     const d = new Date(hoy); d.setDate(hoy.getDate()-6+i);
     return d.toISOString().slice(0,10);
   });
   const asistencias = semana.map(dia=>accessLog.some(e=>e.userId===u.id&&e.date===dia&&e.type==='entry'));
-  const diasSemana=['L','M','M','J','V','S','D'];
+  const diasSemana=['D','L','M','M','J','V','S'];
   const racha = (()=>{
     let r=0;
-    const hoyStr=hoy.toISOString().slice(0,10);
     const logDias=[...new Set(accessLog.filter(e=>e.userId===u.id&&e.type==='entry').map(e=>e.date))].sort().reverse();
-    for(const dia of logDias){const diff=Math.floor((new Date(hoyStr)-new Date(dia))/(1000*60*60*24));if(diff===r){r++;}else if(diff>r)break;}
+    for(const dia of logDias){const diff=Math.floor((new Date(todayStr)-new Date(dia))/(1000*60*60*24));if(diff===r){r++;}else if(diff>r)break;}
     return r;
   })();
   const nivelKey = getNivelUsuario(u.id);
   const nivel = NIVELES[nivelKey];
   const puntos = getPuntosUsuario(u.id);
-  const semanaCard = `
-  <div class="card" style="margin-bottom:14px;border-top:2px solid var(--accent)">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <h3 style="margin-bottom:0">Mi semana 💪</h3>
-      <div style="display:flex;align-items:center;gap:6px;font-size:.75rem;color:${nivel.color}">
-        <span>${nivel.icon}</span><span style="font-weight:700">${nivel.label}</span>
+  const st = getQuotaStatus(u);
+  const stLabel = statusLabel(st);
+  const misClasesReservadas = classes.filter(c=>c.enrolled.includes(u.id));
+  const diasSemanaAsist = asistencias.filter(Boolean).length;
+  const ini = u.name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
+  const proximasClases = misClasesReservadas.slice(0,4);
+  const payHistLocal = (u.payHistory||[]).slice().reverse().slice(0,5);
+  const annLatest = announcements.slice(0,3);
+  return `
+<div class="dashHero">
+  <div>
+    <div style="font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">${hoy.toLocaleDateString('es-SV',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:800;color:#fff;flex-shrink:0">${ini}</div>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;letter-spacing:-.02em;color:var(--white);line-height:1">${u.name.split(' ')[0]}</div>
+        <div style="font-size:.72rem;color:var(--text3);margin-top:2px">${u.name.split(' ').slice(1).join(' ')} · Plan <span style="color:var(--accent);font-weight:700">${u.plan}</span></div>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:12px">
-      ${semana.map((dia,i)=>`
-        <div style="text-align:center">
-          <div style="font-size:.58rem;color:var(--text3);margin-bottom:4px">${diasSemana[new Date(dia).getDay()]}</div>
-          <div style="width:32px;height:32px;border-radius:50%;margin:0 auto;background:${asistencias[i]?'var(--accent)':'var(--surface2)'};border:1px solid ${asistencias[i]?'var(--accent)':'var(--border)'};display:flex;align-items:center;justify-content:center;font-size:.8rem">
-            ${asistencias[i]?'✓':''}
-          </div>
-          <div style="font-size:.52rem;color:var(--text3);margin-top:3px">${dia.slice(8)}</div>
-        </div>`).join('')}
+    <div style="font-size:.76rem;font-weight:700;color:${st==='active'?'var(--green)':st==='blocked'?'var(--red)':'var(--orange)'}">
+      ${st==='active'?'✓ Cuota al día':st==='blocked'?'✗ Acceso bloqueado':st==='frozen'?'❄ Membresía congelada':'⚠ '+stLabel}
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-      <div style="background:var(--surface2);padding:8px;border-radius:2px;border:1px solid var(--border);text-align:center">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;color:var(--accent)">${asistencias.filter(Boolean).length}</div>
-        <div style="font-size:.62rem;color:var(--text3);text-transform:uppercase">Días esta semana</div>
-      </div>
-      <div style="background:var(--surface2);padding:8px;border-radius:2px;border:1px solid var(--border);text-align:center">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;color:var(--orange)">${racha}</div>
-        <div style="font-size:.62rem;color:var(--text3);text-transform:uppercase">Racha actual 🔥</div>
-      </div>
-      <div style="background:var(--surface2);padding:8px;border-radius:2px;border:1px solid var(--border);text-align:center">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;color:var(--accent)">${puntos.toLocaleString()}</div>
-        <div style="font-size:.62rem;color:var(--text3);text-transform:uppercase">Puntos 🏆</div>
-      </div>
+  </div>
+  <div style="text-align:right">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.9rem;font-weight:900;letter-spacing:-.02em;color:var(--white)">LIFT<span style="color:var(--accent)">.</span></div>
+    <div style="font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-top:2px">Mi Panel</div>
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:8px">
+      <span style="font-size:.82rem">${nivel.icon}</span>
+      <span style="font-size:.68rem;font-weight:700;color:${nivel.color}">${nivel.label}</span>
     </div>
-  </div>`;
-  return semanaCard + base;
+    <div style="font-size:.64rem;color:var(--text3);margin-top:4px">${puntos.toLocaleString()} pts · racha ${racha} días 🔥</div>
+  </div>
+</div>
+
+<div class="quickActions">
+  <div class="quickAction" onclick="navigate('miQR')">
+    <div class="qaIcon">📲</div>
+    <div class="qaText"><strong>Mi QR & PIN</strong><span>Credencial de acceso</span></div>
+  </div>
+  <div class="quickAction" onclick="navigate('miPlan')">
+    <div class="qaIcon">⭐</div>
+    <div class="qaText"><strong>Mi Plan</strong><span>Plan ${u.plan}</span></div>
+  </div>
+  <div class="quickAction" onclick="navigate('misClases')">
+    <div class="qaIcon">🏋️</div>
+    <div class="qaText"><strong>Mis Clases</strong><span>${misClasesReservadas.length} reservadas</span></div>
+  </div>
+  <div class="quickAction" onclick="navigate('fidelizacion')">
+    <div class="qaIcon">🏆</div>
+    <div class="qaText"><strong>Mis Puntos</strong><span>${puntos.toLocaleString()} pts</span></div>
+  </div>
+</div>
+
+<div class="statsGrid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
+  <div class="statCard" style="border-left-color:${st==='active'?'var(--green)':st==='blocked'?'var(--red)':'var(--orange)'}">
+    <div class="num" style="color:${st==='active'?'var(--green)':st==='blocked'?'var(--red)':'var(--orange)'};font-size:1rem;padding-top:4px">${stLabel}</div>
+    <div class="lbl">Estado cuota</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">Plan ${u.plan}</div>
+  </div>
+  <div class="statCard" style="border-left-color:var(--accent);cursor:pointer" onclick="navigate('misClases')">
+    <div class="num" style="color:var(--accent)">${misClasesReservadas.length}</div>
+    <div class="lbl">Clases reservadas</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">Esta semana</div>
+  </div>
+  <div class="statCard" style="border-left-color:var(--orange)">
+    <div class="num" style="color:var(--orange)">${racha}</div>
+    <div class="lbl">Racha 🔥</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${diasSemanaAsist} días esta semana</div>
+  </div>
+  <div class="statCard" style="border-left-color:var(--blue);cursor:pointer" onclick="navigate('fidelizacion')">
+    <div class="num" style="color:var(--blue);font-size:1.4rem">${puntos.toLocaleString()}</div>
+    <div class="lbl">Puntos 🏆</div>
+    <div style="font-size:.62rem;color:${nivel.color};margin-top:5px">${nivel.icon} ${nivel.label}</div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:14px;border-top:2px solid var(--accent)">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h3 style="margin-bottom:0">Mi semana 💪</h3>
+    <div style="font-size:.7rem;color:var(--text3)">${diasSemanaAsist}/7 días</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+    ${semana.map((dia,i)=>`<div style="text-align:center"><div style="font-size:.58rem;color:var(--text3);margin-bottom:4px">${diasSemana[new Date(dia+'T12:00:00').getDay()]}</div><div style="width:32px;height:32px;border-radius:50%;margin:0 auto;background:${asistencias[i]?'var(--accent)':'var(--surface2)'};border:1px solid ${asistencias[i]?'var(--accent)':'var(--border)'};display:flex;align-items:center;justify-content:center;font-size:.8rem">${asistencias[i]?'✓':''}</div><div style="font-size:.52rem;color:var(--text3);margin-top:3px">${dia.slice(8)}</div></div>`).join('')}
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3>Mis clases reservadas</h3>
+      <button class="btn btnSm btnGhost" onclick="navigate('misClases')">Ver todas →</button>
+    </div>
+    ${proximasClases.length===0?'<p style="color:var(--text3);font-size:.78rem">No tenés clases reservadas.</p>':
+    proximasClases.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:.78rem"><div><div style="font-weight:600">${c.type}</div><div style="font-size:.68rem;color:var(--text3)">${c.day} ${c.time} · ${c.trainer}</div></div><button class="btn btnXs btnDanger" onclick="cancelReservation(${c.id})">Cancelar</button></div>`).join('')}
+    <div style="margin-top:8px"><button class="btn btnSm btnSuccess" style="width:100%" onclick="navigate('misClases')">+ Reservar clase</button></div>
+  </div>
+  <div class="card">
+    <h3>Mi cuota</h3>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span style="font-size:1.8rem">${{active:'✅',warning:'⚠️',grace:'🕐',blocked:'🔒',frozen:'❄️'}[st]||'❓'}</span>
+      <div><div style="font-weight:700;font-size:.9rem">${stLabel}</div><div style="font-size:.7rem;color:var(--text3)">Plan ${u.plan} · $${safePlan(u.plan).price}/mes</div></div>
+    </div>
+    <h3>Últimos pagos</h3>
+    ${payHistLocal.length===0?'<p style="color:var(--text3);font-size:.78rem">Sin registros de pago.</p>':
+    payHistLocal.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:.74rem"><div style="color:var(--text3)">${p.date}</div><div><span class="badge ${safePlan(p.plan||u.plan).color}">${p.plan||u.plan}</span></div><div style="color:var(--green);font-weight:700">$${(p.amount||0).toLocaleString()}</div></div>`).join('')}
+    <div style="margin-top:8px"><button class="btn btnSm btnGhost" style="width:100%" onclick="navigate('miCuota')">Ver historial completo →</button></div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:14px">
+  <div class="card">
+    <h3>Mis datos personales</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.8rem">
+      ${[['DNI',u.dni],['Nacimiento',u.dob],['Nacionalidad',u.nationality],['Teléfono',u.phone],['Dirección',u.address],['Inscripción',u.inscDate],['Forma de pago',u.payMethod]].map(([l,v])=>`<div><span style="color:var(--text3)">${l}:</span> <strong>${v||'—'}</strong></div>`).join('')}
+    </div>
+    <div style="margin-top:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:2px;padding:8px">
+      <div style="text-align:center"><div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${u.weight||'—'}<span style="font-size:.6rem">kg</span></div><div style="font-size:.6rem;color:var(--text3)">Peso</div></div>
+      <div style="text-align:center"><div style="font-size:1.1rem;font-weight:800;color:var(--blue)">${u.height||'—'}<span style="font-size:.6rem">cm</span></div><div style="font-size:.6rem;color:var(--text3)">Altura</div></div>
+      <div style="text-align:center"><div style="font-size:1.1rem;font-weight:800;color:var(--text2)">${u.bloodType||'—'}</div><div style="font-size:.6rem;color:var(--text3)">Grupo</div></div>
+      <div style="text-align:center"><div style="font-size:1.1rem;font-weight:800;color:${u.medClearance?'var(--green)':'var(--red)'}">${u.medClearance?'✅':'❌'}</div><div style="font-size:.6rem;color:var(--text3)">Apto médico</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Anuncios 📢</h3>
+    ${annLatest.length===0?'<p style="color:var(--text3);font-size:.78rem">Sin anuncios recientes.</p>':
+    annLatest.map(a=>`<div style="padding:7px 0;border-bottom:1px solid var(--border)"><div style="font-weight:600;font-size:.8rem">${a.title}</div><div style="font-size:.7rem;color:var(--text3);margin-top:2px">${a.body.slice(0,60)}${a.body.length>60?'…':''}</div><div style="font-size:.62rem;color:var(--text3);margin-top:3px">${a.date}</div></div>`).join('')}
+    <div style="margin-top:8px"><button class="btn btnSm btnGhost" style="width:100%" onclick="navigate('misAnuncios')">Ver todos →</button></div>
+  </div>
+</div>`;
 };
 
 // ═══════════════════════════════════════════════════════════
