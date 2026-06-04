@@ -136,6 +136,7 @@ router.post('/', authorize('admin', 'reception'), async (req: Request, res: Resp
 router.put('/:id', authorizeOwnerOrRoles((r) => r.params.id, 'admin', 'reception'), async (req: Request, res: Response) => {
   const schema = z.object({
     name:          z.string().min(2).optional(),
+    email:         z.string().email().optional(),
     phone:         z.string().optional(),
     dni:           z.string().optional(),
     dob:           z.string().optional(),
