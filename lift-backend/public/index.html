@@ -1186,11 +1186,15 @@ agenda:()=>{
   const semana=Array.from({length:7},(_,i)=>{const d=new Date(semanaInicio);d.setDate(semanaInicio.getDate()+i);return d.toISOString().slice(0,10);});
   const DIAS_CORTO=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 
+  window._agendaSelected = window._agendaSelected || new Set();
+  window._agendaSelectMode = window._agendaSelectMode || false;
+
   return`
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
   <div class="pageTitle" style="margin:0">📅 Agenda</div>
   <div style="display:flex;gap:8px">
     ${canCreate?`<button class="btn btnAccent" onclick="openNuevaActividad()">+ Nueva Actividad</button>`:''}
+    ${canManageAll?`<button class="btn" id="btnAgendaSelect" onclick="toggleAgendaSelectMode()" style="background:${window._agendaSelectMode?'rgba(229,8,126,.15)':'rgba(255,255,255,.06)'};color:${window._agendaSelectMode?'var(--accent)':'var(--text2)'};border:1px solid ${window._agendaSelectMode?'rgba(229,8,126,.4)':'#2a2a2a'};font-size:.75rem">${window._agendaSelectMode?'✕ Cancelar':'☑ Seleccionar'}</button>`:''}
     ${isAdmin?`<button class="btn" style="background:rgba(52,56,142,.2);color:#8b8fc4;border:1px solid rgba(52,56,142,.4);font-size:.75rem" onclick="navigate('staff')">⚙️ Horarios Staff</button>`:''}
   </div>
 </div>
@@ -1218,6 +1222,14 @@ agenda:()=>{
   </div>
 </div>
 
+<!-- BARRA BULK (visible solo en modo selección) -->
+<div id="agendaBulkBar" style="display:${window._agendaSelectMode?'flex':'none'};align-items:center;gap:10px;padding:10px 14px;background:rgba(229,8,126,.08);border:1px solid rgba(229,8,126,.25);border-radius:4px;margin-bottom:10px">
+  <input type="checkbox" id="chkSelectAll" onchange="agendaSelectAll(this.checked)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer"/>
+  <span id="agendaSelCount" style="font-size:.78rem;color:var(--accent);font-weight:700">0 seleccionadas</span>
+  <div style="flex:1"></div>
+  <button class="btn btnDanger" onclick="eliminarActividadesSeleccionadas()" style="font-size:.75rem;padding:5px 14px">🗑 Eliminar seleccionadas</button>
+</div>
+
 <!-- PRÓXIMAS ACTIVIDADES -->
 <div class="card" style="padding:0;margin-bottom:14px;overflow:hidden">
   <div style="padding:12px 16px;border-bottom:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:center">
@@ -1229,7 +1241,10 @@ agenda:()=>{
     const t=ACTIVITY_TYPES.find(x=>x.id===a.type)||{color:'#666',icon:'📋',label:'Otro'};
     const puedeModificar=isAdmin||(isReception&&a.type!=='personal')||a.staffEmail===currentUser.email;
     const inscripto=a.enrolledUsers&&currentUser.data&&a.enrolledUsers.includes(currentUser.data.id);
-    return`<div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #111;cursor:pointer" onclick="verActividad(${a.id})">
+    const selMode=window._agendaSelectMode&&canManageAll;
+    const isSel=window._agendaSelected&&window._agendaSelected.has(a.id);
+    return`<div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #111;cursor:pointer;background:${isSel?'rgba(229,8,126,.05)':'transparent'}" onclick="${selMode?`agendaToggleItem(${a.id},this)`:`verActividad(${a.id})`}">
+      ${selMode?`<input type="checkbox" data-id="${a.id}" ${isSel?'checked':''} onclick="event.stopPropagation();agendaToggleItem(${a.id},this.closest('div'))" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0"/>`:''}
       <div style="width:3px;height:40px;background:${t.color};border-radius:2px;flex-shrink:0"></div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
@@ -1242,8 +1257,8 @@ agenda:()=>{
       </div>
       <div style="text-align:right;flex-shrink:0">
         ${a.capacity?`<div style="font-size:.7rem;color:${(a.enrolledUsers||[]).length>=a.capacity?'var(--red)':'var(--green)'};font-weight:700">${(a.enrolledUsers||[]).length}/${a.capacity}</div>`:''}
-        ${isUser&&a.requiresEnrollment?`<button class="btn btnSm" onclick="event.stopPropagation();inscribirseActividad(${a.id})" style="background:${inscripto?'rgba(255,59,48,.1)':'rgba(229,8,126,.15)'};color:${inscripto?'var(--red)':'var(--accent)'};border:1px solid ${inscripto?'rgba(255,59,48,.3)':'rgba(229,8,126,.3)'};font-size:.65rem;padding:4px 8px;margin-top:4px">${inscripto?'✕ Cancelar':'+ Inscribirme'}</button>`:''}
-        ${puedeModificar&&!isUser?`<div style="display:flex;gap:4px;margin-top:4px"><button class="btn btnSm" onclick="event.stopPropagation();editarActividad(${a.id})" style="font-size:.6rem;padding:3px 7px">✏️</button><button class="btn btnSm btnDanger" onclick="event.stopPropagation();confirmarEliminarActividad(${a.id})" style="font-size:.6rem;padding:3px 7px">✕</button></div>`:''}
+        ${!selMode&&isUser&&a.requiresEnrollment?`<button class="btn btnSm" onclick="event.stopPropagation();inscribirseActividad(${a.id})" style="background:${inscripto?'rgba(255,59,48,.1)':'rgba(229,8,126,.15)'};color:${inscripto?'var(--red)':'var(--accent)'};border:1px solid ${inscripto?'rgba(255,59,48,.3)':'rgba(229,8,126,.3)'};font-size:.65rem;padding:4px 8px;margin-top:4px">${inscripto?'✕ Cancelar':'+ Inscribirme'}</button>`:''}
+        ${!selMode&&puedeModificar&&!isUser?`<div style="display:flex;gap:4px;margin-top:4px"><button class="btn btnSm" onclick="event.stopPropagation();editarActividad(${a.id})" style="font-size:.6rem;padding:3px 7px">✏️</button><button class="btn btnSm btnDanger" onclick="event.stopPropagation();confirmarEliminarActividad(${a.id})" style="font-size:.6rem;padding:3px 7px">✕</button></div>`:''}
       </div>
     </div>`;
   }).join('')}
@@ -1624,6 +1639,49 @@ function showMachineQR(id){const m=machines.find(x=>x.id===id);openModal(`<h3>QR
 // ============================================================
 function actualizarFormActividad(){
   // Reservado para ajustes futuros del formulario según tipo de actividad
+}
+function toggleAgendaSelectMode(){
+  window._agendaSelectMode=!window._agendaSelectMode;
+  window._agendaSelected=new Set();
+  navigate('agenda');
+}
+function agendaToggleItem(id,rowEl){
+  if(!window._agendaSelected)window._agendaSelected=new Set();
+  if(window._agendaSelected.has(id)){window._agendaSelected.delete(id);}
+  else{window._agendaSelected.add(id);}
+  // update checkbox in row
+  const chk=rowEl&&rowEl.querySelector&&rowEl.querySelector(`input[data-id="${id}"]`);
+  if(chk)chk.checked=window._agendaSelected.has(id);
+  // update row bg
+  if(rowEl&&rowEl.style)rowEl.style.background=window._agendaSelected.has(id)?'rgba(229,8,126,.05)':'transparent';
+  // update counter
+  const cnt=document.getElementById('agendaSelCount');
+  if(cnt)cnt.textContent=`${window._agendaSelected.size} seleccionada${window._agendaSelected.size!==1?'s':''}`;
+  // update selectAll checkbox
+  const all=document.getElementById('chkSelectAll');
+  if(all){const rows=document.querySelectorAll('#agendaBulkBar~.card input[type=checkbox][data-id]');all.checked=rows.length>0&&[...rows].every(c=>window._agendaSelected.has(+c.dataset.id));}
+}
+function agendaSelectAll(checked){
+  window._agendaSelected=new Set();
+  document.querySelectorAll('#agendaBulkBar~.card input[type=checkbox][data-id]').forEach(c=>{
+    if(checked)window._agendaSelected.add(+c.dataset.id);
+    c.checked=checked;
+    const row=c.closest('[style*="border-bottom"]');
+    if(row)row.style.background=checked?'rgba(229,8,126,.05)':'transparent';
+  });
+  const cnt=document.getElementById('agendaSelCount');
+  if(cnt)cnt.textContent=`${window._agendaSelected.size} seleccionada${window._agendaSelected.size!==1?'s':''}`;
+}
+function eliminarActividadesSeleccionadas(){
+  const sel=window._agendaSelected;
+  if(!sel||sel.size===0){alert('Seleccioná al menos una actividad.');return;}
+  if(!confirm(`¿Eliminar ${sel.size} actividad${sel.size!==1?'es':''}? Esta acción no se puede deshacer.`))return;
+  agendaActivities=agendaActivities.filter(a=>!sel.has(a.id));
+  saveAgenda();
+  logAction('Actividades eliminadas en bulk',`${sel.size} actividades eliminadas`);
+  window._agendaSelected=new Set();
+  window._agendaSelectMode=false;
+  navigate('agenda');
 }
 function openNuevaActividad(preDate){
   const role=currentUser.role;
