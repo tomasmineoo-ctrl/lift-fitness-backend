@@ -5986,7 +5986,7 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){if(
     for (const [id, label] of required) {
       if (!get(id)) { showErr(`El campo "${label}" es obligatorio.`); return; }
     }
-    if (get('nPin').length !== 4) { showErr('El PIN debe tener exactamente 4 dígitos.'); return; }
+    if (get('nPin').length < 3 || get('nPin').length > 6 || !/^\d+$/.test(get('nPin'))) { showErr('El PIN debe tener entre 3 y 6 dígitos numéricos.'); return; }
     if (get('nPass').length < 4)  { showErr('La contraseña debe tener al menos 4 caracteres.'); return; }
 
     const weightVal = get('nWeight') ? +get('nWeight') : null;
@@ -6435,7 +6435,7 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){if(
   ══════════════════════════════════════════════════════ */
   window.savePin = async function (id) {
     const pin = String(document.getElementById('newPin')?.value || '');
-    if (pin.length !== 4 || !/^\d{4}$/.test(pin)) { alert('El PIN debe ser exactamente 4 dígitos'); return; }
+    if (pin.length < 3 || pin.length > 6 || !/^\d+$/.test(pin)) { alert('El PIN debe tener entre 3 y 6 dígitos numéricos'); return; }
     if (users.find(u => u.id !== id && u.pin === pin)) { alert('Ese PIN ya lo usa otro socio'); return; }
     try {
       await apiFetch('/api/members/' + id, 'PUT', { pin });

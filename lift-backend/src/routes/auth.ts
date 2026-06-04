@@ -121,9 +121,10 @@ router.post('/login/pin', async (req: Request, res: Response) => {
   const { data: allStaff } = await supabase
     .from('staff')
     .select('id, email, name, role, active, pin, pin2')
-    .eq('gym_id', gym.id);
+    .eq('gym_id', gym.id)
+    .eq('active', true);
 
-  const staffRow = (allStaff || []).find(s => s.pin === pin || (s as any).pin2 === pin);
+  const staffRow = (allStaff || []).find((s: any) => s.pin === pin || (s.pin2 && s.pin2 === pin));
 
   if (staffRow) {
     if (!staffRow.active) return res.status(403).json({ error: 'Cuenta desactivada' });
