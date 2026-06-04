@@ -163,8 +163,34 @@ router.put('/:id', authorizeOwnerOrRoles((r) => r.params.id, 'admin', 'reception
     updates.pass = h;
   }
 
+  // Si cambia el email, resetear verificación
+  let emailChanged = false;
+  if (rest.email) {
+    const { data: current } = await supabase.from('users').select('email').eq('id', Number(req.params.id)).eq('gym_id', req.user!.gym_id).single();
+    if (current && current.email !== rest.email) {
+      updates.email_verified = false;
+      emailChanged = true;
+    }
+  }
+
   const { data, error } = await supabase.from('users').update(updates).eq('id', Number(req.params.id)).eq('gym_id', req.user!.gym_id).select().single();
   if (error || !data) return res.status(404).json({ error: 'Socio no encontrado' });
+
+  // Si el email cambió, enviar nuevo mail de verificación
+  if (emailChanged) {
+    try {
+      await supabase.from('email_tokens').update({ used: true }).eq('user_id', data.id).eq('type', 'verify').eq('used', false);
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await supabase.from('email_tokens').insert({ user_id: data.id, gym_id: req.user!.gym_id, token, type: 'verify', expires_at: expiresAt.toISOString() });
+      const { data: gym } = await supabase.from('gyms').select('slug, name').eq('id', req.user!.gym_id).single();
+      const gymUrl = process.env.NODE_ENV !== 'production' ? 'http://localhost:3000' : `https://${gym?.slug ?? 'lift'}.ctrlgym.org`;
+      await sendVerificationEmail(data.email, data.name, gym?.name ?? 'LIFT Fitness', token, gymUrl);
+    } catch (e) {
+      console.error('[members] Verification email after email change failed:', e);
+    }
+  }
+
   return res.json({ ...data, pass: undefined });
 });
 
