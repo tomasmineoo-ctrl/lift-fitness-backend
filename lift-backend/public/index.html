@@ -1180,64 +1180,22 @@ agenda:()=>{
   const proximas=visible.filter(a=>a.date>=hoy).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
   const pasadas=visible.filter(a=>a.date<hoy).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
 
-  // Grilla semanal — semana actual
-  const semanaInicio=new Date(today());
-  semanaInicio.setDate(today().getDate()-today().getDay()+1);
-  const semana=Array.from({length:7},(_,i)=>{const d=new Date(semanaInicio);d.setDate(semanaInicio.getDate()+i);return d.toISOString().slice(0,10);});
-  const DIAS_CORTO=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  // Calendario mensual
+  if(!window._agendaMes) window._agendaMes = { y: today().getFullYear(), m: today().getMonth() };
+  const calY = window._agendaMes.y;
+  const calM = window._agendaMes.m;
+  const MESES_NOMBRE=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const DIAS_CAB=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  // Primer día del mes (ajuste a Lunes=0)
+  const primerDia=new Date(calY,calM,1);
+  const offsetLunes=(primerDia.getDay()+6)%7; // 0=Lun
+  const diasEnMes=new Date(calY,calM+1,0).getDate();
+  const totalCeldas=Math.ceil((offsetLunes+diasEnMes)/7)*7;
 
   window._agendaSelected = window._agendaSelected || new Set();
   window._agendaSelectMode = window._agendaSelectMode || false;
+  window._agendaDiaSelec = window._agendaDiaSelec || null;
 
-  return`
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-  <div class="pageTitle" style="margin:0">📅 Agenda</div>
-  <div style="display:flex;gap:8px">
-    ${canCreate?`<button class="btn btnAccent" onclick="openNuevaActividad()">+ Nueva Actividad</button>`:''}
-    ${canManageAll?`<button class="btn" id="btnAgendaSelect" onclick="toggleAgendaSelectMode()" style="background:${window._agendaSelectMode?'rgba(229,8,126,.15)':'rgba(255,255,255,.06)'};color:${window._agendaSelectMode?'var(--accent)':'var(--text2)'};border:1px solid ${window._agendaSelectMode?'rgba(229,8,126,.4)':'#2a2a2a'};font-size:.75rem">${window._agendaSelectMode?'✕ Cancelar':'☑ Seleccionar'}</button>`:''}
-    ${isAdmin?`<button class="btn" style="background:rgba(52,56,142,.2);color:#8b8fc4;border:1px solid rgba(52,56,142,.4);font-size:.75rem" onclick="navigate('staff')">⚙️ Horarios Staff</button>`:''}
-  </div>
-</div>
-
-<!-- LEYENDA DE TIPOS -->
-<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
-  ${ACTIVITY_TYPES.map(t=>`<span style="background:${t.color}22;border:1px solid ${t.color}55;color:${t.color};padding:3px 10px;border-radius:2px;font-size:.65rem;font-weight:700;letter-spacing:.04em">${t.icon} ${t.label.toUpperCase()}</span>`).join('')}
-</div>
-
-<!-- GRILLA 15 DÍAS -->
-<div class="card" style="padding:12px;margin-bottom:14px">
-  <div style="font-size:.72rem;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px">PRÓXIMOS 15 DÍAS</div>
-  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">
-    ${Array.from({length:15},(_,i)=>{
-      const d=new Date(today());d.setDate(today().getDate()+i);
-      const fecha=d.toISOString().slice(0,10);
-      const esHoy=i===0;
-      const actDia=visible.filter(a=>a.date===fecha);
-      const DIAS_CORTO2=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-      return`<div style="background:${esHoy?'rgba(229,8,126,.08)':'#0a0a0a'};border:1px solid ${esHoy?'var(--accent)':'#1a1a1a'};border-radius:4px;padding:6px;min-height:72px">
-        <div style="font-size:.6rem;color:${esHoy?'var(--accent)':'var(--text3)'};font-weight:700;margin-bottom:4px;text-align:center">${DIAS_CORTO2[d.getDay()]}<br><span style="font-size:.78rem;color:${esHoy?'var(--accent)':'var(--white)'}">${d.getDate()}</span></div>
-        ${actDia.length===0?`<div style="font-size:.55rem;color:#2a2a2a;text-align:center;margin-top:6px">—</div>`
-          :actDia.slice(0,2).map(a=>{const t=ACTIVITY_TYPES.find(x=>x.id===a.type)||{color:'#666',icon:'📋'};return`<div onclick="verActividad(${a.id})" style="background:${t.color}22;border-left:2px solid ${t.color};padding:2px 3px;margin-bottom:2px;border-radius:1px;cursor:pointer;font-size:.55rem;color:#ddd;overflow:hidden;white-space:nowrap;text-overflow:ellipsis" title="${a.title}">${t.icon} ${a.time.slice(0,5)} ${a.title}</div>`;}).join('')}
-        ${actDia.length>2?`<div style="font-size:.5rem;color:var(--text3);text-align:center">+${actDia.length-2}</div>`:''}
-      </div>`;
-    }).join('')}
-  </div>
-</div>
-
-<!-- BARRA BULK (visible solo en modo selección) -->
-<div id="agendaBulkBar" style="display:${window._agendaSelectMode?'flex':'none'};align-items:center;gap:10px;padding:10px 14px;background:rgba(229,8,126,.08);border:1px solid rgba(229,8,126,.25);border-radius:4px;margin-bottom:10px">
-  <input type="checkbox" id="chkSelectAll" onchange="agendaSelectAll(this.checked)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer"/>
-  <span id="agendaSelCount" style="font-size:.78rem;color:var(--accent);font-weight:700">0 seleccionadas</span>
-  <div style="flex:1"></div>
-  <button class="btn btnDanger" onclick="eliminarActividadesSeleccionadas()" style="font-size:.75rem;padding:5px 14px">🗑 Eliminar seleccionadas</button>
-</div>
-
-<!-- PRÓXIMAS ACTIVIDADES (15 días) -->
-${(()=>{
-  const limite15=new Date(today());limite15.setDate(today().getDate()+15);
-  const limite15str=limite15.toISOString().slice(0,10);
-  const proximas15=proximas.filter(a=>a.date<=limite15str);
-  const proximasFuturas=proximas.filter(a=>a.date>limite15str);
   function renderActRow(a){
     const t=ACTIVITY_TYPES.find(x=>x.id===a.type)||{color:'#666',icon:'📋',label:'Otro'};
     const puedeModificar=isAdmin||(isReception&&a.type!=='personal')||a.staffEmail===currentUser.email;
@@ -1263,30 +1221,91 @@ ${(()=>{
       </div>
     </div>`;
   }
+
   return`
-<div class="card" style="padding:0;margin-bottom:10px;overflow:hidden">
-  <div style="padding:12px 16px;border-bottom:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:center">
-    <span style="font-size:.72rem;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase">PRÓXIMOS 15 DÍAS</span>
-    <span style="font-size:.68rem;color:var(--text3)">${proximas15.length} actividades</span>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+  <div class="pageTitle" style="margin:0">📅 Agenda</div>
+  <div style="display:flex;gap:8px">
+    ${canCreate?`<button class="btn btnAccent" onclick="openNuevaActividad()">+ Nueva Actividad</button>`:''}
+    ${canManageAll?`<button class="btn" onclick="toggleAgendaSelectMode()" style="background:${window._agendaSelectMode?'rgba(229,8,126,.15)':'rgba(255,255,255,.06)'};color:${window._agendaSelectMode?'var(--accent)':'var(--text2)'};border:1px solid ${window._agendaSelectMode?'rgba(229,8,126,.4)':'#2a2a2a'};font-size:.75rem">${window._agendaSelectMode?'✕ Cancelar':'☑ Seleccionar'}</button>`:''}
+    ${isAdmin?`<button class="btn" style="background:rgba(52,56,142,.2);color:#8b8fc4;border:1px solid rgba(52,56,142,.4);font-size:.75rem" onclick="navigate('staff')">⚙️ Horarios Staff</button>`:''}
   </div>
-  ${proximas15.length===0?`<div style="padding:24px;text-align:center;color:var(--text3);font-size:.8rem">Sin actividades en los próximos 15 días</div>`
-  :proximas15.map(renderActRow).join('')}
 </div>
 
-${proximasFuturas.length>0?`
+<!-- LEYENDA DE TIPOS -->
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+  ${ACTIVITY_TYPES.map(t=>`<span style="background:${t.color}22;border:1px solid ${t.color}55;color:${t.color};padding:3px 10px;border-radius:2px;font-size:.65rem;font-weight:700;letter-spacing:.04em">${t.icon} ${t.label.toUpperCase()}</span>`).join('')}
+</div>
+
+<!-- CALENDARIO MENSUAL -->
+<div class="card" style="padding:0;margin-bottom:12px;overflow:hidden">
+  <!-- Header navegación -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #1a1a1a">
+    <button onclick="agendaNavMes(-1)" style="background:none;border:1px solid #2a2a2a;color:var(--text2);width:30px;height:30px;border-radius:4px;cursor:pointer;font-size:.9rem">‹</button>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--white)">${MESES_NOMBRE[calM]} ${calY}</div>
+    <button onclick="agendaNavMes(1)" style="background:none;border:1px solid #2a2a2a;color:var(--text2);width:30px;height:30px;border-radius:4px;cursor:pointer;font-size:.9rem">›</button>
+  </div>
+  <!-- Cabecera días -->
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid #1a1a1a">
+    ${DIAS_CAB.map((d,i)=>`<div style="text-align:center;padding:6px 0;font-size:.62rem;font-weight:700;color:${i>=5?'var(--accent)':'var(--text3)'};letter-spacing:.06em">${d}</div>`).join('')}
+  </div>
+  <!-- Celdas del mes -->
+  <div style="display:grid;grid-template-columns:repeat(7,1fr)">
+    ${Array.from({length:totalCeldas},(_,i)=>{
+      const diaNum=i-offsetLunes+1;
+      const valido=diaNum>=1&&diaNum<=diasEnMes;
+      const fecha=valido?`${calY}-${String(calM+1).padStart(2,'0')}-${String(diaNum).padStart(2,'0')}`:null;
+      const esHoy=fecha===hoy;
+      const esSel=fecha&&window._agendaDiaSelec===fecha;
+      const actsDia=fecha?visible.filter(a=>a.date===fecha):[];
+      const colDia=((i%7)>=5)?'rgba(229,8,126,.04)':'transparent';
+      return`<div onclick="${valido?`agendaSelDia('${fecha}')`:'undefined'}" style="border-right:1px solid #111;border-bottom:1px solid #111;min-height:68px;padding:4px;background:${esSel?'rgba(229,8,126,.1)':colDia};cursor:${valido?'pointer':'default'};position:relative">
+        ${valido?`<div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:${esHoy?'var(--accent)':'transparent'};color:${esHoy?'#fff':esSel?'var(--accent)':'var(--text2)'};font-size:.72rem;font-weight:${esHoy||esSel?'700':'400'};margin-bottom:3px">${diaNum}</div>`:''}
+        ${actsDia.slice(0,3).map(a=>{const t=ACTIVITY_TYPES.find(x=>x.id===a.type)||{color:'#666'};return`<div style="height:4px;border-radius:2px;background:${t.color};margin-bottom:2px;opacity:.9" title="${a.title} ${a.time}"></div>`;}).join('')}
+        ${actsDia.length>3?`<div style="font-size:.5rem;color:var(--text3);text-align:center">+${actsDia.length-3}</div>`:''}
+      </div>`;
+    }).join('')}
+  </div>
+</div>
+
+<!-- BARRA BULK -->
+<div id="agendaBulkBar" style="display:${window._agendaSelectMode?'flex':'none'};align-items:center;gap:10px;padding:10px 14px;background:rgba(229,8,126,.08);border:1px solid rgba(229,8,126,.25);border-radius:4px;margin-bottom:10px">
+  <input type="checkbox" id="chkSelectAll" onchange="agendaSelectAll(this.checked)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer"/>
+  <span id="agendaSelCount" style="font-size:.78rem;color:var(--accent);font-weight:700">0 seleccionadas</span>
+  <div style="flex:1"></div>
+  <button class="btn btnDanger" onclick="eliminarActividadesSeleccionadas()" style="font-size:.75rem;padding:5px 14px">🗑 Eliminar seleccionadas</button>
+</div>
+
+<!-- ACTIVIDADES DEL DÍA SELECCIONADO -->
+${window._agendaDiaSelec?(()=>{
+  const actsDiaSel=visible.filter(a=>a.date===window._agendaDiaSelec).sort((a,b)=>a.time.localeCompare(b.time));
+  const dLabel=new Date(window._agendaDiaSelec+'T12:00:00').toLocaleDateString('es-SV',{weekday:'long',day:'numeric',month:'long'});
+  return`<div class="card" style="padding:0;margin-bottom:10px;overflow:hidden;border:1px solid rgba(229,8,126,.25)">
+  <div style="padding:10px 16px;border-bottom:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:.78rem;font-weight:700;color:var(--accent);text-transform:capitalize">${dLabel}</span>
+    ${canCreate?`<button class="btn btnAccent" style="font-size:.7rem;padding:4px 10px" onclick="openNuevaActividad('${window._agendaDiaSelec}')">+ Agregar</button>`:''}
+  </div>
+  ${actsDiaSel.length===0
+    ?`<div style="padding:18px;text-align:center;color:var(--text3);font-size:.78rem">Sin actividades este día</div>`
+    :actsDiaSel.map(renderActRow).join('')}
+</div>`;
+})():''}
+
+<!-- TODAS LAS PRÓXIMAS (desplegable) -->
+${proximas.length>0?`
 <div class="card" style="padding:0;margin-bottom:10px;overflow:hidden">
-  <div style="padding:12px 16px;border-bottom:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleAgendaSeccion('agendaFuturas',this)">
-    <span style="font-size:.72rem;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase">📆 MÁS ADELANTE</span>
+  <div style="padding:12px 16px;border-bottom:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleAgendaSeccion('agendaProximas',this)">
+    <span style="font-size:.72rem;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase">📋 Todas las próximas</span>
     <div style="display:flex;align-items:center;gap:8px">
-      <span style="font-size:.68rem;color:var(--text3)">${proximasFuturas.length} actividades</span>
-      <span id="agendaFuturasIcon" style="font-size:.7rem;color:var(--text3)">▼</span>
+      <span style="font-size:.68rem;color:var(--text3)">${proximas.length}</span>
+      <span id="agendaProximasIcon" style="font-size:.7rem;color:var(--text3)">▼</span>
     </div>
   </div>
-  <div id="agendaFuturas" style="display:none">
-    ${proximasFuturas.map(renderActRow).join('')}
+  <div id="agendaProximas" style="display:none">
+    ${proximas.map(renderActRow).join('')}
   </div>
-</div>`:''}`;
-})()}
+</div>`:''}
+
 
 ${(()=>{
   const todasPasadas=visible.filter(a=>a.date<hoy).sort((a,b)=>b.date.localeCompare(a.date));
@@ -1688,6 +1707,18 @@ function showMachineQR(id){const m=machines.find(x=>x.id===id);openModal(`<h3>QR
 // ============================================================
 function actualizarFormActividad(){
   // Reservado para ajustes futuros del formulario según tipo de actividad
+}
+function agendaNavMes(dir){
+  if(!window._agendaMes)window._agendaMes={y:new Date().getFullYear(),m:new Date().getMonth()};
+  window._agendaMes.m+=dir;
+  if(window._agendaMes.m>11){window._agendaMes.m=0;window._agendaMes.y++;}
+  if(window._agendaMes.m<0){window._agendaMes.m=11;window._agendaMes.y--;}
+  window._agendaDiaSelec=null;
+  navigate('agenda');
+}
+function agendaSelDia(fecha){
+  window._agendaDiaSelec=(window._agendaDiaSelec===fecha)?null:fecha;
+  navigate('agenda');
 }
 function toggleAgendaSeccion(id,headerEl){
   const body=document.getElementById(id);
