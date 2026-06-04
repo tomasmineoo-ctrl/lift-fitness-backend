@@ -917,10 +917,10 @@ return`
     <div class="lbl">Socios activos</div>
     <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${pendientes} pendientes · ${users.length} total</div>
   </div>
-  <div class="statCard" style="border-left-color:${blocked>0?'var(--red)':'var(--border2)'}">
-    <div class="num" style="color:${blocked>0?'var(--red)':'var(--text2)'}">${blocked}</div>
-    <div class="lbl">Bloqueados</div>
-    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${users.filter(u=>getQuotaStatus(u)==='grace').length} en período de gracia</div>
+  <div class="statCard" style="border-left-color:var(--accent);cursor:pointer" onclick="navigate('adminComisiones')">
+    <div class="num" style="color:var(--accent)">💎</div>
+    <div class="lbl">Comisiones & Metas</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">Ver metas y comisiones</div>
   </div>
   <div class="statCard" style="border-left-color:var(--purple)">
     <div class="num" style="color:var(--purple)">${todayEntries}</div>
