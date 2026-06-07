@@ -356,7 +356,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
       <div class="vBadge">v7 PRO</div>
     </div>
     <div class="topBarRight">
-      <span id="notifBell" style="cursor:pointer;font-size:.9rem;color:var(--text3)" onclick="navigate('notificaciones')">🔔</span>
+      <span id="notifBell" style="cursor:pointer;font-size:.9rem;color:var(--text3)" onclick="navigate('comunicados')">🔔</span>
       <span class="role" id="roleLabel">—</span>
       <button class="logoutBtn" onclick="doLogout()">SALIR</button>
     </div>
@@ -1055,9 +1055,9 @@ if(currentUser.role==='reception'){
     <div class="qaIcon">👥</div>
     <div class="qaText"><strong>Socios</strong><span>Buscar y gestionar</span></div>
   </div>
-  <div class="quickAction ${dangerCountR>0?'qa-urgent qa-danger':''}" onclick="navigate('notificaciones')">
+  <div class="quickAction ${dangerCountR>0?'qa-urgent qa-danger':''}" onclick="navigate('comunicados')">
     <div class="qaIcon">${dangerCountR>0?'🚨':'🔔'}</div>
-    <div class="qaText"><strong style="color:${dangerCountR>0?'var(--red)':'var(--white)'}">${dangerCountR>0?dangerCountR+' Urgentes':'Alertas'}</strong><span>${notifications.length} notificacion${notifications.length!==1?'es':''} activas</span></div>
+    <div class="qaText"><strong style="color:${dangerCountR>0?'var(--red)':'var(--white)'}">${dangerCountR>0?dangerCountR+' Urgentes':'Comunicados'}</strong><span>${notifications.length} notificacion${notifications.length!==1?'es':''} activas</span></div>
   </div>
 </div>
 
@@ -1182,9 +1182,9 @@ return`
     <div class="qaIcon">📊</div>
     <div class="qaText"><strong>Análisis & Reportes</strong><span>Estadísticas y finanzas</span></div>
   </div>
-  <div class="quickAction ${dangerCount>0?'qa-urgent qa-danger':'qa-danger'}" onclick="navigate('notificaciones')">
+  <div class="quickAction ${dangerCount>0?'qa-urgent qa-danger':'qa-danger'}" onclick="navigate('comunicados')">
     <div class="qaIcon">${dangerCount>0?'🚨':'🔔'}</div>
-    <div class="qaText"><strong style="color:${dangerCount>0?'var(--red)':'var(--white)'}">${dangerCount>0?dangerCount+' Urgentes':'Alertas'}</strong><span>${notifications.length} notificacion${notifications.length!==1?'es':''} activas</span></div>
+    <div class="qaText"><strong style="color:${dangerCount>0?'var(--red)':'var(--white)'}">${dangerCount>0?dangerCount+' Urgentes':'Comunicados'}</strong><span>${notifications.length} notificacion${notifications.length!==1?'es':''} activas</span></div>
   </div>
 </div>
 
@@ -1284,7 +1284,7 @@ descuentos:()=>`<div class="pageTitle">Descuentos</div><div style="text-align:ri
 
 referidos:()=>`<div class="pageTitle">Referidos</div><div style="text-align:right;margin-bottom:12px"><button class="btn btnAccent" onclick="openNewReferral()">+ Registrar</button></div><div class="card" style="padding:0;overflow:auto"><table class="tbl"><tr><th>Referente</th><th>Nuevo socio</th><th>Fecha</th><th>Beneficio</th></tr>${referrals.map(r=>`<tr><td>${r.referrerName}</td><td>${r.referredName}</td><td style="color:var(--text3)">${r.date}</td><td style="color:var(--green)">✓ ${r.benefit}</td></tr>`).join('')}</table></div>`,
 
-comunicados:()=>`<div class="pageTitle">Comunicados</div>${currentUser.role!=='user'?`<div style="text-align:right;margin-bottom:12px"><button class="btn btnAccent" onclick="openNewAnnouncement()">+ Comunicado</button></div>`:''} ${announcements.map(a=>`<div class="annItem"><div style="display:flex;justify-content:space-between;align-items:flex-start"><h4>${a.title}</h4><div style="display:flex;gap:5px;align-items:center"><span style="font-size:.63rem;color:var(--text3)">${a.date}</span><span class="badge active" style="font-size:.6rem">${a.target}</span>${currentUser.role!=='user'?`<button class="btn btnXs btnDanger" onclick="deleteAnnouncement(${a.id})">✕</button>`:''}</div></div><p>${a.body}</p><div style="font-size:.63rem;color:var(--text3);margin-top:4px">Por: ${a.author}</div></div>`).join('')}`,
+comunicados:()=>views.notificaciones(),
 
 mensajesMasivos:()=>`<div class="pageTitle">Mensajes Masivos</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px"><div class="card"><h3>Plantillas</h3>${MSG_TEMPLATES.map(t=>`<div class="templateCard" onclick="useTemplate(${t.id})"><h5>${t.emoji} ${t.name}</h5><p>${t.body.substring(0,70)}...</p></div>`).join('')}</div><div class="card"><h3>Enviar</h3><div class="formGroup" style="margin-bottom:10px"><label>Destinatarios</label><select id="massTarget"><option value="all">Todos los socios</option>${Object.keys(PLANS).map(p=>`<option value="${p}">Plan ${p}</option>`).join('')}<option value="debt">Con deuda</option><option value="blocked">Bloqueados</option><option value="expiring">Por vencer</option></select></div><div class="formGroup" style="margin-bottom:10px"><label>Mensaje (usá {nombre})</label><textarea id="massMsg" style="min-height:100px" placeholder="Escribí tu mensaje..."></textarea></div><div id="massPreview" style="margin-bottom:10px"></div><div style="display:flex;gap:8px"><button class="btn btnGhost" onclick="previewMass()">👁 Preview</button><button class="btn btnAccent" onclick="sendMassMessage()">📤 Enviar</button></div><div id="massResult" style="margin-top:10px"></div></div></div>`,
 
@@ -1732,7 +1732,13 @@ staff:()=>`<div class="pageTitle">Staff & Roles</div>
 </div>`,
 
 notificaciones:()=>{genNotifications();const staffList=(staffAccounts||[]).filter(s=>s.role!=='admin').map(s=>`<option value="${s.email}">${s.name} — ${s.role||'Staff'}</option>`).join('');const clientList=(users||[]).map(u=>`<option value="${u.id}">${u.name}</option>`).join('');return`
-<div class="pageTitle">Centro de Alertas</div>
+<div class="pageTitle" style="display:flex;justify-content:space-between;align-items:center"><span>Comunicados</span>${currentUser.role!=='user'?`<button class="btn btnAccent btnSm" onclick="openNewAnnouncement()">+ Comunicado</button>`:''}</div>
+
+<!-- ANUNCIOS / COMUNICADOS GUARDADOS -->
+<div class="card" style="margin-bottom:14px">
+  <h3>📌 Anuncios publicados</h3>
+  ${announcements.length?announcements.map(a=>`<div class="annItem"><div style="display:flex;justify-content:space-between;align-items:flex-start"><h4>${a.title}</h4><div style="display:flex;gap:5px;align-items:center"><span style="font-size:.63rem;color:var(--text3)">${a.date}</span><span class="badge active" style="font-size:.6rem">${a.target}</span>${currentUser.role!=='user'?`<button class="btn btnXs btnDanger" onclick="deleteAnnouncement(${a.id})">✕</button>`:''}</div></div><p>${a.body}</p><div style="font-size:.63rem;color:var(--text3);margin-top:4px">Por: ${a.author}</div></div>`).join(''):'<p style="font-size:.8rem;color:var(--text3);text-align:center;padding:14px 0">Sin anuncios publicados todavía.</p>'}
+</div>
 
 <!-- ALERTAS AUTOMÁTICAS DEL SISTEMA -->
 <div class="card" style="margin-bottom:18px">
@@ -1747,7 +1753,8 @@ notificaciones:()=>{genNotifications();const staffList=(staffAccounts||[]).filte
   }
 </div>
 
-<!-- DOS PANELES: STAFF y CLIENTES -->
+<!-- DOS PANELES: STAFF y CLIENTES (solo administración / recepción) -->
+${(currentUser.role==='admin'||currentUser.role==='reception')?`
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
 
   <!-- PANEL STAFF -->
@@ -1821,6 +1828,7 @@ notificaciones:()=>{genNotifications();const staffList=(staffAccounts||[]).filte
   </div>
 
 </div>
+`:''}
 `;}
 ,
 
@@ -5082,7 +5090,7 @@ views.cobroDiario = () => {
       <div style="display:flex;flex-direction:column;gap:8px">
         <button class="btn" style="background:rgba(48,209,88,.1);color:var(--green);border:1px solid rgba(48,209,88,.3);padding:10px;text-align:left;font-size:.78rem" onclick="navigate('usuarios')">👥 Lista completa de socios</button>
         <button class="btn" style="background:rgba(10,132,255,.08);color:var(--blue);border:1px solid rgba(10,132,255,.25);padding:10px;text-align:left;font-size:.78rem" onclick="navigate('acceso')">🔐 Control de acceso</button>
-        <button class="btn" style="background:rgba(229,8,126,.08);color:var(--accent);border:1px solid rgba(229,8,126,.25);padding:10px;text-align:left;font-size:.78rem" onclick="navigate('notificaciones')">🔔 Ver alertas del sistema</button>
+        <button class="btn" style="background:rgba(229,8,126,.08);color:var(--accent);border:1px solid rgba(229,8,126,.25);padding:10px;text-align:left;font-size:.78rem" onclick="navigate('comunicados')">🔔 Ver alertas del sistema</button>
         <button class="btn" style="background:rgba(255,159,10,.08);color:var(--orange);border:1px solid rgba(255,159,10,.25);padding:10px;text-align:left;font-size:.78rem" onclick="navigate('congelados')">❄️ Socios congelados</button>
       </div>
     </div>
