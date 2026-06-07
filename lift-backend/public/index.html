@@ -818,7 +818,7 @@ function logAction(action,detail){adminLog.unshift({id:Date.now(),user:currentUs
 function fillDemo(e,p){document.getElementById('loginEmail').value=e;document.getElementById('loginPass').value=p;}
 function doLogin(){const em=document.getElementById('loginEmail').value.trim();const pw=document.getElementById('loginPass').value.trim();const staff=staffAccounts.find(s=>s.email===em&&s.pass===pw);if(staff)currentUser={role:staff.role,name:staff.name,email:staff.email};else{const u=users.find(x=>x.email===em&&x.pass===pw);if(!u){alert('Credenciales incorrectas');return;}currentUser={role:'user',name:u.name,data:u,email:u.email};}startApp();}
 function doLogout(){currentUser=null;document.getElementById('loginScreen').style.display='flex';document.getElementById('app').style.display='none';}
-function startApp(){genNotifications();document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('roleLabel').textContent=ROLES[currentUser.role]||currentUser.role;buildSidebar();navigate(currentUser.role==='user'?'miPerfil':currentUser.role==='trainer'?'trainerDashboard':currentUser.role==='reception'?'dashboard':currentUser.role==='nutritionist'?'nutriDashboard':'dashboard');if(currentUser.role==='user'&&typeof checkEncuestaBienvenida==='function')checkEncuestaBienvenida();}
+function startApp(){genNotifications();document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('roleLabel').textContent=ROLES[currentUser.role]||currentUser.role;buildSidebar();navigate(currentUser.role==='user'?'miPerfil':currentUser.role==='trainer'?'trainerDashboard':currentUser.role==='reception'?'dashboard':currentUser.role==='nutritionist'?'nutriDashboard':'dashboard');if(currentUser.role==='user'&&typeof checkEncuestaBienvenida==='function')checkEncuestaBienvenida();if(currentUser.role==='user'&&typeof checkEncuestasCampanas==='function')checkEncuestasCampanas();}
 let pinBuf='';
 function showPinLogin(){openModal(`<h3>Ingreso con PIN</h3><p style="font-size:.78rem;color:var(--text2);margin-bottom:12px;text-align:center">Ingresá tu PIN (hasta 10 dígitos)</p><div class="pinDisplay" id="pinDisplay">—</div><div class="pinGrid">${[1,2,3,4,5,6,7,8,9,'⌫',0,'✓'].map(k=>`<div class="pinBtn" onclick="pinPress('${k}')">${k}</div>`).join('')}</div><div id="pinMsg" style="text-align:center;font-size:.78rem;margin-top:10px;color:var(--red)"></div>`);pinBuf='';}
 function pinPress(k){if(k==='⌫')pinBuf=pinBuf.slice(0,-1);else if(k==='✓'){const u=users.find(x=>x.pin===pinBuf);if(u){currentUser={role:'user',name:u.name,data:u,email:u.email};closeModal();startApp();}else{document.getElementById('pinMsg').textContent='PIN incorrecto';pinBuf='';}}else if(pinBuf.length<10)pinBuf+=k;const d=document.getElementById('pinDisplay');if(d)d.textContent=pinBuf?'●'.repeat(pinBuf.length):'—';}
@@ -6267,36 +6267,99 @@ function enviarEncuestaBienvenida(){
   openModal(`<div style="text-align:center;padding:14px"><div style="font-size:2.5rem">🙏</div><h3>¡Gracias por contarnos tu experiencia!</h3><p style="font-size:.8rem;color:var(--text2)">Tu opinión nos ayuda a mejorar la bienvenida de cada nuevo socio.</p><div style="margin-top:12px"><button class="btn btnAccent" onclick="closeModal()">OK</button></div></div>`);
 }
 
-// ── Admin: crear nueva campaña de encuesta con segmentación de destinatarios ──
-function openNuevaEncuesta(){
+// ── Admin: crear / editar campaña de encuesta (constructor estilo Google Forms + envío automático) ──
+const NE_TYPE_LABELS = {rating:'⭐ Calificación (1-10)', text:'✏️ Respuesta abierta', single:'🔘 Opción única', multiple:'☑️ Varias opciones'};
+window._neQuestions = window._neQuestions || [];
+window._neSeleccionados = window._neSeleccionados || new Set();
+window._neEditId = null;
+
+function openNuevaEncuesta(editId){
+  window._neEditId = editId || null;
+  const editing = editId ? encuestaCampaigns.find(c=>c.id===editId) : null;
+  window._neQuestions = editing ? JSON.parse(JSON.stringify(editing.preguntas)) : WELCOME_SURVEY_QUESTIONS.map(q=>({id:'q'+Math.random().toString(36).slice(2,8), type:q.type, text:q.text, opciones:[]}));
+  window._neSeleccionados = new Set(editing && editing.destinoTipo==='seleccion' ? editing.destinatarios : []);
+  const auto = editing?.auto;
   openModal(`
-    <h3>📋 Nueva encuesta</h3>
+    <h3>📋 ${editing?'Editar encuesta':'Nueva encuesta'}</h3>
     <div class="formGroup">
       <label>Nombre de la campaña *</label>
-      <input id="neNombre" placeholder="Ej: Encuesta de bienvenida — Junio 2026"/>
+      <input id="neNombre" placeholder="Ej: Encuesta de bienvenida — Junio 2026" value="${(editing?.nombre||'').replace(/"/g,'&quot;')}"/>
     </div>
-    <div class="formGroup" style="margin-top:10px">
-      <label>¿A quién se la enviamos?</label>
-      <select id="neTipo" onchange="neToggleDestino()">
-        <option value="todos">Todos los socios activos</option>
-        <option value="plan">Socios de un plan específico</option>
-        <option value="seleccion">Selección particular (buscar y elegir)</option>
-      </select>
-    </div>
-    <div id="neDestinoBox" style="margin-top:10px"></div>
-    <div class="formGroup" style="margin-top:12px">
-      <div style="font-size:.72rem;color:var(--text3);background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:8px">
-        ℹ️ La encuesta usa la plantilla estándar de <strong>8 preguntas sobre primer impacto del servicio</strong> (satisfacción, recepción, instalaciones, horarios, NPS y comentarios libres) — la misma que se envía automáticamente a los socios nuevos a la semana de inscribirse.
+    <div class="formGroup" style="margin-top:10px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:8px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="neAuto" ${auto?'checked':''} onchange="neToggleAuto()"/>
+        <span><strong>🤖 Envío automático a socios nuevos</strong> — se envía sola a cada socio que se inscriba, pasados los días que definas (sin necesidad de seleccionarlos a mano).</span>
+      </label>
+      <div id="neAutoBox" style="margin-top:8px;${auto?'':'display:none'}">
+        <label style="font-size:.78rem">Enviar a los</label>
+        <input id="neAutoDias" type="number" min="0" value="${editing?.autoDias ?? 7}" style="width:70px;display:inline-block;margin:0 6px"/>
+        <span style="font-size:.78rem">días de inscripción</span>
       </div>
     </div>
-    <div id="neResumen" style="margin-top:8px;font-size:.78rem;color:var(--text2)"></div>
+    <div id="neDestinoWrap">
+      <div class="formGroup" style="margin-top:10px">
+        <label>¿A quién se la enviamos?</label>
+        <select id="neTipo" onchange="neToggleDestino()">
+          <option value="todos" ${editing?.destinoTipo==='todos'?'selected':''}>Todos los socios activos</option>
+          <option value="plan" ${editing?.destinoTipo==='plan'?'selected':''}>Socios de un plan específico</option>
+          <option value="seleccion" ${editing?.destinoTipo==='seleccion'?'selected':''}>Selección particular (buscar y elegir)</option>
+        </select>
+      </div>
+      <div id="neDestinoBox" style="margin-top:10px"></div>
+      <div id="neResumen" style="margin-top:8px;font-size:.78rem;color:var(--text2)"></div>
+    </div>
+    <div class="formGroup" style="margin-top:14px">
+      <label>Preguntas (máx. 8) — armá tu propia encuesta</label>
+      <div id="neQList" style="margin-top:6px"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn btnGhost btnSm" onclick="neAddQuestion('rating')">+ ⭐ Calificación</button>
+        <button class="btn btnGhost btnSm" onclick="neAddQuestion('text')">+ ✏️ Abierta</button>
+        <button class="btn btnGhost btnSm" onclick="neAddQuestion('single')">+ 🔘 Opción única</button>
+        <button class="btn btnGhost btnSm" onclick="neAddQuestion('multiple')">+ ☑️ Varias opciones</button>
+      </div>
+    </div>
     <div class="modalActions">
       <button class="btn btnGhost" onclick="closeModal()">Cancelar</button>
-      <button class="btn btnAccent" onclick="guardarNuevaEncuesta()">Crear y enviar</button>
+      <button class="btn btnAccent" onclick="guardarNuevaEncuesta()">${editing?'Guardar cambios':'Crear y enviar'}</button>
     </div>
   `);
+  neRenderQuestions();
+  neToggleAuto();
   neToggleDestino();
+  if(editing && editing.destinoTipo==='plan') setTimeout(()=>{ const sel=document.getElementById('nePlan'); if(sel) sel.value=editing.destinatariosPlan||''; neUpdateResumen(); },0);
 }
+function neToggleAuto(){
+  const auto = document.getElementById('neAuto')?.checked;
+  const box = document.getElementById('neAutoBox');
+  const wrap = document.getElementById('neDestinoWrap');
+  if(box) box.style.display = auto?'':'none';
+  // Si es automática, el destino lo define la automatización (socios nuevos), no hace falta elegir manualmente
+  if(wrap) wrap.style.display = auto?'none':'';
+}
+function neRenderQuestions(){
+  const box = document.getElementById('neQList');
+  if(!box) return;
+  box.innerHTML = window._neQuestions.map((q,i)=>`
+    <div style="border:1px solid var(--border);border-radius:4px;padding:8px;margin-bottom:6px;background:var(--surface2)">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+        <span style="font-size:.72rem;color:var(--text3);min-width:16px">${i+1}.</span>
+        <input value="${(q.text||'').replace(/"/g,'&quot;')}" placeholder="Texto de la pregunta..." style="flex:1" oninput="neQSet(${i},'text',this.value)"/>
+        <span class="badge" style="font-size:.62rem;white-space:nowrap">${NE_TYPE_LABELS[q.type]||q.type}</span>
+        <button class="btn btnGhost btnSm" onclick="neQRemove(${i})" title="Eliminar">🗑️</button>
+      </div>
+      ${(q.type==='single'||q.type==='multiple') ? `
+        <label style="font-size:.7rem;color:var(--text3)">Opciones (una por línea)</label>
+        <textarea rows="3" placeholder="Opción 1&#10;Opción 2&#10;Opción 3" oninput="neQSet(${i},'opciones',this.value.split('\\n'))">${(q.opciones||[]).join('\n')}</textarea>
+      ` : ''}
+    </div>`).join('') || '<p style="font-size:.76rem;color:var(--text3)">Agregá al menos una pregunta con los botones de abajo.</p>';
+}
+function neAddQuestion(type){
+  if(window._neQuestions.length>=8){ alert('Máximo 8 preguntas por encuesta.'); return; }
+  window._neQuestions.push({id:'q'+Math.random().toString(36).slice(2,8), type, text:'', opciones: (type==='single'||type==='multiple')?['Opción 1','Opción 2']:[]});
+  neRenderQuestions();
+}
+function neQSet(i,field,val){ if(window._neQuestions[i]) window._neQuestions[i][field]=val; }
+function neQRemove(i){ window._neQuestions.splice(i,1); neRenderQuestions(); }
 function neToggleDestino(){
   const tipo = document.getElementById('neTipo')?.value || 'todos';
   const box = document.getElementById('neDestinoBox');
@@ -6313,7 +6376,6 @@ function neToggleDestino(){
   }
   neUpdateResumen();
 }
-window._neSeleccionados = window._neSeleccionados || new Set();
 function neFiltrarSocios(){
   const q = (document.getElementById('neBuscar')?.value||'').toLowerCase();
   const list = document.getElementById('neListaSocios');
@@ -6343,33 +6405,150 @@ function neUpdateResumen(){
 function guardarNuevaEncuesta(){
   const nombre = document.getElementById('neNombre')?.value?.trim();
   if(!nombre){ alert('Ingresá un nombre para la campaña'); return; }
-  const tipo = document.getElementById('neTipo')?.value || 'todos';
-  let destinatarios = [];
-  let destinoLabel = '';
-  if(tipo==='todos'){
-    destinatarios = users.filter(u=>u.status==='active').map(u=>u.id);
-    destinoLabel = 'Todos los socios activos';
-  } else if(tipo==='plan'){
-    const plan = document.getElementById('nePlan')?.value;
-    destinatarios = users.filter(u=>u.plan===plan).map(u=>u.id);
-    destinoLabel = `Plan ${plan}`;
+  const preguntas = window._neQuestions.filter(q=>q.text && q.text.trim()).map(q=>({id:q.id, type:q.type, text:q.text.trim(), opciones:(q.opciones||[]).map(o=>o.trim()).filter(Boolean)}));
+  if(!preguntas.length){ alert('Agregá al menos una pregunta con texto.'); return; }
+  for(const q of preguntas){ if((q.type==='single'||q.type==='multiple') && q.opciones.length<2){ alert(`La pregunta "${q.text}" necesita al menos 2 opciones.`); return; } }
+  const auto = document.getElementById('neAuto')?.checked;
+  const autoDias = Math.max(0, +(document.getElementById('neAutoDias')?.value || 7));
+
+  let destinatarios = [], destinoLabel = '', destinoTipo = '', destinatariosPlan = '';
+  if(auto){
+    destinoTipo = 'auto';
+    destinoLabel = `🤖 Automático — socios nuevos, a los ${autoDias} días de inscribirse`;
+    destinatarios = [];
   } else {
-    destinatarios = [...window._neSeleccionados];
-    destinoLabel = `Selección particular (${destinatarios.length} socios)`;
+    destinoTipo = document.getElementById('neTipo')?.value || 'todos';
+    if(destinoTipo==='todos'){
+      destinatarios = users.filter(u=>u.status==='active').map(u=>u.id);
+      destinoLabel = 'Todos los socios activos';
+    } else if(destinoTipo==='plan'){
+      destinatariosPlan = document.getElementById('nePlan')?.value;
+      destinatarios = users.filter(u=>u.plan===destinatariosPlan).map(u=>u.id);
+      destinoLabel = `Plan ${destinatariosPlan}`;
+    } else {
+      destinatarios = [...window._neSeleccionados];
+      destinoLabel = `Selección particular (${destinatarios.length} socios)`;
+    }
+    if(!destinatarios.length){ alert('No hay socios para esta selección.'); return; }
   }
-  if(!destinatarios.length){ alert('No hay socios para esta selección.'); return; }
-  encuestaCampaigns.push({
-    id:Date.now(), nombre, destinoLabel, destinatarios,
-    preguntas: WELCOME_SURVEY_QUESTIONS.map(q=>q.text),
-    fecha: new Date().toISOString().slice(0,10),
-    enviadaPor: currentUser.name||currentUser.email
-  });
+
+  if(window._neEditId){
+    const c = encuestaCampaigns.find(x=>x.id===window._neEditId);
+    if(c){
+      Object.assign(c, {nombre, preguntas, destinoTipo, destinoLabel, destinatarios, destinatariosPlan, auto: !!auto, autoDias});
+      logAction && logAction('Encuesta editada', `${nombre} — ${destinoLabel}`);
+    }
+  } else {
+    const camp = {
+      id:Date.now(), nombre, preguntas, destinoTipo, destinoLabel, destinatarios, destinatariosPlan,
+      auto: !!auto, autoDias,
+      fecha: new Date().toISOString().slice(0,10),
+      enviadaPor: currentUser.name||currentUser.email
+    };
+    encuestaCampaigns.push(camp);
+    if(!auto) destinatarios.forEach(uid=>localStorage.setItem('gp_encuesta_campaign_pend_'+uid, String(camp.id)));
+    logAction && logAction('Encuesta creada', `${nombre} — ${destinoLabel}`);
+  }
   saveEncuestaCampaigns();
-  destinatarios.forEach(uid=>localStorage.setItem('gp_encuesta_campaign_pend_'+uid, String(Date.now())));
   window._neSeleccionados = new Set();
-  logAction && logAction('Encuesta enviada', `${nombre} — ${destinoLabel}`);
+  window._neEditId = null;
   closeModal();
   navigate('encuestas');
+}
+function editarEncuesta(id){ openNuevaEncuesta(id); }
+
+// ── Socio: responder encuestas de campañas (manuales o automáticas para nuevos) ──
+window._ceAnswers = window._ceAnswers || {};
+function checkEncuestasCampanas(){
+  const u = currentUser?.data;
+  if(!u) return;
+  // 1) Campañas manuales pendientes (asignación directa)
+  const pendId = +localStorage.getItem('gp_encuesta_campaign_pend_'+u.id || '');
+  if(pendId){
+    const camp = encuestaCampaigns.find(c=>c.id===pendId && !c.auto);
+    if(camp && !encuestasDB.some(e=>e.userId===u.id && e.campaignId===camp.id)){
+      setTimeout(()=>showEncuestaCampanaModal(camp), 2500);
+      return;
+    } else {
+      localStorage.removeItem('gp_encuesta_campaign_pend_'+u.id);
+    }
+  }
+  // 2) Campañas automáticas para socios nuevos
+  if(!u.inscDate) return;
+  const insc = new Date(u.inscDate.slice(0,10)+'T00:00:00');
+  const dias = Math.floor((new Date()-insc)/86400000);
+  const auto = encuestaCampaigns.find(c=>c.auto && dias>=(c.autoDias??7) && !encuestasDB.some(e=>e.userId===u.id && e.campaignId===c.id));
+  if(auto) setTimeout(()=>showEncuestaCampanaModal(auto), 2500);
+}
+function showEncuestaCampanaModal(camp){
+  window._ceAnswers = {};
+  window._ceCampaign = camp;
+  openModal(`
+    <div style="text-align:center;margin-bottom:14px">
+      <div style="font-size:2rem;margin-bottom:6px">📋</div>
+      <h3>${camp.nombre}</h3>
+      <p style="font-size:.8rem;color:var(--text2)">Tu opinión nos ayuda a mejorar — son solo ${camp.preguntas.length} preguntas rápidas.</p>
+    </div>
+    <div id="ceForm">
+      ${camp.preguntas.map((q,i)=>`
+        <div class="formGroup" style="margin-top:${i?12:0}px">
+          <label>${i+1}. ${q.text}</label>
+          ${q.type==='rating'
+            ? `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px" id="ceRating_${q.id}">
+                ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<div onclick="ceSelectRating('${q.id}',${n})" data-val="${n}" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);border-radius:2px;cursor:pointer;font-weight:700;font-size:.8rem">${n}</div>`).join('')}
+              </div>`
+            : q.type==='text'
+            ? `<textarea placeholder="Tu respuesta..." rows="2" oninput="ceSetText('${q.id}',this.value)"></textarea>`
+            : q.type==='single'
+            ? q.opciones.map(o=>`<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.8rem;cursor:pointer"><input type="radio" name="ce_${q.id}" onchange="ceSetSingle('${q.id}','${o.replace(/'/g,"\\'")}')"/> ${o}</label>`).join('')
+            : q.opciones.map(o=>`<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.8rem;cursor:pointer"><input type="checkbox" onchange="ceToggleMultiple('${q.id}','${o.replace(/'/g,"\\'")}',this.checked)"/> ${o}</label>`).join('')
+          }
+        </div>`).join('')}
+    </div>
+    <div class="modalActions">
+      <button class="btn btnGhost btnSm" onclick="closeModal()">Ahora no</button>
+      <button class="btn btnAccent" onclick="enviarEncuestaCampana()">Enviar respuestas</button>
+    </div>
+  `);
+}
+function ceSelectRating(qid,n){
+  document.querySelectorAll(`#ceRating_${qid} [data-val]`).forEach(el=>{
+    const sel = +el.dataset.val===n;
+    el.style.background = sel?'var(--accent)':'var(--surface2)';
+    el.style.color = sel?'#fff':'';
+    el.style.borderColor = sel?'var(--accent)':'var(--border)';
+  });
+  window._ceAnswers[qid] = n;
+}
+function ceSetText(qid,v){ window._ceAnswers[qid] = v; }
+function ceSetSingle(qid,v){ window._ceAnswers[qid] = v; }
+function ceToggleMultiple(qid,opt,checked){
+  const cur = Array.isArray(window._ceAnswers[qid]) ? window._ceAnswers[qid] : [];
+  window._ceAnswers[qid] = checked ? [...cur,opt] : cur.filter(x=>x!==opt);
+}
+function enviarEncuestaCampana(){
+  const u = currentUser.data;
+  const camp = window._ceCampaign;
+  let faltan = 0;
+  camp.preguntas.forEach(q=>{
+    const v = window._ceAnswers[q.id];
+    if(q.type==='rating' && !v) faltan++;
+  });
+  if(faltan){ alert('Por favor respondé todas las preguntas de calificación.'); return; }
+  const ratingQs = camp.preguntas.filter(q=>q.type==='rating');
+  const ratingProm = ratingQs.length ? Math.round(ratingQs.reduce((s,q)=>s+(+window._ceAnswers[q.id]||0),0)/ratingQs.length*10)/10 : null;
+  const comentario = camp.preguntas.filter(q=>q.type==='text').map(q=>window._ceAnswers[q.id]).filter(Boolean).join(' · ');
+  encuestasDB.push({
+    id:Date.now(), userId:u.id, userName:u.name, tipo: camp.auto?'bienvenida':'campania', campaignId:camp.id,
+    mes:new Date().toISOString().slice(0,7), rating: ratingProm ?? 0,
+    respuestas: {...window._ceAnswers}, comentario,
+    fecha:new Date().toISOString().slice(0,10)
+  });
+  saveEncuestas();
+  localStorage.removeItem('gp_encuesta_campaign_pend_'+u.id);
+  if(typeof addPuntos==='function') addPuntos(u.id,'reto','Encuesta completada: '+camp.nombre);
+  closeModal();
+  openModal(`<div style="text-align:center;padding:14px"><div style="font-size:2.5rem">🙏</div><h3>¡Gracias por tu respuesta!</h3><p style="font-size:.8rem;color:var(--text2)">Tu opinión nos ayuda a mejorar la experiencia de todos los socios.</p><div style="margin-top:12px"><button class="btn btnAccent" onclick="closeModal()">OK</button></div></div>`);
 }
 
 // Admin: ver resultados encuestas
@@ -6388,8 +6567,8 @@ views.encuestas = () => {
   ${encuestaCampaigns.length?`
   <div class="card" style="margin-bottom:14px">
     <h3>Campañas enviadas</h3>
-    <table class="tbl"><tr><th>Campaña</th><th>Destinatarios</th><th>Fecha</th><th>Por</th></tr>
-    ${[...encuestaCampaigns].reverse().slice(0,12).map(c=>`<tr><td><strong>${c.nombre}</strong></td><td style="font-size:.76rem;color:var(--text2)">${c.destinoLabel}</td><td style="font-size:.72rem;color:var(--text3)">${c.fecha}</td><td style="font-size:.72rem;color:var(--text3)">${c.enviadaPor||'—'}</td></tr>`).join('')}
+    <table class="tbl"><tr><th>Campaña</th><th>Destinatarios</th><th>Fecha</th><th>Por</th><th></th></tr>
+    ${[...encuestaCampaigns].reverse().slice(0,12).map(c=>`<tr><td><strong>${c.nombre}</strong>${c.auto?' <span class="badge active" style="font-size:.6rem">🤖 auto</span>':''}</td><td style="font-size:.76rem;color:var(--text2)">${c.destinoLabel}</td><td style="font-size:.72rem;color:var(--text3)">${c.fecha}</td><td style="font-size:.72rem;color:var(--text3)">${c.enviadaPor||'—'}</td><td><button class="btn btnGhost btnSm" onclick="editarEncuesta(${c.id})" title="Editar">✏️</button></td></tr>`).join('')}
     </table>
   </div>`:''}
   <div style="font-size:.74rem;color:var(--text3);margin:-6px 0 14px">🤖 Automatización activa: a cada socio nuevo se le envía la <strong>Encuesta de Bienvenida</strong> (8 preguntas sobre primer impacto) automáticamente a la semana de inscribirse.</div>
