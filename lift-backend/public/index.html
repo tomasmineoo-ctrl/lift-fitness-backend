@@ -818,7 +818,7 @@ function logAction(action,detail){adminLog.unshift({id:Date.now(),user:currentUs
 function fillDemo(e,p){document.getElementById('loginEmail').value=e;document.getElementById('loginPass').value=p;}
 function doLogin(){const em=document.getElementById('loginEmail').value.trim();const pw=document.getElementById('loginPass').value.trim();const staff=staffAccounts.find(s=>s.email===em&&s.pass===pw);if(staff)currentUser={role:staff.role,name:staff.name,email:staff.email};else{const u=users.find(x=>x.email===em&&x.pass===pw);if(!u){alert('Credenciales incorrectas');return;}currentUser={role:'user',name:u.name,data:u,email:u.email};}startApp();}
 function doLogout(){currentUser=null;document.getElementById('loginScreen').style.display='flex';document.getElementById('app').style.display='none';}
-function startApp(){genNotifications();document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('roleLabel').textContent=ROLES[currentUser.role]||currentUser.role;buildSidebar();navigate(currentUser.role==='user'?'miPerfil':currentUser.role==='trainer'?'trainerDashboard':currentUser.role==='reception'?'dashboard':currentUser.role==='nutritionist'?'nutriDashboard':'dashboard');}
+function startApp(){genNotifications();document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('roleLabel').textContent=ROLES[currentUser.role]||currentUser.role;buildSidebar();navigate(currentUser.role==='user'?'miPerfil':currentUser.role==='trainer'?'trainerDashboard':currentUser.role==='reception'?'dashboard':currentUser.role==='nutritionist'?'nutriDashboard':'dashboard');if(currentUser.role==='user'&&typeof checkEncuestaBienvenida==='function')checkEncuestaBienvenida();}
 let pinBuf='';
 function showPinLogin(){openModal(`<h3>Ingreso con PIN</h3><p style="font-size:.78rem;color:var(--text2);margin-bottom:12px;text-align:center">Ingresá tu PIN (hasta 10 dígitos)</p><div class="pinDisplay" id="pinDisplay">—</div><div class="pinGrid">${[1,2,3,4,5,6,7,8,9,'⌫',0,'✓'].map(k=>`<div class="pinBtn" onclick="pinPress('${k}')">${k}</div>`).join('')}</div><div id="pinMsg" style="text-align:center;font-size:.78rem;margin-top:10px;color:var(--red)"></div>`);pinBuf='';}
 function pinPress(k){if(k==='⌫')pinBuf=pinBuf.slice(0,-1);else if(k==='✓'){const u=users.find(x=>x.pin===pinBuf);if(u){currentUser={role:'user',name:u.name,data:u,email:u.email};closeModal();startApp();}else{document.getElementById('pinMsg').textContent='PIN incorrecto';pinBuf='';}}else if(pinBuf.length<10)pinBuf+=k;const d=document.getElementById('pinDisplay');if(d)d.textContent=pinBuf?'●'.repeat(pinBuf.length):'—';}
@@ -6174,6 +6174,204 @@ function enviarEncuesta(){
   openModal(`<div style="text-align:center;padding:14px"><div style="font-size:2.5rem">🙏</div><h3>¡Gracias por tu opinión!</h3><p style="font-size:.8rem;color:var(--text2)">Te acreditamos +${puntosConfig.acciones.reto} puntos por participar.</p><div style="margin-top:12px"><button class="btn btnAccent" onclick="closeModal()">OK</button></div></div>`);
 }
 
+// ═══════════════════════════════════════════════════════════
+// ENCUESTAS — Campañas nuevas + Encuesta automática de bienvenida
+// ═══════════════════════════════════════════════════════════
+let encuestaCampaigns = [];
+try{const ec=localStorage.getItem('gp_encuestaCampaigns');if(ec)encuestaCampaigns=JSON.parse(ec);}catch(e){}
+function saveEncuestaCampaigns(){try{localStorage.setItem('gp_encuestaCampaigns',JSON.stringify(encuestaCampaigns));}catch(e){}}
+
+// 8 preguntas fijas centradas en el primer impacto del servicio (encuesta de bienvenida, 1 semana post-inscripción)
+const WELCOME_SURVEY_QUESTIONS = [
+  {id:'q1', type:'rating', text:'¿Cómo calificarías tu primera semana en LIFT?'},
+  {id:'q2', type:'rating', text:'¿Qué tan fácil fue el proceso de inscripción?'},
+  {id:'q3', type:'rating', text:'¿El personal te recibió y orientó adecuadamente?'},
+  {id:'q4', type:'rating', text:'¿Las instalaciones cumplieron tus expectativas?'},
+  {id:'q5', type:'rating', text:'¿Encontraste fácilmente la información sobre clases y horarios?'},
+  {id:'q6', type:'rating', text:'¿Qué tan probable es que recomiendes LIFT a un amigo? (NPS)'},
+  {id:'q7', type:'text',   text:'¿Qué fue lo que más te gustó hasta ahora?'},
+  {id:'q8', type:'text',   text:'¿Qué podríamos mejorar en tu experiencia de bienvenida?'}
+];
+
+function checkEncuestaBienvenida(){
+  const u = currentUser?.data;
+  if(!u || !u.inscDate) return;
+  const ya = encuestasDB.some(e=>e.userId===u.id && e.tipo==='bienvenida');
+  if(ya) return;
+  const insc = new Date(u.inscDate.slice(0,10)+'T00:00:00');
+  const hoy = new Date();
+  const dias = Math.floor((hoy-insc)/86400000);
+  if(dias < 7) return;
+  const lastShown = localStorage.getItem('gp_encuesta_bienvenida_'+u.id);
+  if(lastShown==='1') return;
+  localStorage.setItem('gp_encuesta_bienvenida_'+u.id, '1');
+  setTimeout(()=>{ if(typeof showEncuestaBienvenidaModal==='function') showEncuestaBienvenidaModal(); }, 2500);
+}
+
+function showEncuestaBienvenidaModal(){
+  openModal(`
+    <div style="text-align:center;margin-bottom:14px">
+      <div style="font-size:2rem;margin-bottom:6px">🌟</div>
+      <h3>¡Ya pasó tu primera semana en LIFT!</h3>
+      <p style="font-size:.8rem;color:var(--text2)">Contanos cómo fue tu primer impacto — son solo 8 preguntas rápidas.</p>
+    </div>
+    <div id="ebForm">
+      ${WELCOME_SURVEY_QUESTIONS.map((q,i)=>`
+        <div class="formGroup" style="margin-top:${i?12:0}px">
+          <label>${i+1}. ${q.text}</label>
+          ${q.type==='rating'
+            ? `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px" id="ebRating_${q.id}">
+                ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<div onclick="ebSelectRating('${q.id}',${n})" data-val="${n}" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);border-radius:2px;cursor:pointer;font-weight:700;font-size:.8rem">${n}</div>`).join('')}
+              </div><input type="hidden" id="ebVal_${q.id}" value=""/>`
+            : `<textarea id="ebVal_${q.id}" placeholder="Tu respuesta..." rows="2"></textarea>`}
+        </div>`).join('')}
+    </div>
+    <div class="modalActions">
+      <button class="btn btnGhost btnSm" onclick="closeModal()">Ahora no</button>
+      <button class="btn btnAccent" onclick="enviarEncuestaBienvenida()">Enviar respuestas</button>
+    </div>
+  `);
+}
+function ebSelectRating(qid,n){
+  document.querySelectorAll(`#ebRating_${qid} [data-val]`).forEach(el=>{
+    const sel = +el.dataset.val===n;
+    el.style.background = sel?'var(--accent)':'var(--surface2)';
+    el.style.color = sel?'#fff':'';
+    el.style.borderColor = sel?'var(--accent)':'var(--border)';
+  });
+  document.getElementById('ebVal_'+qid).value = n;
+}
+function enviarEncuestaBienvenida(){
+  const u = currentUser.data;
+  const respuestas = {};
+  let faltan = 0;
+  WELCOME_SURVEY_QUESTIONS.forEach(q=>{
+    const v = document.getElementById('ebVal_'+q.id)?.value || '';
+    if(q.type==='rating' && !v) faltan++;
+    respuestas[q.id] = q.type==='rating' ? (+v||0) : v;
+  });
+  if(faltan){ alert('Por favor respondé todas las preguntas de puntuación (1-10).'); return; }
+  const ratingProm = Math.round(
+    WELCOME_SURVEY_QUESTIONS.filter(q=>q.type==='rating').reduce((s,q)=>s+(respuestas[q.id]||0),0)
+    / WELCOME_SURVEY_QUESTIONS.filter(q=>q.type==='rating').length * 10
+  )/10;
+  encuestasDB.push({
+    id:Date.now(), userId:u.id, userName:u.name, tipo:'bienvenida',
+    mes:new Date().toISOString().slice(0,7), rating:ratingProm,
+    respuestas, comentario:respuestas.q8||respuestas.q7||'',
+    fecha:new Date().toISOString().slice(0,10)
+  });
+  saveEncuestas();
+  if(typeof addPuntos==='function') addPuntos(u.id,'reto','Encuesta de bienvenida completada');
+  closeModal();
+  openModal(`<div style="text-align:center;padding:14px"><div style="font-size:2.5rem">🙏</div><h3>¡Gracias por contarnos tu experiencia!</h3><p style="font-size:.8rem;color:var(--text2)">Tu opinión nos ayuda a mejorar la bienvenida de cada nuevo socio.</p><div style="margin-top:12px"><button class="btn btnAccent" onclick="closeModal()">OK</button></div></div>`);
+}
+
+// ── Admin: crear nueva campaña de encuesta con segmentación de destinatarios ──
+function openNuevaEncuesta(){
+  openModal(`
+    <h3>📋 Nueva encuesta</h3>
+    <div class="formGroup">
+      <label>Nombre de la campaña *</label>
+      <input id="neNombre" placeholder="Ej: Encuesta de bienvenida — Junio 2026"/>
+    </div>
+    <div class="formGroup" style="margin-top:10px">
+      <label>¿A quién se la enviamos?</label>
+      <select id="neTipo" onchange="neToggleDestino()">
+        <option value="todos">Todos los socios activos</option>
+        <option value="plan">Socios de un plan específico</option>
+        <option value="seleccion">Selección particular (buscar y elegir)</option>
+      </select>
+    </div>
+    <div id="neDestinoBox" style="margin-top:10px"></div>
+    <div class="formGroup" style="margin-top:12px">
+      <div style="font-size:.72rem;color:var(--text3);background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:8px">
+        ℹ️ La encuesta usa la plantilla estándar de <strong>8 preguntas sobre primer impacto del servicio</strong> (satisfacción, recepción, instalaciones, horarios, NPS y comentarios libres) — la misma que se envía automáticamente a los socios nuevos a la semana de inscribirse.
+      </div>
+    </div>
+    <div id="neResumen" style="margin-top:8px;font-size:.78rem;color:var(--text2)"></div>
+    <div class="modalActions">
+      <button class="btn btnGhost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btnAccent" onclick="guardarNuevaEncuesta()">Crear y enviar</button>
+    </div>
+  `);
+  neToggleDestino();
+}
+function neToggleDestino(){
+  const tipo = document.getElementById('neTipo')?.value || 'todos';
+  const box = document.getElementById('neDestinoBox');
+  if(!box) return;
+  if(tipo==='plan'){
+    box.innerHTML = `<div class="formGroup"><label>Plan</label><select id="nePlan" onchange="neUpdateResumen()">${Object.keys(PLANS).map(p=>`<option>${p}</option>`).join('')}</select></div>`;
+  } else if(tipo==='seleccion'){
+    box.innerHTML = `
+      <div class="formGroup"><label>Buscar socio</label><input id="neBuscar" placeholder="Nombre o email..." oninput="neFiltrarSocios()"/></div>
+      <div id="neListaSocios" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;margin-top:6px"></div>`;
+    neFiltrarSocios();
+  } else {
+    box.innerHTML = '';
+  }
+  neUpdateResumen();
+}
+window._neSeleccionados = window._neSeleccionados || new Set();
+function neFiltrarSocios(){
+  const q = (document.getElementById('neBuscar')?.value||'').toLowerCase();
+  const list = document.getElementById('neListaSocios');
+  if(!list) return;
+  const f = users.filter(u=>!q||u.name.toLowerCase().includes(q)||u.email.toLowerCase().includes(q));
+  list.innerHTML = f.slice(0,60).map(u=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--border);font-size:.78rem;cursor:pointer">
+      <input type="checkbox" ${window._neSeleccionados.has(u.id)?'checked':''} onchange="neToggleSocio(${u.id},this.checked)"/>
+      <span style="flex:1"><strong>${u.name}</strong> <span style="color:var(--text3)">· ${u.email}</span></span>
+      <span class="badge ${safePlan(u.plan).color}" style="font-size:.62rem">${u.plan}</span>
+    </label>`).join('') || '<div style="padding:10px;font-size:.76rem;color:var(--text3)">Sin resultados.</div>';
+}
+function neToggleSocio(id,checked){
+  if(checked) window._neSeleccionados.add(id); else window._neSeleccionados.delete(id);
+  neUpdateResumen();
+}
+function neUpdateResumen(){
+  const tipo = document.getElementById('neTipo')?.value || 'todos';
+  const box = document.getElementById('neResumen');
+  if(!box) return;
+  let count = 0;
+  if(tipo==='todos') count = users.filter(u=>u.status==='active').length;
+  else if(tipo==='plan'){ const plan = document.getElementById('nePlan')?.value; count = users.filter(u=>u.plan===plan).length; }
+  else count = window._neSeleccionados.size;
+  box.textContent = `📨 Esta campaña se enviará a ${count} socio${count===1?'':'s'}.`;
+}
+function guardarNuevaEncuesta(){
+  const nombre = document.getElementById('neNombre')?.value?.trim();
+  if(!nombre){ alert('Ingresá un nombre para la campaña'); return; }
+  const tipo = document.getElementById('neTipo')?.value || 'todos';
+  let destinatarios = [];
+  let destinoLabel = '';
+  if(tipo==='todos'){
+    destinatarios = users.filter(u=>u.status==='active').map(u=>u.id);
+    destinoLabel = 'Todos los socios activos';
+  } else if(tipo==='plan'){
+    const plan = document.getElementById('nePlan')?.value;
+    destinatarios = users.filter(u=>u.plan===plan).map(u=>u.id);
+    destinoLabel = `Plan ${plan}`;
+  } else {
+    destinatarios = [...window._neSeleccionados];
+    destinoLabel = `Selección particular (${destinatarios.length} socios)`;
+  }
+  if(!destinatarios.length){ alert('No hay socios para esta selección.'); return; }
+  encuestaCampaigns.push({
+    id:Date.now(), nombre, destinoLabel, destinatarios,
+    preguntas: WELCOME_SURVEY_QUESTIONS.map(q=>q.text),
+    fecha: new Date().toISOString().slice(0,10),
+    enviadaPor: currentUser.name||currentUser.email
+  });
+  saveEncuestaCampaigns();
+  destinatarios.forEach(uid=>localStorage.setItem('gp_encuesta_campaign_pend_'+uid, String(Date.now())));
+  window._neSeleccionados = new Set();
+  logAction && logAction('Encuesta enviada', `${nombre} — ${destinoLabel}`);
+  closeModal();
+  navigate('encuestas');
+}
+
 // Admin: ver resultados encuestas
 views.encuestas = () => {
   const meses=[...new Set(encuestasDB.map(e=>e.mes))].sort().reverse();
@@ -6183,7 +6381,18 @@ views.encuestas = () => {
   const areaCounts={};
   mesData.forEach(e=>{if(e.area)areaCounts[e.area]=(areaCounts[e.area]||0)+1;});
   return `
-  <div class="pageTitle">Encuestas de satisfacción ⭐</div>
+  <div class="pageTitle" style="display:flex;justify-content:space-between;align-items:center">
+    <span>Encuestas de satisfacción ⭐</span>
+    <button class="btn btnAccent btnSm" onclick="openNuevaEncuesta()">+ Nueva encuesta</button>
+  </div>
+  ${encuestaCampaigns.length?`
+  <div class="card" style="margin-bottom:14px">
+    <h3>Campañas enviadas</h3>
+    <table class="tbl"><tr><th>Campaña</th><th>Destinatarios</th><th>Fecha</th><th>Por</th></tr>
+    ${[...encuestaCampaigns].reverse().slice(0,12).map(c=>`<tr><td><strong>${c.nombre}</strong></td><td style="font-size:.76rem;color:var(--text2)">${c.destinoLabel}</td><td style="font-size:.72rem;color:var(--text3)">${c.fecha}</td><td style="font-size:.72rem;color:var(--text3)">${c.enviadaPor||'—'}</td></tr>`).join('')}
+    </table>
+  </div>`:''}
+  <div style="font-size:.74rem;color:var(--text3);margin:-6px 0 14px">🤖 Automatización activa: a cada socio nuevo se le envía la <strong>Encuesta de Bienvenida</strong> (8 preguntas sobre primer impacto) automáticamente a la semana de inscribirse.</div>
   <div class="statsGrid" style="margin-bottom:14px">
     <div class="statCard"><div class="num" style="color:var(--accent)">${avgRating||'—'}</div><div class="lbl">Puntaje promedio</div></div>
     <div class="statCard"><div class="num" style="color:var(--blue)">${mesData.length}</div><div class="lbl">Respuestas este mes</div></div>
