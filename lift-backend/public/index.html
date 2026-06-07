@@ -614,6 +614,7 @@ let comisionesConfig = {
   entrenadores:{mes3:'Bono $30',mes6:'Bono $60 + día libre',mes12:'Bono $150 + reconocimiento'},
   socios:{mes3:'1 semana gratis',mes6:'15% descuento cuota',mes12:'1 mes gratis + remera LIFT'},
   areas:{
+    admin:{label:'Gerencia',objetivo:'Cumplir el plan estratégico mensual del gimnasio (ocupación, retención y satisfacción de socios)',beneficio:'Bono por desempeño de gestión'},
     reception:{label:'Recepción',objetivo:'20 ventas en el mes',beneficio:'Bono $50 para el equipo'},
     trainer:{label:'Entrenadores',objetivo:'Mantener 90% de retención de alumnos',beneficio:'Bono $80 para el equipo'},
     nutritionist:{label:'Nutrición',objetivo:'10 consultas nutricionales en el mes',beneficio:'Bono $40 para el equipo'},
@@ -867,9 +868,9 @@ const adminNav=[
   ]},
   {id:'adminLogView',icon:'📋',label:'Historial de acciones'},
 ];
-const trainerNav=[{section:'Mi Panel'},{id:'trainerDashboard',icon:'📊',label:'Mi Dashboard'},{id:'trainerStudents',icon:'👥',label:'Mis Alumnos'},{id:'miCredencial',icon:'📲',label:'Mi Credencial QR'},{section:'Alumnos'},{id:'trainerMensajes',icon:'💬',label:'Mensajes alumnos'},{id:'trainerProgreso',icon:'📈',label:'Progreso físico'},{section:'Clases'},{id:'agenda',icon:'📅',label:'Agenda'},{id:'reservarClase',icon:'➕',label:'Reservar a Alumno'},{section:'Entrenamiento'},{id:'maquinas',icon:'🏋️',label:'Máquinas'},{section:'Comunicación'},{id:'comunicados',icon:'📢',label:'Comunicados'},{id:'mensajes',icon:'💬',label:'Mensajes'},{section:'Mi Carrera'},{id:'trainerBeneficios',icon:'💎',label:'Mis Beneficios'},{id:'trainerStats',icon:'📊',label:'Mis Estadísticas'},{section:'Comunidad'},{id:'comunidad',icon:'🔥',label:'Comunidad Fitness'}];
+const trainerNav=[{section:'Mi Panel'},{id:'trainerDashboard',icon:'📊',label:'Mi Dashboard'},{id:'trainerStudents',icon:'👥',label:'Mis Alumnos'},{id:'miCredencial',icon:'📲',label:'Mi Credencial QR'},{section:'Alumnos'},{id:'trainerMensajes',icon:'💬',label:'Mensajes alumnos'},{id:'trainerProgreso',icon:'📈',label:'Progreso físico'},{section:'Clases'},{id:'agenda',icon:'📅',label:'Agenda'},{id:'reservarClase',icon:'➕',label:'Reservar a Alumno'},{section:'Entrenamiento'},{id:'maquinas',icon:'🏋️',label:'Máquinas'},{section:'Comunicación'},{id:'comunicados',icon:'📢',label:'Comunicados'},{id:'mensajes',icon:'💬',label:'Mensajes'},{section:'Mi Carrera'},{id:'trainerBeneficios',icon:'💎',label:'Mis Beneficios'},{id:'trainerStats',icon:'📊',label:'Mis Estadísticas'},{id:'adminComisiones',icon:'🎯',label:'Mis Metas'},{section:'Comunidad'},{id:'comunidad',icon:'🔥',label:'Comunidad Fitness'}];
 const receptionNav=[{section:'Cobro'},{id:'cobroDiario',icon:'💵',label:'Ventanilla de Cobro'},{id:'cierreturno',icon:'🔒',label:'Cierre de Turno'},{section:'Principal'},{id:'dashboard',icon:'📊',label:'Dashboard'},{section:'Socios'},{id:'usuarios',icon:'👥',label:'Usuarios'},{id:'congelados',icon:'❄️',label:'Congelados'},{section:'Pagos'},{id:'cuotas',icon:'💳',label:'Cuotas'},{section:'Clases'},{id:'agenda',icon:'📅',label:'Agenda & Clases'},{section:'Comunicación'},{id:'comunicados',icon:'📢',label:'Comunicados'},{id:'mensajes',icon:'💬',label:'Chat socios'},{section:'Seguridad'},{id:'acceso',icon:'🔐',label:'Control de Acceso'},{id:'pinAcceso',icon:'🔢',label:'PINs de socios'},{section:'Ventas'},{id:'adminComisiones',icon:'💎',label:'Mis Metas & Comisión'}];
-const nutriNav=[{section:'Mi Panel'},{id:'nutriDashboard',icon:'📊',label:'Mi Dashboard'},{id:'nutriClientes',icon:'👥',label:'Mis Clientes'},{id:'nutriAgenda',icon:'📅',label:'Agenda de Citas'},{id:'nutriPlanes',icon:'📋',label:'Planes Nutricionales'},{id:'miCredencial',icon:'📲',label:'Mi Credencial QR'},{section:'Comunicación'},{id:'comunicados',icon:'📢',label:'Comunicados'},{id:'mensajes',icon:'💬',label:'Mensajes'},{section:'Comunidad'},{id:'comunidad',icon:'🔥',label:'Comunidad Fitness'}];
+const nutriNav=[{section:'Mi Panel'},{id:'nutriDashboard',icon:'📊',label:'Mi Dashboard'},{id:'nutriClientes',icon:'👥',label:'Mis Clientes'},{id:'nutriAgenda',icon:'📅',label:'Agenda de Citas'},{id:'nutriPlanes',icon:'📋',label:'Planes Nutricionales'},{id:'miCredencial',icon:'📲',label:'Mi Credencial QR'},{id:'adminComisiones',icon:'🎯',label:'Mis Metas'},{section:'Comunicación'},{id:'comunicados',icon:'📢',label:'Comunicados'},{id:'mensajes',icon:'💬',label:'Mensajes'},{section:'Comunidad'},{id:'comunidad',icon:'🔥',label:'Comunidad Fitness'}];
 const userNav=[{section:'Mi Cuenta'},{id:'miPerfil',icon:'👤',label:'Mi Perfil'},{id:'miQR',icon:'📲',label:'Mi QR & PIN'},{id:'miPlan',icon:'⭐',label:'Mi Plan'},{id:'misPuntos',icon:'🏆',label:'Mis Puntos'},{id:'misReferidos',icon:'🤝',label:'Referir Amigos'},{section:'Compras'},{id:'cafeteria',icon:'☕',label:'Cafetería'},{id:'shop',icon:'🛍️',label:'Shop LIFT'},{section:'Comunidad'},{id:'comunidad',icon:'🔥',label:'Comunidad Fitness'},{section:'Clases'},{id:'misClases',icon:'📅',label:'Clases & Reservas'},{section:'Entrenamiento'},{id:'miRutina',icon:'📋',label:'Mi Rutina'},{section:'Comunicación'},{id:'misAnuncios',icon:'📢',label:'Anuncios'},{id:'misMensajes',icon:'💬',label:'Mensajes'},{id:'misNotif',icon:'🔔',label:'Notificaciones'}];
 
 const CHAT_NAV_IDS=['mensajes','misMensajes','trainerMensajes'];
@@ -4700,7 +4701,10 @@ function guardarNuevoReto(){
 // COMISIONES — RECEPCIÓN + ENTRENADORES
 // ═══════════════════════════════════════════════════════════
 views.adminComisiones = () => {
-  const isRecep = currentUser.role==='reception';
+  const myRole = currentUser.role;
+  const isAdmin = myRole==='admin';
+  const isRecep = myRole==='reception';
+  const canEdit = isAdmin; // sólo gerencia/administración configura metas
   const hoy = new Date().toISOString().slice(0,10);
   const mesActual = hoy.slice(0,7);
   // Ventas del mes por recepcionista
@@ -4717,8 +4721,9 @@ views.adminComisiones = () => {
   const trainerStaff = staffAccounts.filter(s=>s.role==='trainer');
   const hoyDate = new Date();
   return `
-  <div class="pageTitle">${isRecep?'Mis Metas':'Comisiones & Metas'} 💎</div>
+  <div class="pageTitle">${isAdmin?'Comisiones & Metas':'Mis Metas'} 💎</div>
   <!-- META GRUPAL RECEPCIÓN -->
+  ${(isAdmin||isRecep)?`
   <div class="card" style="margin-bottom:14px;border-top:2px solid var(--accent)">
     <h3>Meta grupal — Recepción ${mesActual}</h3>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
@@ -4741,9 +4746,9 @@ views.adminComisiones = () => {
   <div class="card" style="margin-bottom:14px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <h3 style="margin-bottom:0">Metas individuales — Recepción</h3>
-      ${!isRecep?`<button class="btn btnAccent btnSm" onclick="editarMetasComision()">⚙ Editar metas</button>`:''}
+      ${canEdit?`<button class="btn btnAccent btnSm" onclick="editarMetasComision()">⚙ Editar metas</button>`:''}
     </div>
-    ${staffAccounts.filter(s=>s.role==='reception').map(s=>{
+    ${staffAccounts.filter(s=>isAdmin?s.role==='reception':s.email===currentUser.email).map(s=>{
       const ventas = ventasPorRecep[s.name]||0;
       const meta = comisionesConfig.recepcion.metaIndividualMensual;
       const pct = Math.min(100,Math.round(ventas/meta*100));
@@ -4760,17 +4765,18 @@ views.adminComisiones = () => {
         ${pct>=100?`<div style="font-size:.7rem;color:var(--green);margin-top:4px">✓ Meta individual alcanzada · ${comisionesConfig.recepcion.beneficioIndividual}</div>`:`<div style="font-size:.7rem;color:var(--text3);margin-top:4px">Faltan ${meta-ventas} ventas · Beneficio: ${comisionesConfig.recepcion.beneficioIndividual}</div>`}
       </div>`;
     }).join('')}
-  </div>
-  <!-- METAS GRUPALES Y OBJETIVOS POR ÁREA + INDIVIDUALES POR PERSONA -->
+  </div>`:''}
+  <!-- OBJETIVOS GENERALES POR ÁREA + METAS INDIVIDUALES POR PERSONA (cada quien ve sólo lo suyo; gerencia ve todo) -->
   ${Object.entries(comisionesConfig.areas).map(([roleKey,area])=>{
-    const staffArea = staffAccounts.filter(s=>s.role===roleKey);
-    if(roleKey!=='reception' && !staffArea.length && isRecep) return '';
-    if(isRecep && roleKey!=='reception') return '';
+    // Visibilidad: admin ve todas las áreas; cada rol ve únicamente su propia área
+    if(!isAdmin && roleKey!==myRole) return '';
+    const staffArea = roleKey==='admin'?staffAccounts.filter(s=>s.role==='admin'):staffAccounts.filter(s=>s.role===roleKey);
+    const soloYo = !isAdmin; // un no-admin sólo ve su propia tarjeta individual
     return `
     <div class="card" style="margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <h3 style="margin-bottom:0">Objetivo general — ${area.label}</h3>
-        ${!isRecep?`<button class="btn btnGhost btnSm" onclick="editarMetaAreaGrupal('${roleKey}')">✏️ Editar</button>`:''}
+        ${canEdit?`<button class="btn btnGhost btnSm" onclick="editarMetaAreaGrupal('${roleKey}')">✏️ Editar</button>`:''}
       </div>
       <div style="padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:2px;margin-bottom:10px">
         <div style="font-size:.8rem;color:var(--text2);margin-bottom:4px"><strong>Objetivo:</strong> ${area.objetivo}</div>
@@ -4778,14 +4784,14 @@ views.adminComisiones = () => {
       </div>
       ${staffArea.length?`
       <div style="font-size:.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Metas individuales — ${area.label}</div>
-      ${staffArea.map(s=>{
+      ${staffArea.filter(s=>!soloYo||s.email===currentUser.email).map(s=>{
         const ind = comisionesConfig.individuales[s.email]||{objetivo:'Sin meta asignada',beneficio:'—'};
         const isMe = s.email===currentUser.email;
         return `
         <div style="padding:10px;background:var(--surface2);border:1px solid ${isMe?'var(--accent)':'var(--border)'};border-radius:2px;margin-bottom:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
             <span style="font-weight:600;font-size:.85rem">${s.name} ${isMe?'<span style="font-size:.65rem;color:var(--accent)">(vos)</span>':''}</span>
-            ${!isRecep?`<button class="btn btnGhost btnSm" onclick="editarMetaIndividual('${s.email}')">⚙ Configurar</button>`:''}
+            ${canEdit?`<button class="btn btnGhost btnSm" onclick="editarMetaIndividual('${s.email}')">⚙ Configurar</button>`:''}
           </div>
           <div style="font-size:.78rem;color:var(--text2)"><strong>Objetivo:</strong> ${ind.objetivo}</div>
           <div style="font-size:.74rem;color:var(--text3)"><strong style="color:var(--text2)">Beneficio:</strong> ${ind.beneficio}</div>
@@ -4794,15 +4800,15 @@ views.adminComisiones = () => {
     </div>`;
   }).join('')}
   <!-- HITOS ENTRENADORES -->
-  ${!isRecep?`
+  ${(isAdmin||myRole==='trainer')?`
   <div class="card" style="margin-bottom:14px">
     <h3>Hitos de entrenadores</h3>
     <div style="font-size:.72rem;color:var(--text3);margin-bottom:10px">
-      3 meses → <strong style="color:var(--text2)">${comisionesConfig.entrenadores.mes3}</strong> · 
-      6 meses → <strong style="color:var(--text2)">${comisionesConfig.entrenadores.mes6}</strong> · 
+      3 meses → <strong style="color:var(--text2)">${comisionesConfig.entrenadores.mes3}</strong> ·
+      6 meses → <strong style="color:var(--text2)">${comisionesConfig.entrenadores.mes6}</strong> ·
       12 meses → <strong style="color:var(--text2)">${comisionesConfig.entrenadores.mes12}</strong>
     </div>
-    ${trainerStaff.map(t=>{
+    ${(isAdmin?trainerStaff:trainerStaff.filter(t=>t.email===currentUser.email)).map(t=>{
       const alumnos=trainerProfiles.find(tp=>tp.trainerEmail===t.email)?.students||[];
       return alumnos.length?`
       <div style="margin-bottom:8px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:2px">
@@ -4820,8 +4826,9 @@ views.adminComisiones = () => {
         }).join('')}
       </div>`:''
     }).join('')||'<p style="font-size:.78rem;color:var(--text3)">Sin entrenadores con alumnos asignados.</p>'}
-  </div>
+  </div>`:''}
   <!-- HITOS SOCIOS -->
+  ${(isAdmin||isRecep)?`
   <div class="card">
     <h3>Hitos de socios</h3>
     <div style="font-size:.72rem;color:var(--text3);margin-bottom:10px">
