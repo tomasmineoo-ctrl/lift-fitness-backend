@@ -612,7 +612,14 @@ function saveComunidad(){try{localStorage.setItem('gp_comunidadPosts',JSON.strin
 let comisionesConfig = {
   recepcion:{metaGrupalMensual:20,metaIndividualMensual:10,beneficioGrupal:'Bono $50 equipo',beneficioIndividual:'Bono $20'},
   entrenadores:{mes3:'Bono $30',mes6:'Bono $60 + día libre',mes12:'Bono $150 + reconocimiento'},
-  socios:{mes3:'1 semana gratis',mes6:'15% descuento cuota',mes12:'1 mes gratis + remera LIFT'}
+  socios:{mes3:'1 semana gratis',mes6:'15% descuento cuota',mes12:'1 mes gratis + remera LIFT'},
+  areas:{
+    reception:{label:'Recepción',objetivo:'20 ventas en el mes',beneficio:'Bono $50 para el equipo'},
+    trainer:{label:'Entrenadores',objetivo:'Mantener 90% de retención de alumnos',beneficio:'Bono $80 para el equipo'},
+    nutritionist:{label:'Nutrición',objetivo:'10 consultas nutricionales en el mes',beneficio:'Bono $40 para el equipo'},
+    cafeteria:{label:'Cafetería',objetivo:'$5000 en ventas del mes',beneficio:'Bono $30 para el equipo'}
+  },
+  individuales:{}
 };
 let comisionesLog = [];
 try{const cocfg=localStorage.getItem('gp_comisionesConfig');if(cocfg)comisionesConfig=JSON.parse(cocfg);}catch(e){}
@@ -4730,10 +4737,10 @@ views.adminComisiones = () => {
     <div style="font-size:.72rem;color:var(--text3);margin-bottom:8px">${pctGrupal}% · Beneficio: <strong style="color:var(--text2)">${comisionesConfig.recepcion.beneficioGrupal}</strong></div>
     ${pctGrupal>=100?`<div style="padding:8px;background:rgba(48,209,88,.08);border:1px solid rgba(48,209,88,.25);border-radius:2px;font-size:.78rem;color:var(--green)">🎉 ¡Meta grupal alcanzada!</div>`:''}
   </div>
-  <!-- META INDIVIDUAL -->
+  <!-- META INDIVIDUAL RECEPCIÓN (con métrica de ventas) -->
   <div class="card" style="margin-bottom:14px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <h3 style="margin-bottom:0">Metas individuales</h3>
+      <h3 style="margin-bottom:0">Metas individuales — Recepción</h3>
       ${!isRecep?`<button class="btn btnAccent btnSm" onclick="editarMetasComision()">⚙ Editar metas</button>`:''}
     </div>
     ${staffAccounts.filter(s=>s.role==='reception').map(s=>{
@@ -4754,6 +4761,38 @@ views.adminComisiones = () => {
       </div>`;
     }).join('')}
   </div>
+  <!-- METAS GRUPALES Y OBJETIVOS POR ÁREA + INDIVIDUALES POR PERSONA -->
+  ${Object.entries(comisionesConfig.areas).map(([roleKey,area])=>{
+    const staffArea = staffAccounts.filter(s=>s.role===roleKey);
+    if(roleKey!=='reception' && !staffArea.length && isRecep) return '';
+    if(isRecep && roleKey!=='reception') return '';
+    return `
+    <div class="card" style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h3 style="margin-bottom:0">Objetivo general — ${area.label}</h3>
+        ${!isRecep?`<button class="btn btnGhost btnSm" onclick="editarMetaAreaGrupal('${roleKey}')">✏️ Editar</button>`:''}
+      </div>
+      <div style="padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:2px;margin-bottom:10px">
+        <div style="font-size:.8rem;color:var(--text2);margin-bottom:4px"><strong>Objetivo:</strong> ${area.objetivo}</div>
+        <div style="font-size:.78rem;color:var(--text3)"><strong style="color:var(--text2)">Beneficio del equipo:</strong> ${area.beneficio}</div>
+      </div>
+      ${staffArea.length?`
+      <div style="font-size:.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Metas individuales — ${area.label}</div>
+      ${staffArea.map(s=>{
+        const ind = comisionesConfig.individuales[s.email]||{objetivo:'Sin meta asignada',beneficio:'—'};
+        const isMe = s.email===currentUser.email;
+        return `
+        <div style="padding:10px;background:var(--surface2);border:1px solid ${isMe?'var(--accent)':'var(--border)'};border-radius:2px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-weight:600;font-size:.85rem">${s.name} ${isMe?'<span style="font-size:.65rem;color:var(--accent)">(vos)</span>':''}</span>
+            ${!isRecep?`<button class="btn btnGhost btnSm" onclick="editarMetaIndividual('${s.email}')">⚙ Configurar</button>`:''}
+          </div>
+          <div style="font-size:.78rem;color:var(--text2)"><strong>Objetivo:</strong> ${ind.objetivo}</div>
+          <div style="font-size:.74rem;color:var(--text3)"><strong style="color:var(--text2)">Beneficio:</strong> ${ind.beneficio}</div>
+        </div>`;
+      }).join('')}`:`<p style="font-size:.78rem;color:var(--text3)">Sin personal asignado a esta área.</p>`}
+    </div>`;
+  }).join('')}
   <!-- HITOS ENTRENADORES -->
   ${!isRecep?`
   <div class="card" style="margin-bottom:14px">
@@ -4837,6 +4876,41 @@ function guardarComisionesConfig(){
     entrenadores:{mes3:get('et3'),mes6:get('et6'),mes12:get('et12')},
     socios:{mes3:get('sc3'),mes6:get('sc6'),mes12:get('sc12')}
   };
+  saveComisiones();closeModal();navigate('adminComisiones');
+}
+function editarMetaAreaGrupal(roleKey){
+  const area = comisionesConfig.areas[roleKey];if(!area)return;
+  openModal(`
+    <h3>Objetivo general — ${area.label}</h3>
+    <div class="formGrid">
+      <div class="formGroup fullWidth"><label>Objetivo del área</label><textarea id="amaObjetivo">${area.objetivo}</textarea></div>
+      <div class="formGroup fullWidth"><label>Beneficio para el equipo</label><input id="amaBeneficio" value="${area.beneficio}"/></div>
+    </div>
+    <div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="guardarMetaAreaGrupal('${roleKey}')">Guardar</button></div>
+  `);
+}
+function guardarMetaAreaGrupal(roleKey){
+  const get=i=>document.getElementById(i)?.value||'';
+  comisionesConfig.areas[roleKey].objetivo = get('amaObjetivo');
+  comisionesConfig.areas[roleKey].beneficio = get('amaBeneficio');
+  saveComisiones();closeModal();navigate('adminComisiones');
+}
+function editarMetaIndividual(email){
+  const s = staffAccounts.find(x=>x.email===email);if(!s)return;
+  const ind = comisionesConfig.individuales[email]||{objetivo:'',beneficio:''};
+  openModal(`
+    <h3>Meta individual — ${s.name}</h3>
+    <div class="formGrid">
+      <div class="formGroup fullWidth"><label>Objetivo personal</label><textarea id="amiObjetivo">${ind.objetivo}</textarea></div>
+      <div class="formGroup fullWidth"><label>Beneficio</label><input id="amiBeneficio" value="${ind.beneficio}"/></div>
+    </div>
+    <div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="guardarMetaIndividual('${email}')">Guardar</button></div>
+  `);
+}
+function guardarMetaIndividual(email){
+  const get=i=>document.getElementById(i)?.value||'';
+  if(!comisionesConfig.individuales)comisionesConfig.individuales={};
+  comisionesConfig.individuales[email]={objetivo:get('amiObjetivo')||'Sin meta asignada',beneficio:get('amiBeneficio')||'—'};
   saveComisiones();closeModal();navigate('adminComisiones');
 }
 
