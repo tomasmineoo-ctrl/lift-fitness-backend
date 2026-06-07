@@ -17,13 +17,16 @@
   --bronze:#cd7f32;--silver:#c0c0c0;--gold:#ffd700;--diamond:#b9f2ff;
 }
 [data-theme="light"]{
-  --bg:#f4f4f6;--surface:#ffffff;--surface2:#f0f0f3;--surface3:#e6e6ea;--border:#e0e0e5;--border2:#d2d2d8;
-  --text:#15151a;--text2:#5b5b66;--text3:#8a8a96;--white:#0c0c10;--gray:#6b6b75;
+  --bg:#eceef1;--surface:#f7f7f9;--surface2:#eef0f2;--surface3:#e4e6ea;--border:#dcdee2;--border2:#cdd0d6;
+  --text:#33363b;--text2:#6b6f76;--text3:#94979e;--white:#26282c;--gray:#75787e;
+  --accent-glow:rgba(229,8,126,0.08);
 }
 [data-theme="light"] body{background:var(--bg);color:var(--text)}
-[data-theme="light"] #loginScreen::before{opacity:.5}
+[data-theme="light"] #loginScreen::before{opacity:.35}
 [data-theme="light"] .topBarBrand .wordmark,[data-theme="light"] .loginBrand,[data-theme="light"] .loginCard h2{color:var(--white)}
+[data-theme="light"] .topBar,[data-theme="light"] .sidebar,[data-theme="light"] .card,[data-theme="light"] .loginCard{box-shadow:0 1px 2px rgba(0,0,0,.04)}
 [data-theme="light"] ::-webkit-scrollbar-track{background:var(--surface2)}
+[data-theme="light"] ::-webkit-scrollbar-thumb{background:var(--border2)}
 
 body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
 #loginScreen{display:flex;min-height:100vh;background:var(--bg);position:relative;overflow:hidden}
