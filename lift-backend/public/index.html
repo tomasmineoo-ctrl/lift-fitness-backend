@@ -16,6 +16,15 @@
   --text:#f5f5f5;--text2:#888888;--text3:#555555;
   --bronze:#cd7f32;--silver:#c0c0c0;--gold:#ffd700;--diamond:#b9f2ff;
 }
+[data-theme="light"]{
+  --bg:#f4f4f6;--surface:#ffffff;--surface2:#f0f0f3;--surface3:#e6e6ea;--border:#e0e0e5;--border2:#d2d2d8;
+  --text:#15151a;--text2:#5b5b66;--text3:#8a8a96;--white:#0c0c10;--gray:#6b6b75;
+}
+[data-theme="light"] body{background:var(--bg);color:var(--text)}
+[data-theme="light"] #loginScreen::before{opacity:.5}
+[data-theme="light"] .topBarBrand .wordmark,[data-theme="light"] .loginBrand,[data-theme="light"] .loginCard h2{color:var(--white)}
+[data-theme="light"] ::-webkit-scrollbar-track{background:var(--surface2)}
+
 body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
 #loginScreen{display:flex;min-height:100vh;background:var(--bg);position:relative;overflow:hidden}
 #loginScreen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 25% 50%,rgba(229,8,126,.07) 0%,transparent 60%),radial-gradient(ellipse 60% 80% at 80% 20%,rgba(52,56,142,.06) 0%,transparent 60%);pointer-events:none}
@@ -356,6 +365,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
       <div class="vBadge">v7 PRO</div>
     </div>
     <div class="topBarRight">
+      <span id="themeToggle" title="Cambiar tema claro/oscuro" style="cursor:pointer;font-size:1rem;color:var(--text3);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border2);border-radius:50%;background:var(--surface2);transition:.2s" onclick="toggleTheme()">🌙</span>
       <span id="notifBell" style="cursor:pointer;font-size:.9rem;color:var(--text3)" onclick="navigate('comunicados')">🔔</span>
       <span class="role" id="roleLabel">—</span>
       <button class="logoutBtn" onclick="doLogout()">SALIR</button>
@@ -834,6 +844,21 @@ function sendClientAlert(){
 function logAction(action,detail){adminLog.unshift({id:Date.now(),user:currentUser?.name||'Sistema',action,detail,time:new Date().toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'}),date:new Date().toISOString().slice(0,10)});if(adminLog.length>200)adminLog=adminLog.slice(0,200);saveDB();}
 function fillDemo(e,p){document.getElementById('loginEmail').value=e;document.getElementById('loginPass').value=p;}
 function doLogin(){const em=document.getElementById('loginEmail').value.trim();const pw=document.getElementById('loginPass').value.trim();const staff=staffAccounts.find(s=>s.email===em&&s.pass===pw);if(staff)currentUser={role:staff.role,name:staff.name,email:staff.email};else{const u=users.find(x=>x.email===em&&x.pass===pw);if(!u){alert('Credenciales incorrectas');return;}currentUser={role:'user',name:u.name,data:u,email:u.email};}startApp();}
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme',theme);
+  const btn=document.getElementById('themeToggle');
+  if(btn)btn.textContent=theme==='light'?'☀️':'🌙';
+  try{localStorage.setItem('gp_theme',theme);}catch(e){}
+}
+function toggleTheme(){
+  const current=document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';
+  applyTheme(current==='light'?'dark':'light');
+}
+(function(){
+  let saved='dark';
+  try{saved=localStorage.getItem('gp_theme')||'dark';}catch(e){}
+  applyTheme(saved);
+})();
 function doLogout(){currentUser=null;document.getElementById('loginScreen').style.display='flex';document.getElementById('app').style.display='none';}
 function startApp(){genNotifications();document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('roleLabel').textContent=ROLES[currentUser.role]||currentUser.role;buildSidebar();navigate(currentUser.role==='user'?'miPerfil':currentUser.role==='trainer'?'trainerDashboard':currentUser.role==='reception'?'dashboard':currentUser.role==='nutritionist'?'nutriDashboard':'dashboard');if(currentUser.role==='user'&&typeof checkEncuestasCampanas==='function')checkEncuestasCampanas();}
 let pinBuf='';
