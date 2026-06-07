@@ -2128,7 +2128,26 @@ function toggleFreeze(id){const u=users.find(x=>x.id===id);if(!u)return;u.frozen
 function openNewExpense(){if(currentUser.role!=='admin'){alert('Solo el administrador puede gestionar gastos');return;}openModal(`<h3>Nuevo Gasto</h3><div class="formGrid"><div class="formGroup"><label>Descripción *</label><input id="expDesc" placeholder="Concepto"/></div><div class="formGroup"><label>Categoría</label><select id="expCat">${expenseCategories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('')}</select></div><div class="formGroup"><label>Importe *</label><input id="expAmt" type="number" placeholder="0"/></div><div class="formGroup"><label>Fecha</label><input id="expDate" type="date" value="${new Date().toISOString().slice(0,10)}"/></div></div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="saveExpense()">Guardar</button></div>`);}
 function saveExpense(){if(currentUser.role!=='admin'){alert('Solo el administrador puede gestionar gastos');return;}const get=i=>document.getElementById(i)?.value||'';if(!get('expDesc')||!get('expAmt')){alert('Completá campos');return;}expenses.push({id:Date.now(),date:get('expDate'),categoryId:+get('expCat'),desc:get('expDesc'),amount:+get('expAmt')});logAction('Gasto registrado',`${get('expDesc')} — $${(+get('expAmt')||0).toLocaleString()}`);saveDB();closeModal();navigate('finanzas');}
 function deleteExpense(id){if(currentUser.role!=='admin'){alert('Solo el administrador puede eliminar gastos');return;}if(confirm('¿Eliminar?')){expenses=expenses.filter(e=>e.id!==id);logAction('Gasto eliminado',`ID ${id}`);saveDB();navigate('finanzas');}}
-function openNewDiscount(){openModal(`<h3>Nuevo Descuento</h3><div class="formGrid"><div class="formGroup"><label>Nombre *</label><input id="dName" placeholder="Estudiantes..."/></div><div class="formGroup"><label>Porcentaje (%)</label><input id="dPct" type="number" placeholder="15"/></div><div class="formGroup"><label>Plan</label><select id="dPlan"><option>Todos</option>${Object.keys(PLANS).map(p=>`<option>${p}</option>`).join('')}</select></div></div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="saveDiscount()">Guardar</button></div>`);}
+function openNewDiscount(){openModal(`<h3>Nuevo Descuento</h3><div class="formGrid"><div class="formGroup"><label>Nombre *</label><input id="dName" placeholder="Estudiantes..."/></div><div class="formGroup"><label>Porcentaje (%)</label><input id="dPct" type="number" placeholder="15" oninput="dUpdatePreview()"/></div><div class="formGroup"><label>Plan</label><select id="dPlan" onchange="dUpdatePreview()"><option>Todos</option>${Object.keys(PLANS).map(p=>`<option>${p}</option>`).join('')}</select></div></div><div id="dPreview" style="margin-top:10px;font-size:.8rem;color:var(--text2)"></div><div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="saveDiscount()">Guardar</button></div>`);dUpdatePreview();}
+function dUpdatePreview(){
+  const get=i=>document.getElementById(i)?.value||'';
+  const pct=+get('dPct')||0;
+  const planSel=get('dPlan')||'Todos';
+  const box=document.getElementById('dPreview');
+  if(!box)return;
+  const fmt=n=>'$'+n.toLocaleString(undefined,{minimumFractionDigits:n%1?2:0,maximumFractionDigits:2});
+  if(planSel==='Todos'){
+    const rows=Object.entries(PLANS).map(([name,p])=>{
+      const final=p.price*(1-pct/100);
+      return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span>${name}</span><span>${fmt(p.price)} → <strong style="color:var(--accent)">${fmt(final)}</strong></span></div>`;
+    }).join('');
+    box.innerHTML=`<div style="font-weight:600;margin-bottom:4px">Vista previa (${pct||0}% de descuento):</div>${rows}`;
+  }else{
+    const p=safePlan(planSel);
+    const final=p.price*(1-pct/100);
+    box.innerHTML=`<div style="font-weight:600;margin-bottom:4px">Vista previa (${pct||0}% de descuento):</div><div style="display:flex;justify-content:space-between"><span>Plan ${planSel}</span><span>${fmt(p.price)} → <strong style="color:var(--accent)">${fmt(final)}</strong></span></div>`;
+  }
+}
 function saveDiscount(){const get=i=>document.getElementById(i)?.value||'';if(!get('dName')){alert('Nombre requerido');return;}discounts.push({id:Date.now(),name:get('dName'),pct:+get('dPct')||0,active:true,plan:get('dPlan')});saveDB();closeModal();navigate('descuentos');}
 function toggleDiscount(id){const d=discounts.find(x=>x.id===id);d.active=!d.active;saveDB();navigate('descuentos');}
 function deleteDiscount(id){if(confirm('¿Eliminar?')){discounts=discounts.filter(d=>d.id!==id);saveDB();navigate('descuentos');}}
