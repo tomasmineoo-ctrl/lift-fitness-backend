@@ -4347,7 +4347,7 @@ function confirmarVentaShop(id){
 // PUNTOS ADMIN
 // ═══════════════════════════════════════════════════════════
 views.adminPuntos = () => {
-  const accLabels={asistencia:'Asistencia',horaExtra:'Hora extra',cafeteria:'Cafetería',renovacion:'Renovación',referido:'Referido',reto:'Reto',cumpleanios:'Cumpleaños',primerAno:'1er año',seisMeses:'6 meses',tresMeses:'3 meses',claseGrupal:'Clase grupal',evaluacionFisica:'Evaluación física',shop:'Shop'};
+  const accLabels=Object.assign({asistencia:'Asistencia',horaExtra:'Hora extra',cafeteria:'Cafetería',renovacion:'Renovación',referido:'Referido',reto:'Reto',cumpleanios:'Cumpleaños',primerAno:'1er año',seisMeses:'6 meses',tresMeses:'3 meses',claseGrupal:'Clase grupal',evaluacionFisica:'Evaluación física',shop:'Shop'}, puntosConfig.labels||{});
   const topUsers = users.map(u=>({u,pts:getPuntosUsuario(u.id)})).sort((a,b)=>b.pts-a.pts).slice(0,10);
   return `
   <div class="pageTitle">Sistema de Puntos 🏆</div>
@@ -4363,6 +4363,7 @@ views.adminPuntos = () => {
           <span style="font-size:.78rem;color:var(--text2)">${accLabels[k]||k}</span>
           <input type="number" value="${v}" data-key="${k}" style="width:55px;padding:3px 6px;text-align:right;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;color:var(--accent);font-size:.78rem;font-weight:700"/>
         </div>`).join('')}
+      <button class="btn btnGhost btnSm" style="margin-top:10px;width:100%" onclick="abrirNuevaOpcionPuntos()">+ Agregar nueva opción</button>
     </div>
     <div class="card">
       <h3>Top socios por puntos</h3>
@@ -4398,6 +4399,26 @@ function guardarConfigPuntos(){
     puntosConfig.acciones[inp.dataset.key]=+inp.value||0;
   });
   savePuntos();navigate('adminPuntos');
+}
+function abrirNuevaOpcionPuntos(){
+  openModal(`
+    <h3>Agregar nueva opción de puntos</h3>
+    <div class="formGroup"><label>Nombre de la acción</label><input id="npNombre" placeholder="Ej: Subir foto en redes, Trajo amigo nuevo, etc."/></div>
+    <div class="formGroup"><label>Puntos que otorga</label><input id="npValor" type="number" value="10"/></div>
+    <div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="guardarNuevaOpcionPuntos()">Agregar</button></div>
+  `);
+}
+function guardarNuevaOpcionPuntos(){
+  const nombre=document.getElementById('npNombre')?.value?.trim();
+  const valor=+document.getElementById('npValor')?.value||0;
+  if(!nombre){ alert('Ingresá un nombre para la acción'); return; }
+  const key='custom_'+nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')+'_'+Date.now().toString(36);
+  if(!puntosConfig.labels) puntosConfig.labels={};
+  puntosConfig.labels[key]=nombre;
+  puntosConfig.acciones[key]=valor;
+  savePuntos();
+  closeModal();
+  navigate('adminPuntos');
 }
 function abrirAgregarPuntosManual(){
   openModal(`
@@ -6085,27 +6106,6 @@ views.misPuntos = () => {
 };
 
 // Patch adminPuntos to show niveles
-const _origAdminPuntos = views.adminPuntos;
-views.adminPuntos = () => {
-  const base = _origAdminPuntos();
-  const nivelStats = Object.entries(NIVELES).map(([k,n])=>({
-    key:k, label:n.label, icon:n.icon, color:n.color,
-    count:users.filter(u=>getNivelUsuario(u.id)===k).length
-  }));
-  const nivelBanner = `
-  <div class="card" style="margin-bottom:14px">
-    <h3>Distribución por nivel</h3>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
-      ${nivelStats.map(n=>`
-        <div style="text-align:center;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:2px;border-top:2px solid ${n.color}">
-          <div style="font-size:1.6rem">${n.icon}</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:800;color:${n.color}">${n.count}</div>
-          <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase">${n.label}</div>
-        </div>`).join('')}
-    </div>
-  </div>`;
-  return nivelBanner + base;
-};
 
 // ═══════════════════════════════════════════════════════════
 // ENCUESTA DE SATISFACCIÓN
