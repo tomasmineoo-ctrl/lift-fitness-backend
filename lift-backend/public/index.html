@@ -593,7 +593,7 @@ let shopVentas = [];
 try{const sp=localStorage.getItem('gp_shopProductos');if(sp)shopProductos=JSON.parse(sp);}catch(e){}
 try{const sped=localStorage.getItem('gp_shopPedidos');if(sped)shopPedidos=JSON.parse(sped);}catch(e){}
 try{const sv=localStorage.getItem('gp_shopVentas');if(sv)shopVentas=JSON.parse(sv);}catch(e){}
-function saveShop(){try{localStorage.setItem('gp_shopProductos',JSON.stringify(shopProductos));localStorage.setItem('gp_shopPedidos',JSON.stringify(shopPedidos));localStorage.setItem('gp_shopVentas',JSON.stringify(shopVentas));}catch(e){}}
+function saveShop(){try{localStorage.setItem('gp_shopProductos',JSON.stringify(shopProductos));localStorage.setItem('gp_shopPedidos',JSON.stringify(shopPedidos));localStorage.setItem('gp_shopVentas',JSON.stringify(shopVentas));}catch(e){alert('No se pudo guardar: el almacenamiento local está lleno (las fotos pesan demasiado). Probá con menos fotos o imágenes más livianas.');console.error('saveShop error',e);}}
 
 // ── COMUNIDAD ──
 let comunidadPosts = [
@@ -3982,8 +3982,9 @@ views.shop = () => {
     ${shopProductos.filter(p=>p.activo).map(p=>{
       const puedeCanjear = misPts >= p.puntos;
       return `
-      <div style="background:var(--surface2);border:1px solid ${puedeCanjear?'var(--accent)':'var(--border)'};border-radius:3px;padding:14px;text-align:center;transition:.12s;opacity:${puedeCanjear?'1':'.65'}">
-        <div style="font-size:2.8rem;margin-bottom:6px">${p.imagen}</div>
+      <div style="background:var(--surface2);border:1px solid ${puedeCanjear?'var(--accent)':'var(--border)'};border-radius:3px;padding:14px;text-align:center;transition:.12s;opacity:${puedeCanjear?'1':'.65'};position:relative">
+        ${(p.fotos&&p.fotos.length)?`<img src="${p.fotos[0]}" style="width:100%;height:100px;object-fit:cover;border-radius:4px;margin-bottom:6px"/>`:`<div style="font-size:2.8rem;margin-bottom:6px">${p.imagen}</div>`}
+        ${(p.fotos&&p.fotos.length)||p.descripcion?`<button onclick="event.stopPropagation();verDetalleProductoShop(${p.id})" title="Ver fotos y descripción" style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,.45);border:none;border-radius:50%;width:22px;height:22px;color:#fff;font-size:.75rem;cursor:pointer">ℹ️</button>`:''}
         <div style="font-weight:700;font-size:.85rem;margin-bottom:4px">${p.nombre}</div>
         <div style="font-size:.7rem;color:var(--text3);margin-bottom:8px">${p.categoria}</div>
         ${p.tipo==='puntos'?`<div style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;margin-bottom:6px">${p.puntos.toLocaleString()} pts</div>`:''}
@@ -3996,6 +3997,26 @@ views.shop = () => {
   </div>`;
 };
 
+window.verDetalleProductoShop=function(id){
+  const p=shopProductos.find(x=>x.id===id);if(!p)return;
+  const fotos=p.fotos&&p.fotos.length?p.fotos:null;
+  const misPts=getPuntosUsuario(currentUser.id);
+  const puedeCanjear=misPts>=(p.puntos||0);
+  openModal(`
+    <h3>${p.nombre}</h3>
+    ${fotos?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">${fotos.map(u=>`<img src="${u}" style="width:120px;height:120px;object-fit:cover;border-radius:6px;border:1px solid var(--border2)"/>`).join('')}</div>`:`<div style="font-size:3rem;text-align:center;margin-bottom:10px">${p.imagen}</div>`}
+    ${p.descripcion?`<p style="font-size:.82rem;color:var(--text2);line-height:1.5">${p.descripcion}</p>`:'<p style="font-size:.8rem;color:var(--text3)">Sin descripción disponible.</p>'}
+    <div style="margin-top:12px">
+      ${p.tipo==='puntos'?`<div style="color:var(--accent);font-weight:800">${(p.puntos||0).toLocaleString()} pts</div>`:''}
+      ${p.tipo==='dinero'?`<div style="color:var(--green);font-weight:800">$${(p.precio||0).toFixed(2)}</div>`:''}
+      ${p.tipo==='mixto'?`<div><span style="color:var(--accent);font-weight:800">${(p.puntos||0).toLocaleString()} pts</span> <span style="color:var(--text3);font-size:.7rem">o</span> <span style="color:var(--green);font-weight:800">$${(p.precio||0).toFixed(2)}</span></div>`:''}
+    </div>
+    <div class="modalActions">
+      <button class="btn btnGhost" onclick="closeModal()">Cerrar</button>
+      <button class="btn ${puedeCanjear?'btnAccent':'btnGhost'}" onclick="closeModal();${puedeCanjear?`openCanjear(${p.id})`:'navigate(\"misPuntos\")'}">${puedeCanjear?'Canjear':'Necesitás '+(p.puntos||0)+' pts'}</button>
+    </div>
+  `);
+};
 function openCanjear(prodId){
   const p=shopProductos.find(x=>x.id===prodId);
   const u=currentUser.data;
@@ -4164,13 +4185,19 @@ function openNuevoProductoShop(){
       <div class="formGroup"><label>Precio en puntos</label><input id="spPts" type="number" placeholder="2500"/></div>
       <div class="formGroup"><label>Pts ganados al comprar con $</label><input id="spPtsGan" type="number" placeholder="100"/></div>
       <div class="formGroup"><label>Stock (999 = ilimitado)</label><input id="spStock" type="number" value="10"/></div>
+      <div class="formGroup fullWidth"><label>Descripción</label><textarea id="spDesc" rows="3" placeholder="Descripción del producto para que el socio la vea al comprar..." style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:4px;color:var(--white);padding:8px;font-size:.8rem;font-family:inherit"></textarea></div>
+      <div class="formGroup fullWidth"><label>Fotos del producto (podés elegir varias)</label><input id="spFotos" type="file" accept="image/*" multiple onchange="cpPreviewFotos(this,'spFotosPreview')"/><div id="spFotosPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div></div>
     </div>
     <div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="guardarNuevoShopProducto()">Guardar</button></div>
   `);
 }
-function guardarNuevoShopProducto(){
+async function guardarNuevoShopProducto(){
   const get=i=>document.getElementById(i)?.value||'';
-  shopProductos.push({id:Date.now(),nombre:get('spNom'),categoria:get('spCat'),tipo:get('spTipo'),precio:+get('spPre')||0,puntos:+get('spPts')||0,ptsGanados:+get('spPtsGan')||0,imagen:get('spEmoji')||'🎁',stock:+get('spStock')||10,activo:true});
+  const fotosInput=document.getElementById('spFotos');
+  let fotos=[];
+  if(fotosInput?.dataset.fotos){try{fotos=JSON.parse(fotosInput.dataset.fotos);}catch(e){}}
+  else if(fotosInput?.files?.length){fotos=await cpReadFilesAsDataURLs(fotosInput.files);}
+  shopProductos.push({id:Date.now(),nombre:get('spNom'),categoria:get('spCat'),tipo:get('spTipo'),precio:+get('spPre')||0,puntos:+get('spPts')||0,ptsGanados:+get('spPtsGan')||0,imagen:get('spEmoji')||'🎁',descripcion:get('spDesc')||'',fotos,stock:+get('spStock')||10,activo:true});
   saveShop();closeModal();navigate('adminShop');
 }
 function openEditarProductoShop(id){
@@ -4192,16 +4219,33 @@ function openEditarProductoShop(id){
       <div class="formGroup"><label>Precio en puntos</label><input id="epPts" type="number" value="${p.puntos||0}"/></div>
       <div class="formGroup"><label>Pts ganados al comprar con $</label><input id="epPtsGan" type="number" value="${p.ptsGanados||0}"/></div>
       <div class="formGroup"><label>Stock (999 = ilimitado)</label><input id="epStock" type="number" value="${p.stock}"/></div>
+      <div class="formGroup fullWidth"><label>Descripción</label><textarea id="epDesc" rows="3" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:4px;color:var(--white);padding:8px;font-size:.8rem;font-family:inherit">${p.descripcion||''}</textarea></div>
+      <div class="formGroup fullWidth"><label>Fotos del producto</label>
+        <div id="epFotosCurrentShop" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">${(p.fotos||[]).map((u,i)=>`<div style="position:relative"><img src="${u}" style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid var(--border2)"/><button onclick="epRemoveFotoShop(${id},${i})" style="position:absolute;top:-6px;right:-6px;background:var(--red);border:none;border-radius:50%;width:18px;height:18px;color:#fff;font-size:.6rem;cursor:pointer;line-height:1">✕</button></div>`).join('')||'<span style="font-size:.72rem;color:var(--text3)">Sin fotos cargadas</span>'}</div>
+        <input id="epFotosShop" type="file" accept="image/*" multiple onchange="cpPreviewFotos(this,'epFotosPreviewShop')"/>
+        <div id="epFotosPreviewShop" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
+        <div style="font-size:.68rem;color:var(--text3);margin-top:4px">Las fotos nuevas se agregan a las existentes.</div>
+      </div>
     </div>
     <div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cancelar</button><button class="btn btnAccent" onclick="guardarEditarShopProducto(${id})">Guardar cambios</button></div>
   `);
 }
-function guardarEditarShopProducto(id){
+window.epRemoveFotoShop=function(id,idx){
+  const p=shopProductos.find(x=>x.id===id);if(!p||!p.fotos)return;
+  p.fotos.splice(idx,1);saveShop();openEditarProductoShop(id);
+};
+async function guardarEditarShopProducto(id){
   const p=shopProductos.find(x=>x.id===id);if(!p)return;
   const get=i=>document.getElementById(i)?.value||'';
   p.nombre=get('epNom');p.categoria=get('epCat');p.imagen=get('epEmoji')||p.imagen;
   p.tipo=get('epTipo');p.precio=+get('epPre')||0;p.puntos=+get('epPts')||0;
   p.ptsGanados=+get('epPtsGan')||0;p.stock=+get('epStock');
+  p.descripcion=get('epDesc')||'';
+  const fotosInput=document.getElementById('epFotosShop');
+  let nuevas=[];
+  if(fotosInput?.dataset.fotos){try{nuevas=JSON.parse(fotosInput.dataset.fotos);}catch(e){}}
+  else if(fotosInput?.files?.length){nuevas=await cpReadFilesAsDataURLs(fotosInput.files);}
+  p.fotos=[...(p.fotos||[]),...nuevas];
   saveShop();closeModal();navigate('adminShop');
 }
 function openAgregarStock(id){
