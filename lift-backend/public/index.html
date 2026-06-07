@@ -2117,10 +2117,38 @@ function openNewStaff(){
     <div class="formGroup"><label>Nombre *</label><input id="sName" placeholder="Nombre completo"/></div>
     <div class="formGroup"><label>Email *</label><input id="sEmail" type="email" placeholder="email@lift.com"/></div>
     <div class="formGroup"><label>Contraseña *</label><input id="sPass" type="password" placeholder="Contraseña"/></div>
-    <div class="formGroup"><label>DNI *</label><input id="sDni" placeholder="XXXXXXXX-X"/></div>
-    <div class="formGroup"><label>Teléfono (WhatsApp)</label><input id="sPhone" placeholder="549XXXXXXXXXX"/></div>
+    <div class="formGroup"><label>Tipo de documento</label><select id="sDocType"><option value="DNI">DNI</option><option value="DUI">DUI</option><option value="Pasaporte">Pasaporte</option><option value="Carnet de Residente">Carnet de Residente</option></select></div>
+    <div class="formGroup"><label>N° de documento *</label><input id="sDni" placeholder="Número de documento"/></div>
+    <div class="formGroup"><label>Teléfono (WhatsApp)</label>
+      <div style="display:flex;gap:6px">
+        <select id="sPhoneCode" style="max-width:150px">
+          <option value="54">🇦🇷 +54 Argentina</option>
+          <option value="591">🇧🇴 +591 Bolivia</option>
+          <option value="55">🇧🇷 +55 Brasil</option>
+          <option value="56">🇨🇱 +56 Chile</option>
+          <option value="57">🇨🇴 +57 Colombia</option>
+          <option value="506">🇨🇷 +506 Costa Rica</option>
+          <option value="53">🇨🇺 +53 Cuba</option>
+          <option value="593">🇪🇨 +593 Ecuador</option>
+          <option value="503" selected>🇸🇻 +503 El Salvador</option>
+          <option value="34">🇪🇸 +34 España</option>
+          <option value="1">🇺🇸 +1 Estados Unidos</option>
+          <option value="502">🇬🇹 +502 Guatemala</option>
+          <option value="504">🇭🇳 +504 Honduras</option>
+          <option value="52">🇲🇽 +52 México</option>
+          <option value="505">🇳🇮 +505 Nicaragua</option>
+          <option value="507">🇵🇦 +507 Panamá</option>
+          <option value="595">🇵🇾 +595 Paraguay</option>
+          <option value="51">🇵🇪 +51 Perú</option>
+          <option value="1809">🇩🇴 +1809 Rep. Dominicana</option>
+          <option value="598">🇺🇾 +598 Uruguay</option>
+          <option value="58">🇻🇪 +58 Venezuela</option>
+        </select>
+        <input id="sPhone" placeholder="79501174" style="flex:1"/>
+      </div>
+    </div>
     <div class="formGroup"><label>Rol</label><select id="sRole"><option value="reception">Recepcionista</option><option value="trainer">Entrenador</option><option value="nutritionist">Nutricionista</option><option value="cafeteria">Cafetería</option><option value="admin">Administrador</option></select></div>
-    <div class="formGroup fullWidth"><div style="font-size:.72rem;color:var(--accent)">🔢 El PIN de ingreso será asignado automáticamente como los dígitos del DNI.</div></div>
+    <div class="formGroup fullWidth"><div style="font-size:.72rem;color:var(--accent)">🔢 El PIN de ingreso será asignado automáticamente como los dígitos del documento.</div></div>
   </div>
   <div style="margin-top:14px">
     <label style="font-size:.72rem;color:var(--text2);letter-spacing:.06em;text-transform:uppercase;font-weight:700">Horario Laboral</label>
@@ -2147,7 +2175,7 @@ function saveStaff(){
     return from&&to?{day:d,from,to}:null;
   }).filter(Boolean);
   const newRole=get('sRole');
-  staffAccounts.push({email:get('sEmail'),pass:get('sPass'),role:newRole,name:get('sName'),phone:get('sPhone'),workSchedule,perms:DEFAULT_PERMS[newRole]||[]});
+  staffAccounts.push({email:get('sEmail'),pass:get('sPass'),role:newRole,name:get('sName'),phone:(get('sPhone')?`${get('sPhoneCode')}${get('sPhone').replace(/\D/g,'')}`:''),workSchedule,perms:DEFAULT_PERMS[newRole]||[]});
   logAction('Staff agregado',get('sName'));
   saveDB();closeModal();navigate('staff');
 }
@@ -7034,19 +7062,22 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){if(
   window.saveStaff = async function () {
     const get = i => document.getElementById(i)?.value || '';
     if (!get('sName') || !get('sEmail') || !get('sPass')) { alert('Completá todos los campos'); return; }
-    if (!get('sDni')) { alert('El DNI es obligatorio para asignar el PIN de ingreso'); return; }
+    if (!get('sDni')) { alert('El número de documento es obligatorio para asignar el PIN de ingreso'); return; }
     if (get('sPass').length < 6) { alert('La contraseña debe tener al menos 6 caracteres'); return; }
     if (staffAccounts.find(s => s.email === get('sEmail'))) { alert('Email ya registrado'); return; }
 
     const dniDigits = get('sDni').replace(/\D/g, '');
-    if (dniDigits.length < 3) { alert('El DNI debe tener al menos 3 dígitos para derivar el PIN'); return; }
+    if (dniDigits.length < 3) { alert('El documento debe tener al menos 3 dígitos para derivar el PIN'); return; }
+
+    const phoneFull = get('sPhone') ? `${get('sPhoneCode')}${get('sPhone').replace(/\D/g,'')}` : '';
 
     const payload = {
       name:     get('sName'),
       email:    get('sEmail'),
       password: get('sPass'),
       role:     get('sRole') || 'reception',
-      dni:      get('sDni'),
+      dni:      `${get('sDocType')||'DNI'} ${get('sDni')}`,
+      phone:    phoneFull,
       pin:      dniDigits,
     };
 
