@@ -6571,7 +6571,6 @@ views.encuestas = () => {
     ${[...encuestaCampaigns].reverse().slice(0,12).map(c=>`<tr><td><strong>${c.nombre}</strong>${c.auto?' <span class="badge active" style="font-size:.6rem">🤖 auto</span>':''}</td><td style="font-size:.76rem;color:var(--text2)">${c.destinoLabel}</td><td style="font-size:.72rem;color:var(--text3)">${c.fecha}</td><td style="font-size:.72rem;color:var(--text3)">${c.enviadaPor||'—'}</td><td><button class="btn btnGhost btnSm" onclick="editarEncuesta(${c.id})" title="Editar">✏️</button></td></tr>`).join('')}
     </table>
   </div>`:''}
-  <div style="font-size:.74rem;color:var(--text3);margin:-6px 0 14px">🤖 Automatización activa: a cada socio nuevo se le envía la <strong>Encuesta de Bienvenida</strong> (8 preguntas sobre primer impacto) automáticamente a la semana de inscribirse.</div>
   <div class="statsGrid" style="margin-bottom:14px">
     <div class="statCard"><div class="num" style="color:var(--accent)">${avgRating||'—'}</div><div class="lbl">Puntaje promedio</div></div>
     <div class="statCard"><div class="num" style="color:var(--blue)">${mesData.length}</div><div class="lbl">Respuestas este mes</div></div>
