@@ -111,21 +111,54 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 /* TOP BAR */
 .topBar{
-  background:rgba(5,5,8,0.95);
-  border-bottom:1px solid rgba(229,8,126,0.15);
+  background:rgba(5,5,8,0.97);
+  border-bottom:none;
   padding:0 24px;height:56px;
   display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
   backdrop-filter:blur(10px);
-  box-shadow:0 1px 20px rgba(229,8,126,0.08)
+  position:relative
 }
-.topBarBrand{display:flex;align-items:center;gap:14px}
+/* Separator line with gradient below topbar */
+.topBar::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent 0%,var(--accent) 30%,transparent 50%,var(--indigo) 70%,transparent 100%);
+  opacity:.5
+}
+.topBarBrand{display:flex;align-items:center;gap:12px}
 .topBarBrand .wordmark{font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:900;letter-spacing:.08em;color:var(--white);text-shadow:0 0 20px rgba(229,8,126,0.4)}
 .topBarBrand .wordmark span{color:var(--accent)}
-.topBarBrand .vBadge{font-size:.52rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);border:1px solid rgba(229,8,126,0.3);padding:3px 8px;border-radius:20px;background:rgba(229,8,126,0.06);font-family:'Orbitron',sans-serif}
-.topBarRight{display:flex;align-items:center;gap:12px}
-.role{font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);background:rgba(229,8,126,0.08);padding:5px 12px;border-radius:20px;border:1px solid rgba(229,8,126,0.25);font-weight:700;font-family:'Orbitron',sans-serif;box-shadow:0 0 10px rgba(229,8,126,0.1)}
-.logoutBtn{background:none;border:1px solid var(--border2);color:var(--text2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;font-family:'Orbitron',sans-serif;font-weight:600;transition:all .15s}
-.logoutBtn:hover{border-color:var(--red);color:var(--red);box-shadow:0 0 12px rgba(255,59,48,0.2)}
+/* vBadge: small pill, no solid bg, magenta border */
+.topBarBrand .vBadge{
+  font-size:.48rem;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(229,8,126,0.7);border:1px solid rgba(229,8,126,0.25);
+  padding:2px 7px;border-radius:20px;background:transparent;
+  font-family:'Orbitron',sans-serif;font-weight:500
+}
+.topBarRight{display:flex;align-items:center;gap:10px}
+/* role badge: outline magenta, hover fills */
+.role{
+  font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--accent);background:transparent;
+  padding:5px 13px;border-radius:20px;
+  border:1px solid rgba(229,8,126,0.4);
+  font-weight:600;font-family:'Orbitron',sans-serif;
+  cursor:default;transition:all .15s
+}
+.role:hover{background:rgba(229,8,126,0.12);box-shadow:0 0 12px rgba(229,8,126,0.15)}
+/* logoutBtn: outline magenta, hover fills magenta */
+.logoutBtn{
+  background:transparent;
+  border:1px solid rgba(229,8,126,0.4);
+  color:var(--accent);
+  padding:6px 14px;border-radius:6px;cursor:pointer;
+  font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;
+  font-family:'Orbitron',sans-serif;font-weight:600;transition:all .18s
+}
+.logoutBtn:hover{
+  background:var(--accent);color:#fff;
+  border-color:var(--accent);
+  box-shadow:0 0 16px rgba(229,8,126,0.35)
+}
 
 /* LAYOUT */
 .mainLayout{display:flex;flex:1;overflow:hidden}
@@ -683,11 +716,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .quickAction{
   position:relative;
   border:none !important;
-  min-height:80px;
-  align-items:flex-start !important;
+  height:140px;min-height:140px;
+  display:flex !important;
   flex-direction:column !important;
-  gap:8px !important;
-  padding:16px !important;
+  align-items:flex-start !important;
+  justify-content:space-between !important;
+  gap:0 !important;
+  padding:14px !important;
 }
 /* Gradient border via pseudo-element (compatible with border-radius) */
 .quickAction::before{
@@ -712,10 +747,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .quickAction.qa-danger:hover::before{background:linear-gradient(135deg,rgba(255,59,48,0.6),rgba(229,8,126,0.4))}
 .quickAction.qa-urgent::before{background:linear-gradient(135deg,rgba(255,59,48,0.4),rgba(229,8,126,0.3));animation:borderPulse 2s ease infinite}
 @keyframes borderPulse{0%,100%{opacity:.7}50%{opacity:1}}
-.qaIcon{font-size:1.6rem !important;flex-shrink:0}
-.qaLucideIcon{width:22px;height:22px;stroke:var(--accent);stroke-width:1.5;margin-bottom:2px;filter:drop-shadow(0 0 4px rgba(229,8,126,0.4))}
-.qaText strong{font-size:.78rem !important;font-family:'Inter',sans-serif !important;font-weight:600 !important;letter-spacing:0 !important;text-transform:none !important}
-.qaText span{font-size:.65rem;color:var(--text2)}
+.qaIcon{font-size:1.6rem;flex-shrink:0;line-height:1}
+.qaLucideIcon{width:24px;height:24px;stroke:var(--accent);stroke-width:1.5;filter:drop-shadow(0 0 5px rgba(229,8,126,0.45))}
+.qaText{margin-top:auto}
+.qaText strong{display:block;font-size:.75rem;font-family:'Inter',sans-serif;font-weight:700;letter-spacing:0;text-transform:none;color:var(--white);line-height:1.3;margin-bottom:2px}
+.qaText span{font-size:.62rem;color:var(--text2);font-family:'Inter',sans-serif}
 
 /* ══════════════════════════════════════════
    KPI CARDS — unique color per position + glassmorphism
@@ -855,7 +891,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="vBadge">v7 PRO</div>
     </div>
     <div class="topBarRight">
-      <span id="notifBell" style="cursor:pointer;font-size:.9rem;color:var(--text3)" onclick="navigate('notificaciones')">🔔</span>
+      <span id="notifBell" style="cursor:pointer;color:var(--text3);display:flex;align-items:center" onclick="navigate('notificaciones')"><i data-lucide="bell" style="width:16px;height:16px;stroke:currentColor;stroke-width:1.75"></i></span>
       <span class="role" id="roleLabel">—</span>
       <button class="logoutBtn" onclick="doLogout()">SALIR</button>
     </div>
@@ -1317,7 +1353,7 @@ function logAction(action,detail){adminLog.unshift({id:Date.now(),user:currentUs
 function fillDemo(e,p){document.getElementById('loginEmail').value=e;document.getElementById('loginPass').value=p;}
 function doLogin(){const em=document.getElementById('loginEmail').value.trim();const pw=document.getElementById('loginPass').value.trim();const staff=staffAccounts.find(s=>s.email===em&&s.pass===pw);if(staff)currentUser={role:staff.role,name:staff.name,email:staff.email};else{const u=users.find(x=>x.email===em&&x.pass===pw);if(!u){alert('Credenciales incorrectas');return;}currentUser={role:'user',name:u.name,data:u,email:u.email};}startApp();}
 function doLogout(){currentUser=null;document.getElementById('loginScreen').style.display='flex';document.getElementById('app').style.display='none';}
-function startApp(){genNotifications();document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('roleLabel').textContent=ROLES[currentUser.role]||currentUser.role;buildSidebar();navigate(currentUser.role==='user'?'miPerfil':currentUser.role==='trainer'?'trainerDashboard':currentUser.role==='reception'?'dashboard':currentUser.role==='nutritionist'?'nutriDashboard':'dashboard');}
+function startApp(){genNotifications();document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('roleLabel').textContent=ROLES[currentUser.role]||currentUser.role;buildSidebar();navigate(currentUser.role==='user'?'miPerfil':currentUser.role==='trainer'?'trainerDashboard':currentUser.role==='reception'?'dashboard':currentUser.role==='nutritionist'?'nutriDashboard':'dashboard');if(window.lucide)lucide.createIcons();}
 let pinBuf='';
 function showPinLogin(){openModal(`<h3>Ingreso con PIN</h3><p style="font-size:.78rem;color:var(--text2);margin-bottom:12px;text-align:center">Ingresá tu PIN (hasta 10 dígitos)</p><div class="pinDisplay" id="pinDisplay">—</div><div class="pinGrid">${[1,2,3,4,5,6,7,8,9,'⌫',0,'✓'].map(k=>`<div class="pinBtn" onclick="pinPress('${k}')">${k}</div>`).join('')}</div><div id="pinMsg" style="text-align:center;font-size:.78rem;margin-top:10px;color:var(--red)"></div>`);pinBuf='';}
 function pinPress(k){if(k==='⌫')pinBuf=pinBuf.slice(0,-1);else if(k==='✓'){const u=users.find(x=>x.pin===pinBuf);if(u){currentUser={role:'user',name:u.name,data:u,email:u.email};closeModal();startApp();}else{document.getElementById('pinMsg').textContent='PIN incorrecto';pinBuf='';}}else if(pinBuf.length<10)pinBuf+=k;const d=document.getElementById('pinDisplay');if(d)d.textContent=pinBuf?'●'.repeat(pinBuf.length):'—';}
@@ -1572,19 +1608,19 @@ if(currentUser.role==='reception'){
 
 <div class="quickActions">
   <div class="quickAction" onclick="navigate('cobroDiario')">
-    <div class="qaIcon">💵</div>
+    <div class="qaIcon"><i data-lucide="banknote" class="qaLucideIcon"></i></div>
     <div class="qaText"><strong>Ventanilla de Cobro</strong><span>Cobrar cuotas del día</span></div>
   </div>
   <div class="quickAction" onclick="navigate('acceso')">
-    <div class="qaIcon">🔐</div>
+    <div class="qaIcon"><i data-lucide="shield-check" class="qaLucideIcon"></i></div>
     <div class="qaText"><strong>Control de Acceso</strong><span>Validar ingreso de socios</span></div>
   </div>
   <div class="quickAction" onclick="navigate('usuarios')">
-    <div class="qaIcon">👥</div>
+    <div class="qaIcon"><i data-lucide="users" class="qaLucideIcon"></i></div>
     <div class="qaText"><strong>Socios</strong><span>Buscar y gestionar</span></div>
   </div>
   <div class="quickAction ${dangerCountR>0?'qa-urgent qa-danger':''}" onclick="navigate('notificaciones')">
-    <div class="qaIcon">${dangerCountR>0?'🚨':'🔔'}</div>
+    <div class="qaIcon"><i data-lucide="${dangerCountR>0?'alert-triangle':'bell'}" class="qaLucideIcon" style="stroke:${dangerCountR>0?'var(--red)':'var(--accent)'}"></i></div>
     <div class="qaText"><strong style="color:${dangerCountR>0?'var(--red)':'var(--white)'}">${dangerCountR>0?dangerCountR+' Urgentes':'Alertas'}</strong><span>${notifications.length} notificacion${notifications.length!==1?'es':''} activas</span></div>
   </div>
 </div>
@@ -1686,7 +1722,7 @@ return`
   <div>
     <div style="font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">${today().toLocaleDateString('es-SV',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
     <div style="display:flex;align-items:baseline;gap:14px">
-      <div class="dashHeroIncome">$${income>0?(income/1000).toFixed(1)+'k':'—'}</div>
+      <div class="dashHeroIncome">$${(income/1000).toFixed(1)}k</div>
       <div>
         <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text3)">Ingresos este mes</div>
         <div style="font-size:.76rem;font-weight:700;margin-top:2px;color:${incDiff>=0?'var(--green)':'var(--red)'}">${incDiff>=0?'↑ +':'↓ '}${Math.abs(incDiff)}% vs mes anterior</div>
@@ -1703,15 +1739,15 @@ return`
 
 <div class="quickActions">
   <div class="quickAction" onclick="navigate('gestionPagos')">
-    <div class="qaIcon">💳</div>
+    <div class="qaIcon"><i data-lucide="credit-card" class="qaLucideIcon"></i></div>
     <div class="qaText"><strong>Gestión de Planes & Pagos</strong><span>Planes, cuotas y cobros</span></div>
   </div>
   <div class="quickAction" onclick="navigate('reportes')">
-    <div class="qaIcon">📊</div>
+    <div class="qaIcon"><i data-lucide="bar-chart-2" class="qaLucideIcon"></i></div>
     <div class="qaText"><strong>Análisis & Reportes</strong><span>Estadísticas y finanzas</span></div>
   </div>
   <div class="quickAction ${dangerCount>0?'qa-urgent qa-danger':'qa-danger'}" onclick="navigate('notificaciones')">
-    <div class="qaIcon">${dangerCount>0?'🚨':'🔔'}</div>
+    <div class="qaIcon"><i data-lucide="${dangerCount>0?'alert-triangle':'bell'}" class="qaLucideIcon" style="stroke:${dangerCount>0?'var(--red)':'var(--accent)'}"></i></div>
     <div class="qaText"><strong style="color:${dangerCount>0?'var(--red)':'var(--white)'}">${dangerCount>0?dangerCount+' Urgentes':'Alertas'}</strong><span>${notifications.length} notificacion${notifications.length!==1?'es':''} activas</span></div>
   </div>
 </div>
@@ -1723,12 +1759,12 @@ return`
     <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${pendientes} pendientes · ${users.length} total</div>
   </div>
   <div class="statCard" style="border-left-color:var(--accent);cursor:pointer" onclick="navigate('adminComisiones')">
-    <div class="num" style="color:var(--accent)">💎</div>
+    <div class="num" style="color:var(--accent)"><i data-lucide="gem" style="width:20px;height:20px;stroke:currentColor;stroke-width:1.5"></i></div>
     <div class="lbl">Comisiones & Metas</div>
     <div style="font-size:.62rem;color:var(--text3);margin-top:5px">Ver metas y comisiones</div>
   </div>
   <div class="statCard" style="border-left-color:var(--purple);cursor:pointer" onclick="navigate('adminShop')">
-    <div class="num" style="color:var(--purple)">🛍️</div>
+    <div class="num" style="color:var(--purple)"><i data-lucide="shopping-bag" style="width:20px;height:20px;stroke:currentColor;stroke-width:1.5"></i></div>
     <div class="lbl">Gestión Shop</div>
     <div style="font-size:.62rem;color:var(--text3);margin-top:5px">Productos y canjes</div>
   </div>
