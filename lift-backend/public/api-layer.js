@@ -420,8 +420,7 @@
     currentUser = null;
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
-    const sp = document.getElementById('supportChatPanel');
-    if (sp) sp.classList.remove('open');
+    if (typeof closeSupportChat === 'function') closeSupportChat();
   };
 
   /* ══════════════════════════════════════════════════════

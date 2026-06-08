@@ -1352,7 +1352,7 @@ function sendClientAlert(){
 function logAction(action,detail){adminLog.unshift({id:Date.now(),user:currentUser?.name||'Sistema',action,detail,time:new Date().toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'}),date:new Date().toISOString().slice(0,10)});if(adminLog.length>200)adminLog=adminLog.slice(0,200);saveDB();}
 function fillDemo(e,p){document.getElementById('loginEmail').value=e;document.getElementById('loginPass').value=p;}
 function doLogin(){const em=document.getElementById('loginEmail').value.trim();const pw=document.getElementById('loginPass').value.trim();const staff=staffAccounts.find(s=>s.email===em&&s.pass===pw);if(staff)currentUser={role:staff.role,name:staff.name,email:staff.email};else{const u=users.find(x=>x.email===em&&x.pass===pw);if(!u){alert('Credenciales incorrectas');return;}currentUser={role:'user',name:u.name,data:u,email:u.email};}startApp();}
-function doLogout(){currentUser=null;document.getElementById('loginScreen').style.display='flex';document.getElementById('app').style.display='none';const sp=document.getElementById('supportChatPanel');if(sp)sp.classList.remove('open');}
+function doLogout(){currentUser=null;document.getElementById('loginScreen').style.display='flex';document.getElementById('app').style.display='none';closeSupportChat();}
 function startApp(){genNotifications();document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('roleLabel').textContent=ROLES[currentUser.role]||currentUser.role;buildSidebar();navigate(currentUser.role==='user'?'miPerfil':currentUser.role==='trainer'?'trainerDashboard':currentUser.role==='reception'?'dashboard':currentUser.role==='nutritionist'?'nutriDashboard':'dashboard');if(window.lucide)lucide.createIcons();}
 let pinBuf='';
 function showPinLogin(){openModal(`<h3>Ingreso con PIN</h3><p style="font-size:.78rem;color:var(--text2);margin-bottom:12px;text-align:center">Ingresá tu PIN (hasta 10 dígitos)</p><div class="pinDisplay" id="pinDisplay">—</div><div class="pinGrid">${[1,2,3,4,5,6,7,8,9,'⌫',0,'✓'].map(k=>`<div class="pinBtn" onclick="pinPress('${k}')">${k}</div>`).join('')}</div><div id="pinMsg" style="text-align:center;font-size:.78rem;margin-top:10px;color:var(--red)"></div>`);pinBuf='';}
@@ -1501,11 +1501,15 @@ let _suppHistory=[];
 let _suppLoading=false;
 
 function openSupportChat(){
-  document.getElementById('supportChatPanel').classList.add('open');
+  const sp=document.getElementById('supportChatPanel');
+  sp.style.display='';
+  sp.classList.add('open');
   document.getElementById('suppInput').focus();
 }
 function closeSupportChat(){
-  document.getElementById('supportChatPanel').classList.remove('open');
+  const sp=document.getElementById('supportChatPanel');
+  sp.classList.remove('open');
+  sp.style.display='none';
 }
 function _suppAppendMsg(role,text){
   const welcome=document.getElementById('suppWelcome');
