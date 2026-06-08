@@ -246,7 +246,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   backdrop-filter:blur(10px);position:relative;overflow:hidden
 }
 .statCard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(229,8,126,0.15),transparent)}
-.statCard:hover{border-left-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 30px rgba(229,8,126,0.1),0 0 0 1px rgba(229,8,126,0.1)}
+.statCard{transition:transform .2s ease,box-shadow .2s ease,border-left-color .2s ease}
+.statCard:hover{border-left-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px rgba(229,8,126,0.1)}
 .statCard .num{font-family:'Orbitron',sans-serif;font-size:1.8rem;font-weight:800;line-height:1}
 .statCard .lbl{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text2);margin-top:6px;font-weight:600;font-family:'Inter',sans-serif}
 
@@ -603,86 +604,59 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   animation:floatUp linear infinite;z-index:1
 }
 
-/* ── KPI number glow by color ── */
-.kpiCard .kpiNum{animation:neonPulse 4s ease-in-out infinite}
-.kpiCard.green .kpiNum{animation:none;text-shadow:0 0 14px rgba(0,255,136,0.7)}
-.kpiCard.red .kpiNum{animation:none;text-shadow:0 0 14px rgba(255,59,48,0.7)}
-.kpiCard.blue .kpiNum{animation:none;text-shadow:0 0 14px rgba(0,170,255,0.7)}
-.kpiCard.purple .kpiNum{animation:none;text-shadow:0 0 14px rgba(191,90,242,0.7)}
-.dashHeroIncome{animation:neonPulse 3s ease-in-out infinite}
-.statCard:hover .num{text-shadow:0 0 18px rgba(229,8,126,0.75);transition:text-shadow .3s}
+/* ── KPI number glow — static text-shadow, NO animation (no repaint loop) ── */
+.kpiCard .kpiNum{text-shadow:0 0 12px rgba(229,8,126,0.4)}
+.kpiCard.green .kpiNum{text-shadow:0 0 12px rgba(0,255,136,0.5)}
+.kpiCard.red .kpiNum{text-shadow:0 0 12px rgba(255,59,48,0.5)}
+.kpiCard.blue .kpiNum{text-shadow:0 0 12px rgba(0,170,255,0.5)}
+.kpiCard.purple .kpiNum{text-shadow:0 0 12px rgba(191,90,242,0.5)}
+/* dashHeroIncome: static glow, no animation */
+.dashHeroIncome{text-shadow:0 0 20px rgba(229,8,126,0.5)}
 
 /* ── Counter animation class ── */
 .numAnim{animation:numPop .45s cubic-bezier(.34,1.56,.64,1) both}
 
-/* ── Staggered card fade-in ── */
-.card{animation:fadeIn .35s ease both}
-.card:nth-child(1){animation-delay:.03s}
-.card:nth-child(2){animation-delay:.09s}
-.card:nth-child(3){animation-delay:.15s}
-.card:nth-child(4){animation-delay:.21s}
-.card:nth-child(5){animation-delay:.27s}
-.card:nth-child(n+6){animation-delay:.33s}
+/* ── Card hover: ONLY transform transition, no animation property ── */
+.card{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(229,8,126,0.08);border-color:rgba(229,8,126,0.22)}
 
-/* ── kpiGrid card stagger ── */
-.kpiCard{animation:fadeIn .35s ease both}
-.kpiGrid .kpiCard:nth-child(1){animation-delay:.04s}
-.kpiGrid .kpiCard:nth-child(2){animation-delay:.1s}
-.kpiGrid .kpiCard:nth-child(3){animation-delay:.16s}
-.kpiGrid .kpiCard:nth-child(4){animation-delay:.22s}
-.kpiGrid .kpiCard:nth-child(5){animation-delay:.28s}
-.kpiGrid .kpiCard:nth-child(n+6){animation-delay:.34s}
+.kpiCard{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.kpiCard:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(229,8,126,0.1);border-color:rgba(229,8,126,0.2)}
 
-/* ── statCard stagger ── */
-.statsGrid .statCard:nth-child(1){animation:fadeIn .3s ease .03s both}
-.statsGrid .statCard:nth-child(2){animation:fadeIn .3s ease .08s both}
-.statsGrid .statCard:nth-child(3){animation:fadeIn .3s ease .13s both}
-.statsGrid .statCard:nth-child(4){animation:fadeIn .3s ease .18s both}
-.statsGrid .statCard:nth-child(n+5){animation:fadeIn .3s ease .23s both}
+.statCard:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(229,8,126,0.12),0 0 0 1px rgba(229,8,126,0.1)}
 
-/* ── quickAction stagger ── */
-.quickActions .quickAction:nth-child(1){animation:fadeIn .3s ease .05s both}
-.quickActions .quickAction:nth-child(2){animation:fadeIn .3s ease .1s both}
-.quickActions .quickAction:nth-child(3){animation:fadeIn .3s ease .15s both}
-.quickActions .quickAction:nth-child(n+4){animation:fadeIn .3s ease .2s both}
-
-/* ── Card hover glow pulse ── */
-.card:hover{animation:cardGlowPulse 2.5s ease-in-out infinite;border-color:rgba(229,8,126,0.22)}
-.kpiCard:hover{animation:cardGlowPulse 2.5s ease-in-out infinite;border-color:rgba(229,8,126,0.22)}
-.statCard:hover{animation:none;transform:translateY(-2px);box-shadow:0 8px 30px rgba(229,8,126,0.18),0 0 0 1px rgba(229,8,126,0.12)}
-
-/* ── PLAN CARDS: metallic gradients ── */
+/* ── PLAN CARDS: metallic gradients — static, NO animation (barShimmer removido) ── */
 .planCard.bronze{
   background:linear-gradient(135deg,rgba(205,127,50,0.14),rgba(139,69,19,0.06));
   border-color:rgba(205,127,50,0.3)
 }
-.planCard.bronze::before{background:linear-gradient(90deg,#8B4513,#cd7f32,#f0a040,#cd7f32,#8B4513);background-size:200% 100%;animation:barShimmer 4s linear infinite}
+.planCard.bronze::before{background:linear-gradient(90deg,#8B4513,#cd7f32,#f0a040)}
 .planCard.bronze .planName{color:#e8a050}
-.planCard.bronze:hover{box-shadow:0 8px 30px rgba(205,127,50,0.2)}
 
 .planCard.silver{
   background:linear-gradient(135deg,rgba(192,192,192,0.1),rgba(100,100,100,0.05));
   border-color:rgba(192,192,192,0.25)
 }
-.planCard.silver::before{background:linear-gradient(90deg,#606060,#C0C0C0,#e8e8e8,#C0C0C0,#606060);background-size:200% 100%;animation:barShimmer 4s linear infinite}
+.planCard.silver::before{background:linear-gradient(90deg,#606060,#C0C0C0,#e8e8e8)}
 .planCard.silver .planName{color:#d4d4d4}
-.planCard.silver:hover{box-shadow:0 8px 30px rgba(192,192,192,0.15)}
 
 .planCard.gold{
   background:linear-gradient(135deg,rgba(255,215,0,0.12),rgba(184,134,11,0.06));
   border-color:rgba(255,215,0,0.3)
 }
-.planCard.gold::before{background:linear-gradient(90deg,#B8860B,#FFD700,#fff176,#FFD700,#B8860B);background-size:200% 100%;animation:barShimmer 3s linear infinite}
+.planCard.gold::before{background:linear-gradient(90deg,#B8860B,#FFD700,#fff176)}
 .planCard.gold .planName{color:#ffd700}
-.planCard.gold:hover{box-shadow:0 8px 30px rgba(255,215,0,0.2)}
 
 .planCard.diamond{
   background:linear-gradient(135deg,rgba(229,8,126,0.1),rgba(52,56,142,0.1));
   border-color:rgba(229,8,126,0.35)
 }
-.planCard.diamond::before{background:linear-gradient(90deg,#34388E,#E5087E,#ff69b4,#E5087E,#34388E);background-size:200% 100%;animation:barShimmer 3s linear infinite}
+.planCard.diamond::before{background:linear-gradient(90deg,#34388E,#E5087E,#ff69b4)}
 .planCard.diamond .planName{color:#ff69b4}
-.planCard.diamond:hover{box-shadow:0 8px 30px rgba(229,8,126,0.25)}
+
+/* planCard hover: solo transform, sin box-shadow animado */
+.planCard{transition:transform .2s ease,border-color .2s ease}
+.planCard:hover{transform:translateY(-2px);border-color:rgba(229,8,126,0.35)}
 
 /* ── INCOME BAR CHART: gradient bars ── */
 .bar{
@@ -729,9 +703,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   background:linear-gradient(135deg,rgba(229,8,126,0.65),rgba(52,56,142,0.65));
 }
 .quickAction:hover{
-  transform:translateY(-3px) !important;
-  box-shadow:0 12px 40px rgba(229,8,126,0.12),0 4px 16px rgba(0,0,0,0.3) !important;
-  background:rgba(229,8,126,0.06) !important;
+  transform:translateY(-2px) !important;
+  box-shadow:0 8px 24px rgba(229,8,126,0.1),0 2px 12px rgba(0,0,0,0.2) !important;
+  background:rgba(229,8,126,0.05) !important;
   border:none !important
 }
 .quickAction.qa-danger::before{background:linear-gradient(135deg,rgba(255,59,48,0.3),rgba(229,8,126,0.2))}
