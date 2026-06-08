@@ -533,6 +533,165 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .suppWelcome{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;gap:8px;color:var(--text2);font-size:.78rem;flex:1;font-family:'Inter',sans-serif}
 .suppWelcome .suppWIcon{font-size:2.2rem;margin-bottom:4px}
 .suppWelcome strong{color:var(--text);font-size:.85rem;font-family:'Orbitron',sans-serif}
+
+/* ══════════════════════════════════════════
+   ENHANCED ANIMATIONS & EFFECTS v2
+══════════════════════════════════════════ */
+
+/* Neon pulse for KPI numbers */
+@keyframes neonPulse{
+  0%,100%{text-shadow:0 0 8px rgba(229,8,126,0.35)}
+  50%{text-shadow:0 0 20px rgba(229,8,126,0.85),0 0 40px rgba(229,8,126,0.35),0 0 60px rgba(229,8,126,0.15)}
+}
+/* Login brand dramatic pulse */
+@keyframes brandGlow{
+  0%,100%{text-shadow:0 0 40px rgba(229,8,126,0.5),0 0 80px rgba(229,8,126,0.2)}
+  50%{text-shadow:0 0 60px rgba(229,8,126,0.9),0 0 120px rgba(229,8,126,0.4),0 0 180px rgba(229,8,126,0.15)}
+}
+/* Card hover glow pulse */
+@keyframes cardGlowPulse{
+  0%,100%{box-shadow:0 0 20px rgba(229,8,126,0.08)}
+  50%{box-shadow:0 0 35px rgba(229,8,126,0.2),0 0 60px rgba(229,8,126,0.08)}
+}
+/* Counter pop when value renders */
+@keyframes numPop{
+  0%{transform:scale(.85);opacity:0}
+  70%{transform:scale(1.06)}
+  100%{transform:scale(1);opacity:1}
+}
+/* Floating particle */
+@keyframes floatUp{
+  0%{opacity:0;transform:translateY(0) scale(0.5)}
+  15%{opacity:.7}
+  85%{opacity:.15}
+  100%{opacity:0;transform:translateY(-95vh) scale(1.2)}
+}
+/* Scan line sweep */
+@keyframes scanLine{
+  0%{top:-4px}
+  100%{top:100%}
+}
+/* Bar gradient shimmer */
+@keyframes barShimmer{
+  0%{background-position:200% center}
+  100%{background-position:-200% center}
+}
+
+/* ── LOGIN: brand pulse ── */
+.loginBrand{animation:brandGlow 4s ease-in-out infinite}
+
+/* ── LOGIN: scan line ── */
+.loginScanLine{
+  position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent 0%,rgba(229,8,126,0.2) 30%,rgba(229,8,126,0.5) 50%,rgba(229,8,126,0.2) 70%,transparent 100%);
+  animation:scanLine 10s linear infinite;
+  pointer-events:none;z-index:3
+}
+/* ── LOGIN: floating particles ── */
+.liftParticle{
+  position:absolute;border-radius:50%;pointer-events:none;
+  animation:floatUp linear infinite;z-index:1
+}
+
+/* ── KPI number glow by color ── */
+.kpiCard .kpiNum{animation:neonPulse 4s ease-in-out infinite}
+.kpiCard.green .kpiNum{animation:none;text-shadow:0 0 14px rgba(0,255,136,0.7)}
+.kpiCard.red .kpiNum{animation:none;text-shadow:0 0 14px rgba(255,59,48,0.7)}
+.kpiCard.blue .kpiNum{animation:none;text-shadow:0 0 14px rgba(0,170,255,0.7)}
+.kpiCard.purple .kpiNum{animation:none;text-shadow:0 0 14px rgba(191,90,242,0.7)}
+.dashHeroIncome{animation:neonPulse 3s ease-in-out infinite}
+.statCard:hover .num{text-shadow:0 0 18px rgba(229,8,126,0.75);transition:text-shadow .3s}
+
+/* ── Counter animation class ── */
+.numAnim{animation:numPop .45s cubic-bezier(.34,1.56,.64,1) both}
+
+/* ── Staggered card fade-in ── */
+.card{animation:fadeIn .35s ease both}
+.card:nth-child(1){animation-delay:.03s}
+.card:nth-child(2){animation-delay:.09s}
+.card:nth-child(3){animation-delay:.15s}
+.card:nth-child(4){animation-delay:.21s}
+.card:nth-child(5){animation-delay:.27s}
+.card:nth-child(n+6){animation-delay:.33s}
+
+/* ── kpiGrid card stagger ── */
+.kpiCard{animation:fadeIn .35s ease both}
+.kpiGrid .kpiCard:nth-child(1){animation-delay:.04s}
+.kpiGrid .kpiCard:nth-child(2){animation-delay:.1s}
+.kpiGrid .kpiCard:nth-child(3){animation-delay:.16s}
+.kpiGrid .kpiCard:nth-child(4){animation-delay:.22s}
+.kpiGrid .kpiCard:nth-child(5){animation-delay:.28s}
+.kpiGrid .kpiCard:nth-child(n+6){animation-delay:.34s}
+
+/* ── statCard stagger ── */
+.statsGrid .statCard:nth-child(1){animation:fadeIn .3s ease .03s both}
+.statsGrid .statCard:nth-child(2){animation:fadeIn .3s ease .08s both}
+.statsGrid .statCard:nth-child(3){animation:fadeIn .3s ease .13s both}
+.statsGrid .statCard:nth-child(4){animation:fadeIn .3s ease .18s both}
+.statsGrid .statCard:nth-child(n+5){animation:fadeIn .3s ease .23s both}
+
+/* ── quickAction stagger ── */
+.quickActions .quickAction:nth-child(1){animation:fadeIn .3s ease .05s both}
+.quickActions .quickAction:nth-child(2){animation:fadeIn .3s ease .1s both}
+.quickActions .quickAction:nth-child(3){animation:fadeIn .3s ease .15s both}
+.quickActions .quickAction:nth-child(n+4){animation:fadeIn .3s ease .2s both}
+
+/* ── Card hover glow pulse ── */
+.card:hover{animation:cardGlowPulse 2.5s ease-in-out infinite;border-color:rgba(229,8,126,0.22)}
+.kpiCard:hover{animation:cardGlowPulse 2.5s ease-in-out infinite;border-color:rgba(229,8,126,0.22)}
+.statCard:hover{animation:none;transform:translateY(-2px);box-shadow:0 8px 30px rgba(229,8,126,0.18),0 0 0 1px rgba(229,8,126,0.12)}
+
+/* ── PLAN CARDS: metallic gradients ── */
+.planCard.bronze{
+  background:linear-gradient(135deg,rgba(205,127,50,0.14),rgba(139,69,19,0.06));
+  border-color:rgba(205,127,50,0.3)
+}
+.planCard.bronze::before{background:linear-gradient(90deg,#8B4513,#cd7f32,#f0a040,#cd7f32,#8B4513);background-size:200% 100%;animation:barShimmer 4s linear infinite}
+.planCard.bronze .planName{color:#e8a050}
+.planCard.bronze:hover{box-shadow:0 8px 30px rgba(205,127,50,0.2)}
+
+.planCard.silver{
+  background:linear-gradient(135deg,rgba(192,192,192,0.1),rgba(100,100,100,0.05));
+  border-color:rgba(192,192,192,0.25)
+}
+.planCard.silver::before{background:linear-gradient(90deg,#606060,#C0C0C0,#e8e8e8,#C0C0C0,#606060);background-size:200% 100%;animation:barShimmer 4s linear infinite}
+.planCard.silver .planName{color:#d4d4d4}
+.planCard.silver:hover{box-shadow:0 8px 30px rgba(192,192,192,0.15)}
+
+.planCard.gold{
+  background:linear-gradient(135deg,rgba(255,215,0,0.12),rgba(184,134,11,0.06));
+  border-color:rgba(255,215,0,0.3)
+}
+.planCard.gold::before{background:linear-gradient(90deg,#B8860B,#FFD700,#fff176,#FFD700,#B8860B);background-size:200% 100%;animation:barShimmer 3s linear infinite}
+.planCard.gold .planName{color:#ffd700}
+.planCard.gold:hover{box-shadow:0 8px 30px rgba(255,215,0,0.2)}
+
+.planCard.diamond{
+  background:linear-gradient(135deg,rgba(229,8,126,0.1),rgba(52,56,142,0.1));
+  border-color:rgba(229,8,126,0.35)
+}
+.planCard.diamond::before{background:linear-gradient(90deg,#34388E,#E5087E,#ff69b4,#E5087E,#34388E);background-size:200% 100%;animation:barShimmer 3s linear infinite}
+.planCard.diamond .planName{color:#ff69b4}
+.planCard.diamond:hover{box-shadow:0 8px 30px rgba(229,8,126,0.25)}
+
+/* ── INCOME BAR CHART: gradient bars ── */
+.bar{
+  background:linear-gradient(180deg,rgba(229,8,126,0.9) 0%,rgba(52,56,142,0.6) 100%);
+  box-shadow:0 0 8px rgba(229,8,126,0.3);
+  position:relative;overflow:hidden
+}
+.bar::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,0.15) 0%,transparent 50%);
+  pointer-events:none
+}
+
+/* ── DASHBOARD HERO: enhanced ── */
+.dashHero{animation:fadeIn .3s ease both}
+
+/* ── CONTENT transition ── */
+.content{transition:opacity .15s ease}
+.content.navigating{opacity:0}
 </style>
 </head>
 <body>
@@ -2180,7 +2339,79 @@ window.guardarBackupNube=async function(){const btn=document.getElementById('btn
 window.cargarListaBackups=async function(){const el=document.getElementById('backupList');if(!el)return;el.innerHTML='<p style="color:var(--text3);font-size:.8rem">Cargando...</p>';try{const list=await apiFetch('/api/admin/backup/list');if(!list||!list.length){el.innerHTML='<p style="color:var(--text3);font-size:.8rem">Sin backups en la nube aún. El primero se creará esta noche a las 3:00 AM.</p>';return;}el.innerHTML='<table class="tbl"><tr><th>Archivo</th><th>Tamaño</th><th>Fecha</th><th></th></tr>'+list.map(f=>`<tr><td style="font-family:monospace;font-size:.72rem">${f.name}</td><td style="font-size:.72rem;color:var(--text3)">${f.metadata?.size?Math.round(f.metadata.size/1024)+' KB':'—'}</td><td style="font-size:.72rem;color:var(--text3)">${f.created_at?f.created_at.slice(0,19).replace('T',' '):'—'}</td><td><a href="/api/admin/backup/fetch/${f.name}" download="${f.name}" class="btn btnXs btnGhost">⬇️</a></td></tr>`).join('')+'</table>';}catch(e){el.innerHTML='<p style="color:var(--red);font-size:.8rem">Error al cargar backups: '+e.message+'</p>';}};
 async function refreshPayments(){try{const res=await apiFetch('/api/payments?limit=500');if(res&&res.data){paymentsDB=(res.data||[]).map(p=>({...p,userName:p.user_name||p.userName||'—',date:p.payment_date||p.date||''}));}}catch(e){console.warn('[refreshPayments]',e.message);}renderPaymentsTable();}
 async function refreshShopVentas(){try{const data=await apiFetch('/api/shop/ventas');if(Array.isArray(data)){shopVentas=data.map(v=>({id:v.id,productoId:v.producto_id,productoNombre:v.producto_nombre,productoEmoji:v.producto_emoji||'🎁',userId:v.user_id,userName:v.user_name,cantidad:v.cantidad,metodoPago:v.metodo_pago,precioTotal:+v.precio_total,puntosOtorgados:v.puntos_otorgados,fecha:v.fecha}));document.getElementById('content').innerHTML=views.adminShop();afterRender('_adminShopInner');}}catch(e){console.warn('[refreshShopVentas]',e.message);}}
-function afterRender(view){if(view==='usuarios')renderUserTable();if(view==='adminPanel')renderAdminPanel();if(view==='panelSocios')renderPS();if(view==='backups')cargarListaBackups();if(view==='acceso')renderAccessLog();if(view==='pagos'||view==='gestionPagos')refreshPayments();if(view==='adminShop')refreshShopVentas();if(view==='adminLogView'){setTimeout(()=>renderLog(),50);}if(view==='miQR'||view==='miCredencial')setTimeout(()=>startQRRotation(view),80);if(view==='misMensajes'){markUserChatRead();setTimeout(()=>{const el=document.getElementById('chatMsgs');if(el)el.scrollTop=el.scrollHeight;},50);}if(view==='mensajes')setTimeout(()=>{const el=document.getElementById('chatMsgs');if(el)el.scrollTop=el.scrollHeight;},50);}
+function afterRender(view){if(view==='usuarios')renderUserTable();if(view==='adminPanel')renderAdminPanel();if(view==='panelSocios')renderPS();if(view==='backups')cargarListaBackups();if(view==='acceso')renderAccessLog();if(view==='pagos'||view==='gestionPagos')refreshPayments();if(view==='adminShop')refreshShopVentas();if(view==='adminLogView'){setTimeout(()=>renderLog(),50);}if(view==='miQR'||view==='miCredencial')setTimeout(()=>startQRRotation(view),80);if(view==='misMensajes'){markUserChatRead();setTimeout(()=>{const el=document.getElementById('chatMsgs');if(el)el.scrollTop=el.scrollHeight;},50);}if(view==='mensajes')setTimeout(()=>{const el=document.getElementById('chatMsgs');if(el)el.scrollTop=el.scrollHeight;},50);setTimeout(animateCounters,60);}
+
+/* ══ COUNTER ANIMATION ══ */
+function animateCounter(el,end,duration,prefix,suffix){
+  if(!el||isNaN(end))return;
+  const start=0;const startTime=performance.now();
+  el.classList.add('numAnim');
+  function step(now){
+    const elapsed=now-startTime;const p=Math.min(elapsed/duration,1);
+    // ease out cubic
+    const ease=1-Math.pow(1-p,3);
+    const current=Math.round(start+(end-start)*ease);
+    const formatted=current.toLocaleString('es-SV');
+    el.textContent=(prefix||'')+formatted+(suffix||'');
+    if(p<1)requestAnimationFrame(step);
+    else el.textContent=(prefix||'')+end.toLocaleString('es-SV')+(suffix||'');
+  }
+  requestAnimationFrame(step);
+}
+function animateCounters(){
+  // KPI nums
+  document.querySelectorAll('.kpiCard .kpiNum').forEach(el=>{
+    const raw=el.textContent.replace(/[^\d.]/g,'');
+    const num=parseFloat(raw);
+    if(!isNaN(num)&&num>0){
+      const prefix=el.textContent.includes('$')?'$':'';
+      const suffix=el.textContent.includes('%')?'%':'';
+      animateCounter(el,Math.round(num),900,prefix,suffix);
+    }
+  });
+  // Stat card nums
+  document.querySelectorAll('.statCard .num').forEach(el=>{
+    const raw=el.textContent.replace(/[^\d.]/g,'');
+    const num=parseFloat(raw);
+    if(!isNaN(num)&&num>0){
+      const prefix=el.textContent.includes('$')?'$':'';
+      animateCounter(el,Math.round(num),800,prefix,'');
+    }
+  });
+  // Dashboard hero income
+  document.querySelectorAll('.dashHeroIncome').forEach(el=>{
+    const raw=el.textContent.replace(/[^\d.]/g,'');
+    const num=parseFloat(raw);
+    if(!isNaN(num)&&num>0)animateCounter(el,Math.round(num),1100,'$','');
+  });
+}
+
+/* ══ LOGIN PARTICLES ══ */
+function initLoginParticles(){
+  const screen=document.getElementById('loginScreen');
+  if(!screen||screen.querySelector('.loginScanLine'))return;
+  // Scan line
+  const scan=document.createElement('div');scan.className='loginScanLine';screen.appendChild(scan);
+  // Floating particles
+  const colors=['rgba(229,8,126,','rgba(52,56,142,','rgba(229,8,126,'];
+  for(let i=0;i<18;i++){
+    const p=document.createElement('div');p.className='liftParticle';
+    const size=Math.random()*3+1;
+    const color=colors[Math.floor(Math.random()*colors.length)];
+    const opacity=(Math.random()*0.4+0.1).toFixed(2);
+    p.style.cssText=`
+      width:${size}px;height:${size}px;
+      left:${Math.random()*100}%;
+      bottom:${Math.random()*20}%;
+      background:${color}${opacity});
+      box-shadow:0 0 ${size*3}px ${color}0.6);
+      animation-duration:${Math.random()*12+8}s;
+      animation-delay:${Math.random()*8}s;
+    `;
+    screen.appendChild(p);
+  }
+}
+document.addEventListener('DOMContentLoaded',initLoginParticles);
 let _qrTimer=null;
 // Genera el token temporal rotativo: epoch//30 XOR con id o email para ser único por usuario
 function getTOTPSlot(){return Math.floor(Date.now()/30000);}
