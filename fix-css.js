@@ -5,206 +5,166 @@ const styleStart = html.indexOf('<style>');
 const styleEnd = html.indexOf('</style>');
 let css = html.slice(styleStart + 7, styleEnd);
 
-// 1. Replace all Orbitron with Inter (global)
-css = css.replace(/font-family:'Orbitron',sans-serif/g, "font-family:'Inter',sans-serif");
-css = css.replace(/font-family:'Orbitron',monospace/g, "font-family:'Inter',monospace");
-
-// Re-add Orbitron ONLY for brand identity elements
-css = css.replace(".loginBrand{font-family:'Inter',sans-serif;", ".loginBrand{font-family:'Orbitron',sans-serif;");
-css = css.replace(".loginCard h2{font-family:'Inter',sans-serif;", ".loginCard h2{font-family:'Orbitron',sans-serif;");
-css = css.replace(".topBarBrand .wordmark{font-family:'Inter',sans-serif;", ".topBarBrand .wordmark{font-family:'Orbitron',sans-serif;");
-
-// 2. Remove text-shadow glows on non-brand elements
-css = css.replace(/;text-shadow:0 0 \d+px rgba\(229,8,126,0\.\d+\)/g, '');
-css = css.replace(/text-shadow:0 0 \d+px rgba\(229,8,126,0\.\d+\)/g, '');
-
-// 3. Tone down card h3 - change color from accent to text2
+// 1. Update :root palette
 css = css.replace(
-  "margin-bottom:14px;color:var(--accent);\n  opacity:.8",
-  "margin-bottom:12px;color:var(--text2);"
+  /:root\{[^}]+\}/,
+  `:root{
+  --bg:#0c0b0a;--surface:#161412;--surface2:#1e1c19;--surface3:#262320;--border:#302d2a;--border2:#3d3a36;--border3:#4a4642;
+  --accent:#c83870;--accent2:#a62e5c;--accent-glow:rgba(200,56,112,0.13);--accent-soft:rgba(200,56,112,0.07);
+  --indigo:#4a4e9a;--indigo2:#3b3e80;--gray:#a8a49f;--white:#ede8e2;
+  --red:#c75858;--green:#4fa876;--blue:#5490c2;--orange:#c8784a;--teal:#4da8a7;--purple:#9070bc;
+  --text:#e8e3dd;--text2:#857e78;--text3:#504c48;
+  --bronze:#b87333;--silver:#a8a8a8;--gold:#c8a84b;--diamond:#9fd8e8;
+}`
 );
 
-// 4. Remove shimmer lines (gradient pink top on cards)
-css = css.replace(
-  ".card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(229,8,126,0.2),transparent)}",
-  ".card::before{display:none}"
-);
-css = css.replace(
-  ".statCard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(229,8,126,0.15),transparent)}",
-  ".statCard::before{display:none}"
-);
-css = css.replace(
-  ".kpiCard::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(229,8,126,0.1),transparent)}",
-  ".kpiCard::after{display:none}"
-);
+// 2. Remove all text-shadow glows
+css = css.replace(/;text-shadow:[^;}]+/g, '');
+css = css.replace(/text-shadow:[^;}]+;/g, '');
 
-// 5. Replace glass/backdrop-filter cards with solid surfaces
+// 3. Remove shimmer lines on cards (top gradient pink line)
+css = css.replace(/\.card::before\{[^}]+\}/, '.card::before{display:none}');
+css = css.replace(/\.statCard::before\{[^}]+\}/, '.statCard::before{display:none}');
+
+// 4. Tone down card h3 - use text2 instead of accent
 css = css.replace(
-  "background:var(--glass);\n  border:1px solid var(--border);\n  border-radius:12px;padding:20px;margin-bottom:14px;\n  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);\n  transition:border-color .2s,box-shadow .2s;\n  position:relative;overflow:hidden",
-  "background:var(--surface);\n  border:1px solid var(--border);\n  border-radius:10px;padding:20px;margin-bottom:14px;\n  transition:border-color .2s;\n  position:relative;overflow:hidden"
+  /\.card h3\{[^}]+\}/,
+  ".card h3{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;color:var(--text2)}"
 );
 
-// 6. Simplify card hover
+// 5. Simplify card hover - no glow
 css = css.replace(
-  ".card:hover{border-color:rgba(229,8,126,0.2);box-shadow:0 4px 30px rgba(229,8,126,0.06)}",
-  ".card:hover{border-color:var(--border2)}"
+  /\.card:hover\{[^}]+\}/,
+  '.card:hover{border-color:var(--border2)}'
 );
 
-// 7. Remove backdrop-filter from statCard
-css = css.replace("backdrop-filter:blur(10px);position:relative;overflow:hidden\n}\n.statCard::before", "position:relative;overflow:hidden\n}\n.statCard::before");
+// 6. Remove all colored box-shadow glows (keep structural shadows)
+css = css.replace(/;box-shadow:0 0 \d+px rgba\([^)]+\)/g, '');
+css = css.replace(/box-shadow:0 0 \d+px rgba\([^)]+\),?/g, '');
+css = css.replace(/;box-shadow:0 0 \d+px var\(--accent\)/g, '');
 
-// 8. Remove statCard hover glow
+// 7. Simplify statCard hover
 css = css.replace(
-  ".statCard:hover{border-left-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px rgba(229,8,126,0.1)}",
-  ".statCard:hover{border-left-color:var(--accent);transform:translateY(-1px)}"
+  /\.statCard:hover\{[^}]+\}/,
+  '.statCard:hover{border-left-color:var(--accent);transform:translateY(-1px)}'
 );
 
-// 9. Remove chat bubble glow
+// 8. Simplify .btnAccent
 css = css.replace(
-  ".msgBubble.sent{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--white);align-self:flex-end;box-shadow:0 4px 16px rgba(229,8,126,0.3)}",
-  ".msgBubble.sent{background:var(--accent);color:var(--white);align-self:flex-end}"
-);
-
-// 10. Simplify quickAction hover
-css = css.replace(
-  ".quickAction:hover{border-color:rgba(229,8,126,0.35);background:rgba(229,8,126,0.06);transform:translateY(-2px);box-shadow:0 8px 30px rgba(229,8,126,0.12)}",
-  ".quickAction:hover{border-color:rgba(200,56,112,0.3);background:rgba(200,56,112,0.04);transform:translateY(-1px)}"
-);
-
-// 11. Simplify quickAction text - remove uppercase/tracked
-css = css.replace(
-  "font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--white);line-height:1.3}",
-  "font-weight:700;letter-spacing:0;color:var(--white);line-height:1.3}"
-);
-
-// 12. Remove kpiCard colored glows
-css = css.replace(/;box-shadow:0 0 8px rgba\([^)]+\)/g, '');
-
-// 13. Remove quota/badge glows
-css = css.replace(/;box-shadow:0 0 6px rgba\([^)]+\)/g, '');
-css = css.replace(/;box-shadow:0 0 8px rgba\([^)]+\)/g, '');
-css = css.replace(/;box-shadow:0 0 12px rgba\(229,8,126,0\.15\)/g, '');
-css = css.replace(/;box-shadow:0 0 16px rgba\(229,8,126,0\.35\)/g, '');
-
-// 14. Simplify annItem
-css = css.replace(
-  ".annItem{background:var(--glass);border-radius:10px;padding:14px;margin-bottom:8px;border:1px solid var(--border);border-left:2px solid var(--accent);box-shadow:inset 0 0 20px rgba(229,8,126,0.03)}",
-  ".annItem{background:var(--surface);border-radius:8px;padding:14px;margin-bottom:8px;border:1px solid var(--border);border-left:3px solid var(--accent)}"
-);
-
-// 15. Simplify annItem h4
-css = css.replace(
-  ".annItem h4{font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.08em;margin-bottom:5px;text-transform:uppercase;color:var(--white)}",
-  ".annItem h4{font-family:'Inter',sans-serif;font-size:.82rem;font-weight:700;margin-bottom:5px;color:var(--white)}"
-);
-
-// 16. Simplify QR wrap
-css = css.replace(
-  ".qrWrap{background:#fff;padding:10px;border-radius:8px;display:inline-block;box-shadow:0 0 20px rgba(229,8,126,0.15)}",
-  ".qrWrap{background:#fff;padding:10px;border-radius:6px;display:inline-block}"
-);
-
-// 17. Remove healthItem hVal text glow
-css = css.replace(
-  ".healthItem .hVal{font-family:'Inter',sans-serif;font-size:1.1rem;font-weight:700;color:var(--accent);text-shadow:0 0 12px rgba(229,8,126,0.4)}",
-  ".healthItem .hVal{font-family:'Inter',sans-serif;font-size:1.1rem;font-weight:700;color:var(--accent)}"
-);
-
-// 18. Simplify btnAccent hover
-css = css.replace(
-  ".btnAccent{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--white);border:none;box-shadow:0 4px 16px rgba(229,8,126,0.3)}",
-  ".btnAccent{background:var(--accent);color:var(--white);border:none}"
+  /\.btnAccent\{[^}]+\}/,
+  '.btnAccent{background:var(--accent);color:var(--white);border:none}'
 );
 css = css.replace(
-  ".btnAccent:hover{box-shadow:0 4px 14px rgba(200,56,112,0.3);transform:translateY(-1px)}",
-  ".btnAccent:hover{background:var(--accent2);transform:translateY(-1px)}"
+  /\.btnAccent:hover\{[^}]+\}/,
+  '.btnAccent:hover{background:var(--accent2);transform:translateY(-1px)}'
 );
 
-// 19. Remove all remaining box-shadow glows with pink
-css = css.replace(/;box-shadow:0 0 \d+px rgba\(229,8,126,[^)]+\)/g, '');
-css = css.replace(/box-shadow:0 0 \d+px rgba\(229,8,126,[^)]+\),/g, '');
-
-// 20. Replace remaining glass backgrounds with surface
-css = css.replace(/background:var\(--glass\)/g, 'background:var(--surface2)');
-css = css.replace(/background:var\(--glass2\)/g, 'background:var(--surface2)');
-
-// 21. Remove remaining backdrop-filter:blur
-css = css.replace(/backdrop-filter:blur\(\d+px\);-webkit-backdrop-filter:blur\(\d+px\);/g, '');
-css = css.replace(/;backdrop-filter:blur\(\d+px\)/g, '');
-css = css.replace(/backdrop-filter:blur\(\d+px\)/g, '');
-
-// 22. Simplify modal box-shadow
+// 9. Simplify quickAction hover
 css = css.replace(
-  /box-shadow:0 0 80px rgba\(229,8,126,0\.12\),inset 0 1px 0 rgba\(229,8,126,0\.1\)/,
-  "box-shadow:0 8px 40px rgba(0,0,0,0.4)"
+  /\.quickAction:hover\{[^}]+\}/,
+  '.quickAction:hover{border-color:rgba(200,56,112,0.3);background:rgba(200,56,112,0.04);transform:translateY(-1px)}'
 );
 
-// 23. Simplify loginCard box-shadow
+// 10. Remove topbar gradient separator line
 css = css.replace(
-  /box-shadow:0 0 60px rgba\(229,8,126,0\.08\),inset 0 1px 0 rgba\(255,255,255,0\.05\)/,
-  "box-shadow:0 8px 32px rgba(0,0,0,0.3)"
+  /\.topBar::after\{[^}]+\}/,
+  '.topBar::after{content:\'\';position:absolute;bottom:0;left:0;right:0;height:1px;background:var(--border)}'
 );
 
-// 24. Simplify btnPrimary (login button)
+// 11. Simplify annItem
 css = css.replace(
-  /box-shadow:0 4px 20px rgba\(229,8,126,0\.4\),0 0 40px rgba\(229,8,126,0\.15\)/,
-  "box-shadow:0 4px 16px rgba(200,56,112,0.3)"
-);
-css = css.replace(
-  /box-shadow:0 6px 30px rgba\(229,8,126,0\.6\),0 0 60px rgba\(229,8,126,0\.2\)/,
-  "box-shadow:0 6px 20px rgba(200,56,112,0.35)"
+  /\.annItem\{[^}]+\}/,
+  '.annItem{background:var(--surface);border-radius:8px;padding:14px;margin-bottom:8px;border:1px solid var(--border);border-left:3px solid var(--accent)}'
 );
 
-// 25. Simplify sidebar support button
+// 12. Simplify .annItem h4
 css = css.replace(
-  ".sidebarSupportBtn{\n  margin:10px 10px 12px;\n  background:linear-gradient(135deg,rgba(229,8,126,0.2),rgba(52,56,142,0.3));\n  border:1px solid rgba(229,8,126,0.3);\n  border-radius:10px;padding:10px 12px;cursor:pointer;\n  font-size:.62rem;font-weight:700;color:var(--accent);\n  display:flex;align-items:center;gap:7px;\n  transition:all .2s;user-select:none;\n  font-family:'Inter',sans-serif;text-transform:uppercase;letter-spacing:.08em;\n  box-shadow:0 0 16px rgba(229,8,126,0.1)\n}",
-  ".sidebarSupportBtn{\n  margin:10px 10px 12px;\n  background:var(--surface2);\n  border:1px solid var(--border);\n  border-radius:8px;padding:10px 12px;cursor:pointer;\n  font-size:.62rem;font-weight:700;color:var(--text2);\n  display:flex;align-items:center;gap:7px;\n  transition:all .2s;user-select:none;\n  font-family:'Inter',sans-serif;text-transform:uppercase;letter-spacing:.06em\n}"
-);
-css = css.replace(
-  ".sidebarSupportBtn:hover{background:linear-gradient(135deg,rgba(229,8,126,0.3),rgba(52,56,142,0.4));box-shadow:0 0 24px rgba(229,8,126,0.2);transform:translateY(-1px)}",
-  ".sidebarSupportBtn:hover{background:var(--surface3);border-color:var(--border2);color:var(--accent)}"
+  /\.annItem h4\{[^}]+\}/,
+  ".annItem h4{font-family:'Barlow Condensed',sans-serif;font-size:.82rem;font-weight:700;margin-bottom:5px;color:var(--white)}"
 );
 
-// 26. Simplify dashHero
+// 13. Remove chat bubble glow
 css = css.replace(
-  "background:linear-gradient(135deg,rgba(229,8,126,0.08),rgba(52,56,142,0.06));\n  border:1px solid rgba(229,8,126,0.2);border-radius:16px;\n  padding:24px 28px;margin-bottom:16px;\n  display:flex;justify-content:space-between;align-items:center;\n  position:relative;overflow:hidden;\n  box-shadow:0 0 60px rgba(229,8,126,0.06),inset 0 1px 0 rgba(229,8,126,0.1)",
-  "background:var(--surface);\n  border:1px solid var(--border);border-radius:10px;\n  padding:24px 28px;margin-bottom:16px;\n  display:flex;justify-content:space-between;align-items:center;\n  position:relative;overflow:hidden"
+  /\.msgBubble\.sent\{[^}]+\}/,
+  '.msgBubble.sent{background:var(--accent);color:var(--white);align-self:flex-end}'
 );
 
-// 27. Remove remaining dashHero pseudo-elements content
+// 14. Remove quota bar glows
+css = css.replace(/\.quotaFill\{[^}]+\}/, '.quotaFill{height:100%;border-radius:2px;background:var(--green)}');
+css = css.replace(/\.quotaFill\.warn\{[^}]+\}/, '.quotaFill.warn{background:var(--orange)}');
+css = css.replace(/\.quotaFill\.danger\{[^}]+\}/, '.quotaFill.danger{background:var(--red)}');
+
+// 15. Simplify QR shadow
 css = css.replace(
-  ".dashHero::before{content:'';position:absolute;right:-60px;top:-60px;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(229,8,126,0.08) 0%,transparent 65%);pointer-events:none}",
-  ".dashHero::before{display:none}"
-);
-css = css.replace(
-  ".dashHero::after{content:'';position:absolute;left:0;bottom:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(229,8,126,0.2),transparent)}",
-  ".dashHero::after{display:none}"
+  /\.qrWrap\{[^}]+\}/,
+  '.qrWrap{background:#fff;padding:10px;border-radius:6px;display:inline-block}'
 );
 
-// 28. Simplify topbar separator
+// 16. Simplify modal shadow
 css = css.replace(
-  "background:linear-gradient(90deg,transparent 0%,var(--accent) 30%,transparent 50%,var(--indigo) 70%,transparent 100%);\n  opacity:.5",
-  "background:var(--border)"
+  /\.modal\{[^}]+\}/,
+  ".modal{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:28px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.4);animation:fadeIn .2s ease}"
 );
 
-// 29. Simplify sidebar bg
+// 17. Tone down formGroup labels - remove Orbitron, soften
 css = css.replace(
-  "background:linear-gradient(180deg,#0d0d14 0%,#080810 100%);",
-  "background:var(--surface);"
+  /\.formGroup label\{[^}]+\}/,
+  ".formGroup label{font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);font-weight:600;font-family:'Barlow Condensed',sans-serif}"
 );
 
-// 30. Remove pageTitle text shadow (if any remain)
-css = css.replace(/\.pageTitle\{([^}]+)\}/, (m, inner) => {
-  return '.pageTitle{' + inner.replace(/text-shadow:[^;]+;?/g, '') + '}';
-});
-
-// 31. Tab: remove Orbitron leftover letter-spacing weirdness, simplify active
+// 18. Tone down tbl th
 css = css.replace(
-  ".tab.active,.tab:hover{color:var(--white);border-bottom-color:var(--accent)}",
-  ".tab.active,.tab:hover{color:var(--white);border-bottom-color:var(--accent)}"
+  /\.tbl th\{[^}]+\}/,
+  ".tbl th{background:var(--surface2);padding:10px 12px;text-align:left;color:var(--text2);font-weight:700;font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border)}"
 );
+
+// 19. Simplify .dashHero
+css = css.replace(
+  /\.dashHero\{[^}]+\}/,
+  '.dashHero{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px 28px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden}'
+);
+css = css.replace(/\.dashHero::before\{[^}]+\}/, '.dashHero::before{display:none}');
+css = css.replace(/\.dashHero::after\{[^}]+\}/, '.dashHero::after{display:none}');
+
+// 20. Simplify .sideSection color
+css = css.replace(
+  /\.sideSection\{[^}]+\}/,
+  ".sideSection{padding:20px 16px 5px;font-size:.6rem;letter-spacing:.08em;color:var(--text3);font-weight:700;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;border-top:1px solid var(--border);margin-top:4px}"
+);
+
+// 21. Simplify pageTitle - remove glow
+css = css.replace(
+  /\.pageTitle\{[^}]+\}/,
+  ".pageTitle{font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;letter-spacing:.06em;color:var(--white);margin-bottom:24px;text-transform:uppercase;display:flex;align-items:center;gap:12px}"
+);
+css = css.replace(/\.pageTitle::before\{[^}]+\}/, '.pageTitle::before{content:\'\';display:inline-block;width:3px;height:1.4rem;background:var(--accent);border-radius:2px;flex-shrink:0}');
+
+// 22. Simplify statCard num font
+css = css.replace(
+  /\.statCard \.num\{[^}]+\}/,
+  ".statCard .num{font-family:'Barlow Condensed',sans-serif;font-size:1.9rem;font-weight:800;line-height:1}"
+);
+
+// 23. Clean up remaining colored btn glows
+css = css.replace(/\.btnSuccess:hover\{[^}]+\}/, '.btnSuccess:hover{background:rgba(79,168,118,.15)}');
+css = css.replace(/\.btnDanger:hover\{[^}]+\}/, '.btnDanger:hover{background:rgba(199,88,88,.15)}');
+css = css.replace(/\.btnInfo:hover\{[^}]+\}/, '.btnInfo:hover{background:rgba(84,144,194,.15)}');
+css = css.replace(/\.btnPurple:hover\{[^}]+\}/, '.btnPurple:hover{background:rgba(144,112,188,.15)}');
+css = css.replace(/\.btnTeal:hover\{[^}]+\}/, '.btnTeal:hover{background:rgba(77,168,167,.15)}');
+
+// 24. Simplify kpiCard num font
+css = css.replace(
+  /\.kpiCard \.kpiNum\{[^}]+\}/,
+  ".kpiCard .kpiNum{font-family:'Barlow Condensed',sans-serif;font-size:1.7rem;font-weight:800;line-height:1}"
+);
+
+// 25. Remove remaining glow box-shadows
+css = css.replace(/;box-shadow:[^;}]*rgba\(229,8,126[^)]*\)[^;}]*/g, '');
+css = css.replace(/;box-shadow:[^;}]*rgba\(0,255,136[^)]*\)[^;}]*/g, '');
+css = css.replace(/;box-shadow:[^;}]*rgba\(0,170,255[^)]*\)[^;}]*/g, '');
+css = css.replace(/;box-shadow:[^;}]*rgba\(0,229,255[^)]*\)[^;}]*/g, '');
 
 // Write back
 const result = html.slice(0, styleStart + 7) + css + html.slice(styleEnd);
 fs.writeFileSync('lift-backend/public/index.html', result);
-console.log('CSS transformation complete');
+console.log('Done');
