@@ -1546,30 +1546,29 @@ const adminNav=[
   {id:'dashboard',icon:'📊',label:'Dashboard'},
   {group:'💰  Finanzas',gid:'g-fin',items:[
     {id:'gestionPagos',label:'Planes & Pagos'},
-    {id:'descuentos',label:'Descuentos'},
     {id:'reportes',label:'Análisis & Reportes'},
-    {id:'adminCafeteria',label:'Cafetería'},
-    {id:'adminShop',label:'Shop'},
+    {id:'finanzas',label:'Gastos & Balance'},
+    {id:'descuentos',label:'Descuentos'},
   ]},
   {group:'👥  Socios',gid:'g-socios',items:[
     {id:'panelSocios',label:'Panel de Socios'},
     {id:'encuestas',label:'Encuestas'},
   ]},
-  {group:'📅  Itinerario',gid:'g-ops',items:[
+  {group:'🏋️  Operaciones',gid:'g-ops',items:[
     {id:'agenda',label:'Agenda & Clases'},
-  ]},
-  {group:'🔧  Mantenimiento',gid:'g-mant',items:[
     {id:'maquinas',label:'Máquinas'},
+    {id:'adminCafeteria',label:'Cafetería'},
+    {id:'adminShop',label:'Shop'},
   ]},
   {group:'📢  Comunicación',gid:'g-com',items:[
     {id:'comunicados',label:'Comunicados'},
     {id:'mensajes',label:'Chat socios'},
   ]},
   {group:'🏆  Fidelización',gid:'g-fid',items:[
+    {id:'adminComisiones',label:'Comisiones & Metas'},
     {id:'adminPuntos',label:'Sistema de Puntos'},
     {id:'adminRetos',label:'Retos & Comunidad'},
     {id:'referidos',label:'Referidos'},
-    {id:'adminComisiones',label:'Comisiones & Metas'},
   ]},
   {group:'⚙️  Gestión',gid:'g-gest',items:[
     {id:'staff',label:'Staff & Roles'},
@@ -1579,9 +1578,74 @@ const adminNav=[
   ]},
   {id:'adminLogView',icon:'📋',label:'Historial de acciones'},
 ];
-const trainerNav=[{section:'Mi Panel'},{id:'trainerDashboard',icon:'📊',label:'Mi Dashboard'},{id:'trainerStudents',icon:'👥',label:'Mis Alumnos'},{id:'miCredencial',icon:'📲',label:'Mi Credencial QR'},{section:'Alumnos'},{id:'trainerMensajes',icon:'💬',label:'Mensajes alumnos'},{id:'trainerProgreso',icon:'📈',label:'Progreso físico'},{section:'Clases'},{id:'agenda',icon:'📅',label:'Agenda'},{id:'reservarClase',icon:'➕',label:'Reservar a Alumno'},{section:'Entrenamiento'},{id:'maquinas',icon:'🏋️',label:'Máquinas'},{section:'Comunicación'},{id:'comunicados',icon:'📢',label:'Comunicados'},{id:'mensajes',icon:'💬',label:'Mensajes'},{section:'Mi Carrera'},{id:'trainerBeneficios',icon:'💎',label:'Mis Beneficios'},{id:'trainerStats',icon:'📊',label:'Mis Estadísticas'},{id:'adminComisiones',icon:'🎯',label:'Mis Metas'},{section:'Comunidad'},{id:'comunidad',icon:'🔥',label:'Comunidad Fitness'}];
-const receptionNav=[{section:'Cobro'},{id:'cobroDiario',icon:'💵',label:'Ventanilla de Cobro'},{id:'cierreturno',icon:'🔒',label:'Cierre de Turno'},{section:'Principal'},{id:'dashboard',icon:'📊',label:'Dashboard'},{section:'Socios'},{id:'usuarios',icon:'👥',label:'Usuarios'},{id:'congelados',icon:'❄️',label:'Congelados'},{section:'Pagos'},{id:'cuotas',icon:'💳',label:'Cuotas'},{section:'Clases'},{id:'agenda',icon:'📅',label:'Agenda & Clases'},{section:'Comunicación'},{id:'comunicados',icon:'📢',label:'Comunicados'},{id:'mensajes',icon:'💬',label:'Chat socios'},{section:'Seguridad'},{id:'acceso',icon:'🔐',label:'Control de Acceso'},{id:'pinAcceso',icon:'🔢',label:'PINs de socios'},{section:'Gimnasio'},{id:'maquinas',icon:'🏋️',label:'Máquinas'},{section:'Ventas'},{id:'adminComisiones',icon:'💎',label:'Mis Metas & Comisión'}];
-const nutriNav=[{section:'Mi Panel'},{id:'nutriDashboard',icon:'📊',label:'Mi Dashboard'},{id:'nutriClientes',icon:'👥',label:'Mis Clientes'},{id:'nutriAgenda',icon:'📅',label:'Agenda de Citas'},{id:'nutriPlanes',icon:'📋',label:'Planes Nutricionales'},{id:'miCredencial',icon:'📲',label:'Mi Credencial QR'},{id:'adminComisiones',icon:'🎯',label:'Mis Metas'},{section:'Comunicación'},{id:'comunicados',icon:'📢',label:'Comunicados'},{id:'mensajes',icon:'💬',label:'Mensajes'},{section:'Comunidad'},{id:'comunidad',icon:'🔥',label:'Comunidad Fitness'}];
+const trainerNav=[
+  {id:'trainerDashboard',icon:'📊',label:'Mi Dashboard'},
+  {group:'👥  Mis Alumnos',gid:'t-alum',items:[
+    {id:'trainerStudents',label:'Ver Alumnos'},
+    {id:'trainerMensajes',label:'Mensajes'},
+    {id:'trainerProgreso',label:'Progreso físico'},
+  ]},
+  {group:'📅  Clases',gid:'t-clases',items:[
+    {id:'agenda',label:'Agenda'},
+    {id:'reservarClase',label:'Reservar a Alumno'},
+  ]},
+  {group:'🏋️  Entrenamiento',gid:'t-train',items:[
+    {id:'maquinas',label:'Máquinas'},
+  ]},
+  {group:'📢  Comunicación',gid:'t-com',items:[
+    {id:'comunicados',label:'Comunicados'},
+    {id:'mensajes',label:'Chat socios'},
+  ]},
+  {group:'💎  Mi Carrera',gid:'t-car',items:[
+    {id:'adminComisiones',label:'Mis Metas'},
+    {id:'trainerBeneficios',label:'Mis Beneficios'},
+    {id:'trainerStats',label:'Mis Estadísticas'},
+  ]},
+  {id:'miCredencial',icon:'📲',label:'Mi Credencial'},
+  {id:'comunidad',icon:'🔥',label:'Comunidad'},
+];
+const receptionNav=[
+  {id:'dashboard',icon:'📊',label:'Dashboard'},
+  {group:'💵  Cobro & Pagos',gid:'r-cobro',items:[
+    {id:'cobroDiario',label:'Ventanilla de Cobro'},
+    {id:'cierreturno',label:'Cierre de Turno'},
+    {id:'cuotas',label:'Estado de Cuotas'},
+  ]},
+  {group:'👥  Socios',gid:'r-socios',items:[
+    {id:'usuarios',label:'Usuarios'},
+    {id:'congelados',label:'Congelados'},
+  ]},
+  {group:'🔐  Acceso & Seguridad',gid:'r-acceso',items:[
+    {id:'acceso',label:'Control de Acceso'},
+    {id:'pinAcceso',label:'PINs de socios'},
+  ]},
+  {group:'📅  Agenda & Clases',gid:'r-agenda',items:[
+    {id:'agenda',label:'Agenda del día'},
+  ]},
+  {group:'🏋️  Gimnasio',gid:'r-gym',items:[
+    {id:'maquinas',label:'Máquinas'},
+  ]},
+  {group:'📢  Comunicación',gid:'r-com',items:[
+    {id:'comunicados',label:'Comunicados'},
+    {id:'mensajes',label:'Chat socios'},
+  ]},
+  {id:'adminComisiones',icon:'💎',label:'Mis Metas'},
+];
+const nutriNav=[
+  {id:'nutriDashboard',icon:'📊',label:'Mi Dashboard'},
+  {group:'🥗  Mis Clientes',gid:'n-cli',items:[
+    {id:'nutriClientes',label:'Ver Clientes'},
+    {id:'nutriAgenda',label:'Agenda de Citas'},
+    {id:'nutriPlanes',label:'Planes Nutricionales'},
+  ]},
+  {group:'📢  Comunicación',gid:'n-com',items:[
+    {id:'comunicados',label:'Comunicados'},
+    {id:'mensajes',label:'Mensajes'},
+  ]},
+  {id:'adminComisiones',icon:'🎯',label:'Mis Metas'},
+  {id:'miCredencial',icon:'📲',label:'Mi Credencial'},
+  {id:'comunidad',icon:'🔥',label:'Comunidad'},
+];
 const userNav=[{section:'Mi Cuenta'},{id:'miPerfil',icon:'👤',label:'Mi Perfil'},{id:'miQR',icon:'📲',label:'Mi QR & PIN'},{id:'miPlan',icon:'⭐',label:'Mi Plan'},{id:'misPuntos',icon:'🏆',label:'Mis Puntos'},{id:'misReferidos',icon:'🤝',label:'Referir Amigos'},{section:'Compras'},{id:'cafeteria',icon:'☕',label:'Cafetería'},{id:'shop',icon:'🛍️',label:'Shop LIFT'},{section:'Comunidad'},{id:'comunidad',icon:'🔥',label:'Comunidad Fitness'},{section:'Clases'},{id:'misClases',icon:'📅',label:'Clases & Reservas'},{section:'Entrenamiento'},{id:'miRutina',icon:'📋',label:'Mi Rutina'},{section:'Comunicación'},{id:'misAnuncios',icon:'📢',label:'Anuncios'},{id:'misMensajes',icon:'💬',label:'Mensajes'},{id:'misNotif',icon:'🔔',label:'Notificaciones'}];
 
 const CHAT_NAV_IDS=['mensajes','misMensajes','trainerMensajes'];
