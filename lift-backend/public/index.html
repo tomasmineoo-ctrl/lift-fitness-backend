@@ -22,7 +22,10 @@
 }
 
 /* ── BASE ── */
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(200,56,112,0.07) 0%,transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 80%,rgba(74,78,154,0.05) 0%,transparent 50%)
+}
 
 /* ── SCROLLBARS ── */
 ::-webkit-scrollbar{width:3px;height:3px}
@@ -109,12 +112,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 /* TOP BAR */
 .topBar{
-  background:rgba(5,5,8,0.97);
+  background:rgba(6,4,8,0.98);
   border-bottom:none;
   padding:0 24px;height:56px;
   display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
-  backdrop-filter:blur(10px);
-  position:relative
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  position:relative;
+  box-shadow:0 1px 0 rgba(200,56,112,0.15),0 4px 24px rgba(0,0,0,0.5)
 }
 /* Separator line with gradient below topbar */
 .topBar::after{
@@ -166,10 +170,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 ══════════════════════════════════════════ */
 .sidebar{
   width:230px;
-  background:linear-gradient(180deg,#0d0d14 0%,#080810 100%);
-  border-right:1px solid rgba(200,56,112,0.08);
+  background:linear-gradient(180deg,rgba(14,10,12,0.98) 0%,rgba(8,6,10,0.99) 100%);
+  border-right:1px solid rgba(200,56,112,0.12);
   flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;
-  box-shadow:2px 0 24px rgba(0,0,0,0.4)
+  box-shadow:2px 0 32px rgba(0,0,0,0.6),inset -1px 0 0 rgba(200,56,112,0.05)
 }
 .sidebarNav{flex:1;overflow-y:auto;padding-bottom:8px}
 .sidebarSupportBtn{margin:10px 10px 12px;background:rgba(200,56,112,0.08);border:1px solid rgba(200,56,112,0.20);border-radius:10px;padding:10px 12px;cursor:pointer;font-size:.62rem;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:7px;transition:all .2s;user-select:none;font-family:'Inter',sans-serif;text-transform:uppercase;letter-spacing:.06em}
@@ -234,15 +238,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
    CARDS — GLASSMORPHISM
 ══════════════════════════════════════════ */
 .card{
-  background:var(--glass);
-  border:1px solid var(--border);
-  border-radius:12px;padding:20px;margin-bottom:14px;
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  transition:border-color .2s,box-shadow .2s;
-  position:relative;overflow:hidden
+  background:linear-gradient(145deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015));
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:14px;padding:20px;margin-bottom:14px;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  transition:border-color .2s,box-shadow .2s,transform .2s;
+  position:relative;overflow:hidden;
+  box-shadow:0 2px 20px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.06)
 }
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(200,56,112,0.2),transparent)}
-.card:hover{border-color:rgba(200,56,112,0.18)}
+.card:hover{border-color:rgba(200,56,112,0.25);box-shadow:0 4px 30px rgba(0,0,0,0.4),0 0 20px rgba(200,56,112,0.06),inset 0 1px 0 rgba(255,255,255,0.08);transform:translateY(-1px)}
 .card h3{font-family:'Orbitron',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-bottom:14px;color:var(--text2);opacity:.9}
 
 /* PAGE TITLE */
@@ -256,10 +261,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 /* STATS GRID */
 .statsGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:20px}
 .statCard{
-  background:var(--glass);border:1px solid var(--border);border-radius:12px;
-  padding:18px 16px;border-left:2px solid var(--border2);
+  background:linear-gradient(145deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));
+  border:1px solid rgba(255,255,255,0.07);border-radius:14px;
+  padding:18px 16px;border-left:3px solid rgba(200,56,112,0.35);
   transition:all .2s;cursor:default;
-  backdrop-filter:blur(10px);position:relative;overflow:hidden
+  backdrop-filter:blur(12px);position:relative;overflow:hidden;
+  box-shadow:0 2px 16px rgba(0,0,0,0.25),inset 0 1px 0 rgba(255,255,255,0.05)
 }
 .statCard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(200,56,112,0.15),transparent)}
 .statCard{transition:transform .2s ease,box-shadow .2s ease,border-left-color .2s ease}
@@ -441,22 +448,24 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
    DASHBOARD COMPONENTS
 ══════════════════════════════════════════ */
 .dashHero{
-  background:linear-gradient(135deg,rgba(200,56,112,0.08),rgba(52,56,142,0.06));
-  border:1px solid rgba(200,56,112,0.2);border-radius:16px;
-  padding:24px 28px;margin-bottom:16px;
+  background:linear-gradient(135deg,rgba(200,56,112,0.12) 0%,rgba(52,56,142,0.10) 50%,rgba(200,56,112,0.04) 100%);
+  border:1px solid rgba(200,56,112,0.25);border-radius:18px;
+  padding:28px 32px;margin-bottom:16px;
   display:flex;justify-content:space-between;align-items:center;
   position:relative;overflow:hidden;
-  box-shadow:0 0 60px rgba(200,56,112,0.06),inset 0 1px 0 rgba(200,56,112,0.1)
+  box-shadow:0 8px 40px rgba(200,56,112,0.12),0 2px 8px rgba(0,0,0,0.4),inset 0 1px 0 rgba(200,56,112,0.2)
 }
 .dashHero::before{content:'';position:absolute;right:-60px;top:-60px;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(200,56,112,0.08) 0%,transparent 65%);pointer-events:none}
 .dashHero::after{content:'';position:absolute;left:0;bottom:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(200,56,112,0.2),transparent)}
-.dashHeroIncome{font-family:'Orbitron',sans-serif;font-size:2.4rem;font-weight:900;line-height:1;color:var(--accent);}
+.dashHeroIncome{font-family:'Orbitron',sans-serif;font-size:2.6rem;font-weight:900;line-height:1;color:var(--accent);text-shadow:0 0 30px rgba(200,56,112,0.5),0 0 60px rgba(200,56,112,0.2);letter-spacing:-.02em}
 
 .quickActions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
 .quickAction{
-  display:flex;align-items:center;gap:12px;padding:14px 16px;
-  background:var(--glass);border:1px solid var(--border);border-radius:12px;
-  cursor:pointer;transition:all .2s;backdrop-filter:blur(10px)
+  display:flex;align-items:center;gap:12px;padding:16px 18px;
+  background:linear-gradient(145deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));
+  border:1px solid rgba(255,255,255,0.07);border-radius:14px;
+  cursor:pointer;transition:all .2s;backdrop-filter:blur(12px);
+  box-shadow:0 2px 12px rgba(0,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.05)
 }
 .quickAction:hover{border-color:rgba(200,56,112,0.28);background:rgba(200,56,112,0.04);transform:translateY(-1px);box-shadow:0 4px 20px rgba(200,56,112,0.08)}
 .quickAction.qa-danger:hover{border-color:rgba(255,59,48,.35);box-shadow:0 8px 30px rgba(255,59,48,.1)}
@@ -803,14 +812,32 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 }
 
 [data-theme="light"]{
-  --bg:#dcdde1;--surface:#e9eaed;--surface2:#dfe0e4;--surface3:#d2d3d8;--border:#c6c8cd;--border2:#b6b8bf;
-  --text:#26282c;--text2:#5d5f66;--text3:#86888f;--white:#1b1c1f;--gray:#6a6c73;
-  --accent-glow:rgba(200,56,112,0.08);
+  --bg:#d8d9de;--surface:#e2e3e8;--surface2:#eaebef;--surface3:#f0f1f4;--border:#c4c6cc;--border2:#b0b2b9;
+  --text:#22242a;--text2:#55575f;--text3:#82848c;--white:#18191e;--gray:#65676f;
+  --accent-glow:rgba(200,56,112,0.06);
 }
-[data-theme="light"] body{background:var(--bg);color:var(--text)}
-[data-theme="light"] .topBar,[data-theme="light"] .sidebar{background:var(--surface)!important}
-[data-theme="light"] .card,[data-theme="light"] .statCard,[data-theme="light"] .kpiCard,[data-theme="light"] .modal{background:var(--surface2)!important;backdrop-filter:none!important}
+[data-theme="light"] body{
+  background:var(--bg)!important;
+  background-image:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(200,56,112,0.05) 0%,transparent 55%)!important;
+  color:var(--text)
+}
+[data-theme="light"] .topBar{background:rgba(220,221,226,0.97)!important;box-shadow:0 1px 0 rgba(200,56,112,0.12),0 4px 16px rgba(0,0,0,0.08)!important}
+[data-theme="light"] .sidebar{background:linear-gradient(180deg,#d2d3d9 0%,#cccdd4 100%)!important;border-right:1px solid rgba(200,56,112,0.10)!important}
+[data-theme="light"] .card{background:linear-gradient(145deg,rgba(255,255,255,0.75),rgba(255,255,255,0.55))!important;border-color:rgba(0,0,0,0.08)!important;box-shadow:0 2px 12px rgba(0,0,0,0.08),inset 0 1px 0 rgba(255,255,255,0.9)!important}
+[data-theme="light"] .statCard{background:linear-gradient(145deg,rgba(255,255,255,0.8),rgba(255,255,255,0.6))!important;border-color:rgba(0,0,0,0.07)!important}
+[data-theme="light"] .kpiCard{background:linear-gradient(145deg,rgba(255,255,255,0.75),rgba(255,255,255,0.55))!important;backdrop-filter:none!important}
+[data-theme="light"] .modal{background:rgba(235,236,240,0.97)!important;border-color:rgba(200,56,112,0.15)!important}
+[data-theme="light"] .dashHero{background:linear-gradient(135deg,rgba(200,56,112,0.10),rgba(74,78,154,0.07))!important}
+[data-theme="light"] .quickAction{background:linear-gradient(145deg,rgba(255,255,255,0.7),rgba(255,255,255,0.5))!important;border-color:rgba(0,0,0,0.07)!important}
 [data-theme="light"] ::-webkit-scrollbar-thumb{background:var(--border2)}
+[data-theme="light"] .formGroup input,[data-theme="light"] .formGroup select,[data-theme="light"] .formGroup textarea{background:rgba(255,255,255,0.7)!important;border-color:rgba(0,0,0,0.12)!important;color:var(--text)!important}
+[data-theme="light"] .filterBar input,[data-theme="light"] .filterBar select{background:rgba(255,255,255,0.65)!important;border-color:rgba(0,0,0,0.10)!important;color:var(--text)!important}
+[data-theme="light"] .navItem{color:var(--text2)}
+[data-theme="light"] .navItem:hover{background:rgba(200,56,112,0.08)!important;color:var(--white)}
+[data-theme="light"] .navItem.active{background:rgba(200,56,112,0.14)!important;color:var(--white)}
+[data-theme="light"] .tbl th{background:rgba(200,56,112,0.06)!important}
+[data-theme="light"] .tbl td{color:var(--text)}
+[data-theme="light"] .tbl tr:hover td{background:rgba(200,56,112,0.04)!important}
 </style>
 </head>
 <body>
