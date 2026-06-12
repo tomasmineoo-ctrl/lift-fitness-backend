@@ -1933,6 +1933,48 @@ ${(()=>{
   </div>`:'<p style="font-size:.78rem;color:var(--text3);margin-bottom:10px">Sin cobros registrados en este turno aún.</p>'}
   ${ultimoPago?`<div style="font-size:.7rem;color:var(--text3)">Último cobro: <span style="color:var(--text2);font-weight:600">${ultimoPago.userName}</span> · $${ultimoPago.monto} · ${ultimoPago.hora}</div>`:''}
 </div>`;})()}
+
+${(()=>{
+  // En el gym ahora — socios con entrada hoy sin salida registrada
+  const dentro = accessLog.filter(l=>l.date===todayStr&&l.type==='entry'&&!l.exitTime).sort((a,b)=>b.time.localeCompare(a.time));
+  // Solicitudes de pausa pendientes
+  const pausasPend = pausaSolicitudes.filter(s=>s.estado==='pendiente');
+  return`
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3 style="margin:0">🟢 En el gym ahora (${dentro.length})</h3>
+      <button class="btn btnSm btnGhost" onclick="navigate('acceso')">Ver acceso →</button>
+    </div>
+    ${dentro.length?`<div style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto">
+      ${dentro.map(l=>{const u=users.find(x=>x.id===l.userId);return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:rgba(255,255,255,0.03);border-radius:6px">
+        <div style="font-size:.78rem;font-weight:600;color:var(--text2)">${l.userName}</div>
+        <div style="font-size:.68rem;color:var(--text3)">${u?safePlan(u.plan):''} · entró ${l.time}</div>
+      </div>`;}).join('')}
+    </div>`:`<p style="font-size:.78rem;color:var(--text3)">No hay socios dentro del gimnasio en este momento.</p>`}
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3 style="margin:0">⏸️ Solicitudes de pausa (${pausasPend.length})</h3>
+      <button class="btn btnSm btnGhost" onclick="navigate('panelSocios')">Ver socios →</button>
+    </div>
+    ${pausasPend.length?`<div style="display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto">
+      ${pausasPend.map(s=>`<div style="padding:8px 10px;background:rgba(102,170,255,.06);border:1px solid rgba(102,170,255,.18);border-radius:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div style="font-size:.78rem;font-weight:600;color:var(--text2)">${s.userName}</div>
+          <div style="font-size:.68rem;color:var(--text3)">${s.fechaInicio} → ${s.fechaFin}</div>
+        </div>
+        <div style="font-size:.7rem;color:var(--text3);margin-bottom:6px">${s.motivo}</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btnSm btnSuccess" onclick="resolverPausa(${s.id},true)">✅ Aceptar</button>
+          <button class="btn btnSm btnDanger" onclick="resolverPausa(${s.id},false)">❌ Rechazar</button>
+          ${s.comprobante?`<button class="btn btnSm btnGhost" onclick="verComprobantePausa(${s.id})">📎 Ver</button>`:''}
+        </div>
+      </div>`).join('')}
+    </div>`:`<p style="font-size:.78rem;color:var(--text3)">No hay solicitudes de pausa pendientes.</p>`}
+  </div>
+</div>
+`;})()}
 `;
 }
 // ── Dashboard admin normal ──
