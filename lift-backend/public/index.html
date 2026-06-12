@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
@@ -1933,72 +1933,7 @@ ${(()=>{
   </div>`:'<p style="font-size:.78rem;color:var(--text3);margin-bottom:10px">Sin cobros registrados en este turno aún.</p>'}
   ${ultimoPago?`<div style="font-size:.7rem;color:var(--text3)">Último cobro: <span style="color:var(--text2);font-weight:600">${ultimoPago.userName}</span> · $${ultimoPago.monto} · ${ultimoPago.hora}</div>`:''}
 </div>`;})()}
-
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-  <div class="card" style="${dangerCountR>0?'border-left:3px solid var(--red)':''}">
-    <h3 style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <span>Alertas</span>
-      ${notifications.length>0?`<span style="background:${dangerCountR>0?'var(--red)':'var(--accent)'};color:#fff;border-radius:20px;padding:2px 10px;font-size:.6rem;font-family:'Orbitron',sans-serif;font-weight:700">${notifications.length}</span>`:''}
-    </h3>
-    <div style="display:flex;flex-direction:column;gap:5px;max-height:140px;overflow-y:auto">
-      ${notifications.length===0
-        ?'<p style="color:var(--text2);font-size:.78rem">Sin alertas activas ✓</p>'
-        :notifications.slice(0,6).map(n=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:${n.type==='danger'?'rgba(255,59,48,0.07)':n.type==='warn'?'rgba(200,56,112,0.06)':'rgba(255,255,255,0.03)'};border-radius:8px;border:1px solid ${n.type==='danger'?'rgba(255,59,48,.2)':n.type==='warn'?'rgba(200,56,112,.15)':'rgba(255,255,255,0.06)'}"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:${n.type==='danger'?'var(--red)':n.type==='warn'?'var(--accent)':'var(--blue)'}"></div><div style="font-size:.74rem">${n.msg}</div></div>`).join('')}
-    </div>
-  </div>
-  <div class="card">
-    <h3 style="margin-bottom:12px">Estado del ciclo de cobro</h3>
-    <div style="display:flex;flex-direction:column;gap:6px">
-      ${[
-        {label:'Día de corte pago',val:'Día 7',ok:curDay<=7,extra:curDay<=7?`faltan ${7-curDay} días`:'VENCIDO'},
-        {label:'Período de gracia',val:'Hasta día 10',ok:curDay<=10,extra:curDay<=10?`faltan ${10-curDay} días`:'VENCIDO'},
-        {label:'Bloqueo automático',val:'Desde día 11',ok:false,extra:curDay>=11?'⚠ ACTIVO':'No activo aún'},
-      ].map(x=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06);font-size:.75rem"><div><div style="font-weight:600;color:var(--text)">${x.label}</div><div style="color:var(--text3);font-size:.67rem;margin-top:1px">${x.extra}</div></div><span style="font-weight:700;font-family:'Orbitron',sans-serif;font-size:.72rem;color:${x.ok?'var(--green)':'var(--orange)'}">${x.val}</span></div>`).join('')}
-    </div>
-    <div style="margin-top:10px;padding:10px 12px;background:rgba(79,168,118,0.05);border:1px solid rgba(79,168,118,0.18);border-radius:8px">
-      <div class="progressBar" style="height:6px;margin-bottom:8px;border-radius:3px"><div class="progressFill" style="width:${pctCobrado}%;background:${pctCobrado>=80?'var(--green)':pctCobrado>=50?'var(--orange)':'var(--red)'}"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:.72rem"><span style="color:var(--green);font-weight:600">✅ ${paid.length} cobrados</span><span style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:.7rem;color:${pctCobrado>=80?'var(--green)':pctCobrado>=50?'var(--orange)':'var(--red)'}">${pctCobrado}%</span><span style="color:var(--orange);font-weight:600">⏳ ${pending.length} pendientes</span></div>
-    </div>
-    ${withDebt.length?`<div style="margin-top:8px;padding:8px 10px;background:rgba(255,59,48,0.06);border:1px solid rgba(255,59,48,0.18);border-radius:8px;font-size:.74rem"><span style="color:var(--red);font-weight:700">💸 Deuda acumulada: $${totalDebt.toLocaleString()}</span> · ${withDebt.length} socios</div>`:''}
-  </div>
-</div>
-
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-  <div class="card">
-    <h3 style="color:var(--orange);margin-bottom:12px">⚠ Próximas a vencer (${proxVencer.length})</h3>
-    ${proxVencer.length===0?'<p style="color:var(--text3);font-size:.8rem">Sin cuotas próximas a vencer ✓</p>':
-    `<div style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:4px">${proxVencer.slice(0,8).map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06);font-size:.78rem"><div><div style="font-weight:600;color:var(--text)">${u.name}</div><div style="font-size:.67rem;color:var(--text3);margin-top:1px">Plan ${u.plan} · $${safePlan(u.plan).price.toLocaleString()}</div></div><div style="display:flex;align-items:center;gap:6px"><span class="badge warning">${statusLabel(getQuotaStatus(u))}</span><button class="btn btnXs btnSuccess" onclick="markPaid(${u.id})">Cobrar</button></div></div>`).join('')}${proxVencer.length>8?`<div style="text-align:center;padding:6px;font-size:.72rem;color:var(--text3)">+${proxVencer.length-8} más</div>`:''}</div>`}
-  </div>
-  <div class="card">
-    <h3 style="color:var(--red);margin-bottom:12px">🔒 Bloqueados / gracia (${blockedU.length+grace.length})</h3>
-    ${(blockedU.length+grace.length)===0?'<p style="color:var(--text3);font-size:.8rem">Sin cuotas vencidas ✓</p>':
-    `<div style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:4px">${[...grace,...blockedU].slice(0,8).map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06);font-size:.78rem"><div><div style="font-weight:600;color:var(--text)">${u.name}</div><div style="font-size:.67rem;color:var(--text3);margin-top:1px">Plan ${u.plan}${(u.debt||0)>0?' · Deuda $'+u.debt.toLocaleString():''}</div></div><div style="display:flex;align-items:center;gap:6px"><span class="badge ${getQuotaStatus(u)}">${statusLabel(getQuotaStatus(u))}</span><button class="btn btnXs btnSuccess" onclick="markPaid(${u.id})">Cobrar</button></div></div>`).join('')}</div>`}
-  </div>
-</div>
-
-<div style="display:grid;grid-template-columns:2fr 1fr;gap:14px">
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <h3>Cuotas pendientes de cobro</h3>
-      <button class="btn btnSm btnAccent" onclick="navigate('cobroDiario')">Ir a ventanilla →</button>
-    </div>
-    ${pending.length===0?'<p style="color:var(--text3);font-size:.8rem">¡Todos pagaron este mes! ✓</p>':
-    `<div style="max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:4px">${pending.slice(0,10).map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06);font-size:.78rem"><div style="flex:1"><div style="font-weight:600;color:var(--text)">${u.name}</div><div style="font-size:.67rem;color:var(--text3);margin-top:1px">${u.payMethod||'—'} · último pago: ${u.lastPayment||'nunca'}</div></div><div style="display:flex;align-items:center;gap:6px"><span style="color:var(--accent);font-weight:700;font-size:.82rem;font-family:'Orbitron',sans-serif">$${safePlan(u.plan).price.toLocaleString()}</span><span class="badge ${getQuotaStatus(u)}">${statusLabel(getQuotaStatus(u))}</span><button class="btn btnXs btnSuccess" onclick="markPaid(${u.id})">✓ Cobrar</button></div></div>`).join('')}${pending.length>10?`<div style="text-align:center;padding:8px;font-size:.72rem"><button class="btn btnSm btnGhost" onclick="navigate('gestionPagos')">Ver todos (${pending.length}) →</button></div>`:''}</div>`}
-  </div>
-  <div>
-    <div class="card" style="margin-bottom:14px">
-      <h3>Clases hoy — ${DAYS_FULL[today().getDay()]}</h3>
-      ${clasesHoy.length===0
-        ?'<p style="color:var(--text2);font-size:.78rem">Sin clases programadas hoy</p>'
-        :clasesHoy.map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06);margin-bottom:4px"><div style="font-family:'Orbitron',sans-serif;font-size:.82rem;font-weight:700;color:var(--white);min-width:44px">${c.time}</div><div style="flex:1"><div style="font-size:.78rem;font-weight:600;color:var(--text)">${c.type}</div><div style="font-size:.65rem;color:var(--text3);margin-top:1px">${c.trainer}</div></div><div style="font-size:.75rem;font-weight:700;font-family:'Orbitron',sans-serif;color:${c.enrolled.length>=c.capacity?'var(--red)':'var(--green)'}">${c.enrolled.length}/${c.capacity}</div></div>`).join('')}
-      <div style="margin-top:8px"><button class="btn btnSm btnGhost" style="width:100%" onclick="navigate('agenda')">Ver agenda completa →</button></div>
-    </div>
-    <div class="card">
-      <h3>Por plan</h3>
-      ${Object.entries(PLANS).map(([n,p])=>{const total=users.filter(u=>u.plan===n).length;const pagaron=paid.filter(u=>u.plan===n).length;const pct=total?Math.round(pagaron/total*100):0;return`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:.74rem;margin-bottom:3px"><span class="badge ${p.color}">${n}</span><span style="color:var(--text3)">${pagaron}/${total}</span></div><div class="progressBar" style="height:5px"><div class="progressFill" style="width:${pct}%;background:var(--${p.color})"></div></div></div>`;}).join('')}
-    </div>
-  </div>
-</div>`;
+`;
 }
 // ── Dashboard admin normal ──
 const dangerCount=notifications.filter(n=>n.type==='danger').length;
