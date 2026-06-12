@@ -1609,12 +1609,13 @@ const receptionNav=[
   {group:'💵  Cobro & Pagos',gid:'r-cobro',items:[
     {id:'cobroDiario',label:'Ventanilla de Cobro'},
     {id:'cierreturno',label:'Cierre de Turno'},
-    {id:'cuotas',label:'Estado de Cuotas'},
+    {id:'gestionPagos',label:'Planes & Pagos'},
   ]},
   {group:'👥  Socios',gid:'r-socios',items:[
     {id:'panelSocios',label:'Panel de Socios'},
-    {id:'usuarios',label:'Listado completo'},
-    {id:'congelados',label:'Congelados'},
+  ]},
+  {group:'🛍️  Shop',gid:'r-shop',items:[
+    {id:'adminShop',label:'Shop'},
   ]},
   {group:'🔐  Acceso & Seguridad',gid:'r-acceso',items:[
     {id:'acceso',label:'Control de Acceso'},
@@ -1850,7 +1851,7 @@ if(currentUser.role==='reception'){
     <div class="qaIcon">🔐</div>
     <div class="qaText"><strong>Control de Acceso</strong><span>Validar ingreso de socios</span></div>
   </div>
-  <div class="quickAction" onclick="navigate('usuarios')">
+  <div class="quickAction" onclick="navigate('panelSocios')">
     <div class="qaIcon">👥</div>
     <div class="qaText"><strong>Socios</strong><span>Buscar y gestionar</span></div>
   </div>
@@ -1861,17 +1862,17 @@ if(currentUser.role==='reception'){
 </div>
 
 <div class="statsGrid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
-  <div class="statCard" style="border-left-color:var(--green);cursor:pointer" onclick="navigate('usuarios')">
+  <div class="statCard" style="border-left-color:var(--green);cursor:pointer" onclick="navigate('panelSocios')">
     <div class="num" style="color:var(--green)">${users.filter(u=>getQuotaStatus(u)==='active').length}</div>
     <div class="lbl">Socios activos</div>
     <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${users.length} registrados total</div>
   </div>
-  <div class="statCard" style="border-left-color:var(--orange);cursor:pointer" onclick="navigate('cuotas')">
+  <div class="statCard" style="border-left-color:var(--orange);cursor:pointer" onclick="navigate('gestionPagos')">
     <div class="num" style="color:var(--orange)">${pending.length}</div>
     <div class="lbl">Cuotas pendientes</div>
     <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${paid.length} cobrados · ${pctCobrado}%</div>
   </div>
-  <div class="statCard" style="border-left-color:var(--red);cursor:pointer" onclick="navigate('cuotas')">
+  <div class="statCard" style="border-left-color:var(--red);cursor:pointer" onclick="navigate('gestionPagos')">
     <div class="num" style="color:var(--red)">${blockedU.length}</div>
     <div class="lbl">Bloqueados</div>
     <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${grace.length} en gracia · ${frozen.length} congelados</div>
@@ -1978,7 +1979,7 @@ ${(()=>{
       <button class="btn btnSm btnAccent" onclick="navigate('cobroDiario')">Ir a ventanilla →</button>
     </div>
     ${pending.length===0?'<p style="color:var(--text3);font-size:.8rem">¡Todos pagaron este mes! ✓</p>':
-    `<div style="max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:4px">${pending.slice(0,10).map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06);font-size:.78rem"><div style="flex:1"><div style="font-weight:600;color:var(--text)">${u.name}</div><div style="font-size:.67rem;color:var(--text3);margin-top:1px">${u.payMethod||'—'} · último pago: ${u.lastPayment||'nunca'}</div></div><div style="display:flex;align-items:center;gap:6px"><span style="color:var(--accent);font-weight:700;font-size:.82rem;font-family:'Orbitron',sans-serif">$${safePlan(u.plan).price.toLocaleString()}</span><span class="badge ${getQuotaStatus(u)}">${statusLabel(getQuotaStatus(u))}</span><button class="btn btnXs btnSuccess" onclick="markPaid(${u.id})">✓ Cobrar</button></div></div>`).join('')}${pending.length>10?`<div style="text-align:center;padding:8px;font-size:.72rem"><button class="btn btnSm btnGhost" onclick="navigate('cuotas')">Ver todos (${pending.length}) →</button></div>`:''}</div>`}
+    `<div style="max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:4px">${pending.slice(0,10).map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06);font-size:.78rem"><div style="flex:1"><div style="font-weight:600;color:var(--text)">${u.name}</div><div style="font-size:.67rem;color:var(--text3);margin-top:1px">${u.payMethod||'—'} · último pago: ${u.lastPayment||'nunca'}</div></div><div style="display:flex;align-items:center;gap:6px"><span style="color:var(--accent);font-weight:700;font-size:.82rem;font-family:'Orbitron',sans-serif">$${safePlan(u.plan).price.toLocaleString()}</span><span class="badge ${getQuotaStatus(u)}">${statusLabel(getQuotaStatus(u))}</span><button class="btn btnXs btnSuccess" onclick="markPaid(${u.id})">✓ Cobrar</button></div></div>`).join('')}${pending.length>10?`<div style="text-align:center;padding:8px;font-size:.72rem"><button class="btn btnSm btnGhost" onclick="navigate('gestionPagos')">Ver todos (${pending.length}) →</button></div>`:''}</div>`}
   </div>
   <div>
     <div class="card" style="margin-bottom:14px">
@@ -5261,11 +5262,13 @@ function rechazarCanje(id){
   p.estado='rechazado';savePuntos();saveShop();navigate('adminShop');
 }
 function eliminarProductoShop(id){
+  if(currentUser.role!=='admin'){requireAdminAuth('Eliminar producto del Shop',()=>eliminarProductoShop(id));return;}
   if(!confirm('¿Eliminar este producto del shop?'))return;
   shopProductos=shopProductos.filter(x=>x.id!==id);
   saveShop();navigate('adminShop');
 }
 function openNuevoProductoShop(){
+  if(currentUser.role!=='admin'){requireAdminAuth('Crear producto en el Shop',()=>openNuevoProductoShop());return;}
   openModal(`
     <h3>➕ Nuevo producto</h3>
     <div class="formGrid">
@@ -5299,6 +5302,7 @@ async function guardarNuevoShopProducto(){
   saveShop();closeModal();navigate('adminShop');
 }
 function openEditarProductoShop(id){
+  if(currentUser.role!=='admin'){requireAdminAuth('Editar producto del Shop',()=>openEditarProductoShop(id));return;}
   const p=shopProductos.find(x=>x.id===id);if(!p)return;
   openModal(`
     <h3>✏️ Editar producto</h3>
@@ -5347,6 +5351,7 @@ async function guardarEditarShopProducto(id){
   saveShop();closeModal();navigate('adminShop');
 }
 function openAgregarStock(id){
+  if(currentUser.role!=='admin'){requireAdminAuth('Agregar stock al Shop',()=>openAgregarStock(id));return;}
   const p=shopProductos.find(x=>x.id===id);if(!p)return;
   openModal(`
     <h3>📦 Agregar stock — ${p.imagen} ${p.nombre}</h3>
@@ -7016,6 +7021,7 @@ views.planes = () => {
 };
 
 function openNuevoPlan(){
+  if(currentUser.role!=='admin'){requireAdminAuth('Crear nuevo plan',()=>openNuevoPlan());return;}
   openModal(`
     <h3>Nuevo plan</h3>
     <div class="formGrid">
@@ -7049,6 +7055,7 @@ function guardarNuevoPlan(){
   savePlanes();closeModal();navigate('gestionPagos');
 }
 function openEditPlan(key){
+  if(currentUser.role!=='admin'){requireAdminAuth('Editar plan',()=>openEditPlan(key));return;}
   const p=PLANS[key];
   openModal(`
     <h3>Editar plan — ${key}</h3>
@@ -7077,6 +7084,7 @@ function guardarEditPlan(key){
   savePlanes();closeModal();navigate('gestionPagos');
 }
 function deletePlan(key){
+  if(currentUser.role!=='admin'){requireAdminAuth('Eliminar plan',()=>deletePlan(key));return;}
   const inUse=users.filter(u=>u.plan===key).length;
   if(inUse>0){alert(`No podés eliminar este plan. Hay ${inUse} socios usándolo.`);return;}
   if(!confirm(`¿Eliminar el plan "${key}"?`))return;
