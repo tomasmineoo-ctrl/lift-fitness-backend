@@ -1615,7 +1615,7 @@ const receptionNav=[
   {group:'💵  Cobro & Pagos',gid:'r-cobro',items:[
     {id:'cobroDiario',label:'Ventanilla de Cobro'},
     {id:'cierreturno',label:'Cierre de Turno'},
-    {id:'gestionPagos',label:'Planes & Pagos'},
+    {id:'planes',label:'Planes'},
   ]},
   {group:'👥  Socios',gid:'r-socios',items:[
     {id:'panelSocios',label:'Panel de Socios'},
@@ -1871,12 +1871,12 @@ if(currentUser.role==='reception'){
     <div class="lbl">Socios activos</div>
     <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${users.length} registrados total</div>
   </div>
-  <div class="statCard" style="border-left-color:var(--orange);cursor:pointer" onclick="navigate('gestionPagos')">
+  <div class="statCard" style="border-left-color:var(--orange);cursor:pointer" onclick="navigate('panelSocios')">
     <div class="num" style="color:var(--orange)">${pending.length}</div>
     <div class="lbl">Cuotas pendientes</div>
     <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${paid.length} cobrados · ${pctCobrado}%</div>
   </div>
-  <div class="statCard" style="border-left-color:var(--red);cursor:pointer" onclick="navigate('gestionPagos')">
+  <div class="statCard" style="border-left-color:var(--red);cursor:pointer" onclick="navigate('panelSocios')">
     <div class="num" style="color:var(--red)">${blockedU.length}</div>
     <div class="lbl">Bloqueados</div>
     <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${grace.length} en gracia · ${frozen.length} congelados</div>
@@ -7222,6 +7222,13 @@ try{const sp=localStorage.getItem('gp_planes');if(sp){const p=JSON.parse(sp);Obj
 function savePlanes(){try{localStorage.setItem('gp_planes',JSON.stringify(PLANS));}catch(e){}}
 
 views.planes = () => {
+  // Vista de catálogo (recepción y demás roles): solo lectura, planes disponibles para la venta
+  if(currentUser.role!=='admin'){
+    return `
+    <div class="pageTitle">Planes de Membresía</div>
+    <div class="planGrid">${Object.entries(PLANS).map(([n,p])=>`<div class="planCard ${p.color}"><div class="planName" style="color:var(--${p.color})">${n}</div><div class="planPrice">$${p.price.toLocaleString()}/mes</div><div class="planFeats">${(Array.isArray(p.features)?p.features.join(' · '):(p.features||'')).split('·').map(f=>`• ${f.trim()}`).join('<br>')}</div><div style="margin-top:8px;font-size:.7rem;color:var(--text3)">${users.filter(u=>u.plan===n).length} socios</div></div>`).join('')}</div>`;
+  }
+  // Vista de gestión (solo admin): alta, edición y baja de planes
   return `
   <div class="pageTitle">Gestionar Planes</div>
   <div class="card">
