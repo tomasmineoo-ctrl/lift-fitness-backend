@@ -1866,25 +1866,25 @@ if(currentUser.role==='reception'){
 </div>
 
 <div class="statsGrid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
-  <div class="statCard" style="border-left-color:var(--green);cursor:pointer" onclick="navigate('panelSocios')">
+  <div class="statCard" style="border-left-color:var(--green);cursor:pointer" onclick="openSociosResumen('active')">
     <div class="num" style="color:var(--green)">${users.filter(u=>getQuotaStatus(u)==='active').length}</div>
-    <div class="lbl">Socios activos</div>
+    <div class="lbl">Activos</div>
     <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${users.length} registrados total</div>
   </div>
-  <div class="statCard" style="border-left-color:var(--orange);cursor:pointer" onclick="navigate('panelSocios')">
-    <div class="num" style="color:var(--orange)">${pending.length}</div>
-    <div class="lbl">Cuotas pendientes</div>
+  <div class="statCard" style="border-left-color:var(--orange);cursor:pointer" onclick="openSociosResumen('grace')">
+    <div class="num" style="color:var(--orange)">${grace.length}</div>
+    <div class="lbl">En gracia</div>
     <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${paid.length} cobrados · ${pctCobrado}%</div>
   </div>
-  <div class="statCard" style="border-left-color:var(--red);cursor:pointer" onclick="navigate('panelSocios')">
+  <div class="statCard" style="border-left-color:var(--red);cursor:pointer" onclick="openSociosResumen('blocked')">
     <div class="num" style="color:var(--red)">${blockedU.length}</div>
     <div class="lbl">Bloqueados</div>
-    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${grace.length} en gracia · ${frozen.length} congelados</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${pending.length} cuotas pendientes</div>
   </div>
-  <div class="statCard" style="border-left-color:var(--teal);cursor:pointer" onclick="navigate('agenda')">
-    <div class="num" style="color:var(--teal)">${clasesHoy.length}</div>
-    <div class="lbl">Clases hoy</div>
-    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${DAYS_FULL[today().getDay()]}</div>
+  <div class="statCard" style="border-left-color:var(--blue);cursor:pointer" onclick="openSociosResumen('frozen')">
+    <div class="num" style="color:var(--blue)">${frozen.length}</div>
+    <div class="lbl">Planes Pausados</div>
+    <div style="font-size:.62rem;color:var(--text3);margin-top:5px">${clasesHoy.length} clases hoy · ${DAYS_FULL[today().getDay()]}</div>
   </div>
 </div>
 
