@@ -1282,6 +1282,11 @@ try{const sped=localStorage.getItem('gp_shopPedidos');if(sped)shopPedidos=JSON.p
 try{const sv=localStorage.getItem('gp_shopVentas');if(sv)shopVentas=JSON.parse(sv);}catch(e){}
 function saveShop(){try{localStorage.setItem('gp_shopProductos',JSON.stringify(shopProductos));localStorage.setItem('gp_shopPedidos',JSON.stringify(shopPedidos));localStorage.setItem('gp_shopVentas',JSON.stringify(shopVentas));}catch(e){alert('No se pudo guardar: el almacenamiento local está lleno (las fotos pesan demasiado). Probá con menos fotos o imágenes más livianas.');console.error('saveShop error',e);}}
 
+// ── PAUSAS DE PLAN (solicitudes de socios, auditoría admin/recepción) ──
+let pausaSolicitudes = []; // {id,userId,userName,motivo,fechaInicio,fechaFin,comprobante,estado:'pendiente'|'aceptada'|'rechazada',fechaSolicitud,resueltoPor,fechaResolucion}
+try{const psol=localStorage.getItem('gp_pausaSolicitudes');if(psol)pausaSolicitudes=JSON.parse(psol);}catch(e){}
+function savePausas(){try{localStorage.setItem('gp_pausaSolicitudes',JSON.stringify(pausaSolicitudes));}catch(e){alert('No se pudo guardar: el almacenamiento local está lleno (el comprobante pesa demasiado). Probá con una imagen más liviana.');console.error('savePausas error',e);}}
+
 // ── COMUNIDAD ──
 let comunidadPosts = [
   {id:1,autorId:'admin',autorNombre:'LIFT Fitness Center',autorRol:'admin',contenido:'¡Bienvenidos a la comunidad LIFT Fitness Center San Salvador! 🔥 Este es tu espacio para compartir logros, motivarte y crecer junto a todos.',imagen:'',fecha:'2025-05-01',likes:[],comentarios:[],tipo:'post'},
@@ -2727,7 +2732,7 @@ ${(currentUser.role==='admin'||currentUser.role==='reception')?`
 
 usuarios:()=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="pageTitle" style="margin:0">Socios</div><button class="btn btnAccent" onclick="openNewUser()">+ Nuevo Socio</button></div><div class="filterBar"><input id="searchUser" oninput="renderUserTable()" placeholder="Nombre, email o DNI..."/><select id="filterStatus" onchange="renderUserTable()"><option value="">Todos</option><option value="active">Activos</option><option value="inactive">Inactivos</option><option value="grace">En gracia</option><option value="blocked">Bloqueados</option><option value="frozen">Congelados</option></select><select id="filterPlan" onchange="renderUserTable()"><option value="">Todos los planes</option>${Object.keys(PLANS).map(p=>`<option>${p}</option>`).join('')}</select></div><div class="card" style="padding:0;overflow:auto"><table class="tbl" id="userTable"></table></div>`,
 
-panelSocios:()=>{const activos=users.filter(u=>getQuotaStatus(u)==='active').length;const bloqueados=users.filter(u=>getQuotaStatus(u)==='blocked').length;const congeladosN=users.filter(u=>u.frozen||u.status==='frozen').length;const enGracia=users.filter(u=>getQuotaStatus(u)==='grace').length;const conDeuda=users.filter(u=>(u.debt||0)>0).length;return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="pageTitle" style="margin:0">Socios</div><button class="btn btnAccent" onclick="openNewUser()">+ Nuevo Socio</button></div><div class="statsGrid" style="grid-template-columns:repeat(5,1fr);margin-bottom:16px"><div class="statCard"><div class="num">${users.length}</div><div class="lbl">Total</div></div><div class="statCard"><div class="num" style="color:var(--green)">${activos}</div><div class="lbl">Activos</div></div><div class="statCard"><div class="num" style="color:var(--orange)">${enGracia}</div><div class="lbl">En gracia</div></div><div class="statCard"><div class="num" style="color:var(--red)">${bloqueados}</div><div class="lbl">Bloqueados</div></div><div class="statCard"><div class="num" style="color:var(--blue)">${congeladosN}</div><div class="lbl">Congelados</div></div></div><div class="filterBar"><input id="psSearch" oninput="renderPS()" placeholder="Nombre, email, DNI o banco..."/><select id="psPlan" onchange="renderPS()"><option value="">Todos los planes</option>${Object.keys(PLANS).map(p=>`<option>${p}</option>`).join('')}</select><select id="psStatus" onchange="renderPS()"><option value="">Todos los estados</option><option value="active">Activos</option><option value="inactive">Inactivos</option><option value="grace">En gracia</option><option value="blocked">Bloqueados</option><option value="frozen">Congelados</option></select><select id="psDebt" onchange="renderPS()"><option value="">Cualquier deuda</option><option value="yes">Con deuda</option><option value="no">Sin deuda</option></select><button class="btn btnPurple btnSm" onclick="exportUsersCSV()">📥 CSV</button></div><div class="card" style="padding:0;overflow:auto"><table class="tbl" id="psTable"></table></div>`;},
+panelSocios:()=>{const activos=users.filter(u=>getQuotaStatus(u)==='active').length;const bloqueados=users.filter(u=>getQuotaStatus(u)==='blocked').length;const congeladosN=users.filter(u=>u.frozen||u.status==='frozen').length;const enGracia=users.filter(u=>getQuotaStatus(u)==='grace').length;const conDeuda=users.filter(u=>(u.debt||0)>0).length;const pausasPend=pausaSolicitudes.filter(s=>s.estado==='pendiente');return`${pausasPend.length?`<div class="card" style="border:1px solid #66aaff;margin-bottom:16px;background:rgba(102,170,255,.05)"><h3>⏸️ Auditoría — Solicitudes de pausa de plan (${pausasPend.length})</h3><div style="overflow:auto;margin-top:8px"><table class="tbl"><tr><th>Socio</th><th>Desde</th><th>Hasta</th><th>Motivo</th><th>Comprobante</th><th>Acciones</th></tr>${pausasPend.map(s=>`<tr><td>${s.userName}</td><td style="font-family:monospace;font-size:.72rem">${s.fechaInicio}</td><td style="font-family:monospace;font-size:.72rem">${s.fechaFin}</td><td style="font-size:.78rem;max-width:200px">${s.motivo}</td><td>${s.comprobante?`<button class="btn btnSm btnGhost" onclick="verComprobantePausa(${s.id})">📎 Ver</button>`:'—'}</td><td style="display:flex;gap:6px"><button class="btn btnSm btnSuccess" onclick="resolverPausa(${s.id},true)">✅ Aceptar</button><button class="btn btnSm btnDanger" onclick="resolverPausa(${s.id},false)">❌ Rechazar</button></td></tr>`).join('')}</table></div></div>`:''}<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="pageTitle" style="margin:0">Socios</div><button class="btn btnAccent" onclick="openNewUser()">+ Nuevo Socio</button></div><div class="statsGrid" style="grid-template-columns:repeat(5,1fr);margin-bottom:16px"><div class="statCard"><div class="num">${users.length}</div><div class="lbl">Total</div></div><div class="statCard"><div class="num" style="color:var(--green)">${activos}</div><div class="lbl">Activos</div></div><div class="statCard"><div class="num" style="color:var(--orange)">${enGracia}</div><div class="lbl">En gracia</div></div><div class="statCard"><div class="num" style="color:var(--red)">${bloqueados}</div><div class="lbl">Bloqueados</div></div><div class="statCard"><div class="num" style="color:var(--blue)">${congeladosN}</div><div class="lbl">Congelados</div></div></div><div class="filterBar"><input id="psSearch" oninput="renderPS()" placeholder="Nombre, email, DNI o banco..."/><select id="psPlan" onchange="renderPS()"><option value="">Todos los planes</option>${Object.keys(PLANS).map(p=>`<option>${p}</option>`).join('')}</select><select id="psStatus" onchange="renderPS()"><option value="">Todos los estados</option><option value="active">Activos</option><option value="inactive">Inactivos</option><option value="grace">En gracia</option><option value="blocked">Bloqueados</option><option value="frozen">Congelados</option></select><select id="psDebt" onchange="renderPS()"><option value="">Cualquier deuda</option><option value="yes">Con deuda</option><option value="no">Sin deuda</option></select><button class="btn btnPurple btnSm" onclick="exportUsersCSV()">📥 CSV</button></div><div class="card" style="padding:0;overflow:auto"><table class="tbl" id="psTable"></table></div>`;},
 adminPanel:()=>`<div class="pageTitle">Panel Admin Pro</div><div class="exportBar"><button class="btn btnPurple btnSm" onclick="exportUsersCSV()">📥 CSV Socios</button><button class="btn btnInfo btnSm" onclick="exportPaymentsCSV()">📥 CSV Pagos</button></div><div class="filterBar"><input id="apSearch" oninput="renderAdminPanel()" placeholder="Nombre, email, DNI, banco..."/><select id="apPlan" onchange="renderAdminPanel()"><option value="">Todos los planes</option>${Object.keys(PLANS).map(p=>`<option>${p}</option>`).join('')}</select><select id="apStatus" onchange="renderAdminPanel()"><option value="">Todos los estados</option><option value="active">Activos</option><option value="inactive">Inactivos</option><option value="blocked">Bloqueados</option><option value="frozen">Congelados</option></select><select id="apDebt" onchange="renderAdminPanel()"><option value="">Cualquier deuda</option><option value="yes">Con deuda</option><option value="no">Sin deuda</option></select></div><div class="card" style="padding:0;overflow:auto"><table class="tbl" id="adminPanelTable"><tr><th>Socio</th><th>Plan</th><th>Banco/Tarjeta</th><th>Último Pago</th><th>Deuda</th><th>Estado</th><th>Acciones</th></tr></table></div>`,
 
 congelados:()=>`<div class="pageTitle">Congelados</div><div class="card" style="padding:0;overflow:auto"><table class="tbl"><tr><th>Socio</th><th>Plan</th><th>Estado</th><th>Acción</th></tr>${users.map(u=>`<tr><td>${u.name}</td><td><span class="badge ${safePlan(u.plan).color}">${u.plan}</span></td><td><span class="badge ${u.frozen?'frozen':'active'}">${u.frozen?'Congelada':'Activa'}</span></td><td>${u.frozen?`<button class="btn btnSm btnSuccess" onclick="toggleFreeze(${u.id})">Descongelar</button>`:`<button class="btn btnSm btnInfo" onclick="toggleFreeze(${u.id})">❄️ Congelar</button>`}</td></tr>`).join('')}</table></div>`,
@@ -6150,6 +6155,32 @@ views.miPlan = () => {
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:800;color:var(--orange)">$${deudaCaf.toFixed(2)}</div>
   </div>`:''}
 
+  <!-- Pausar mi plan -->
+  ${(()=>{
+    const pendiente = pausaSolicitudes.find(s=>s.userId===u.id&&s.estado==='pendiente');
+    const ultima = pausaSolicitudes.filter(s=>s.userId===u.id).sort((a,b)=>b.id-a.id)[0];
+    if(pendiente){
+      return `<div class="card" style="border:1px solid #66aaff;margin-bottom:14px;background:rgba(102,170,255,.05)">
+        <h3>⏸️ Pausar mi Plan</h3>
+        <p style="font-size:.82rem;color:var(--text2);margin-top:6px">Tu solicitud de pausa está <b>pendiente de revisión</b> por administración/recepción.</p>
+        <div style="font-size:.78rem;color:var(--text3);margin-top:6px">Del <b>${pendiente.fechaInicio}</b> al <b>${pendiente.fechaFin}</b> — Motivo: ${pendiente.motivo}</div>
+      </div>`;
+    }
+    if(st==='frozen'){
+      return `<div class="card" style="border:1px solid #66aaff;margin-bottom:14px;background:rgba(102,170,255,.05)">
+        <h3>⏸️ Plan en pausa</h3>
+        <p style="font-size:.82rem;color:var(--text2);margin-top:6px">Tu plan está pausado${u.freezeFrom?` desde el <b>${u.freezeFrom}</b>`:''}${u.freezeUntil?` hasta el <b>${u.freezeUntil}</b>`:''}.</p>
+        ${u.freezeMotivo?`<div style="font-size:.72rem;color:var(--text3);margin-top:4px">Motivo: ${u.freezeMotivo}</div>`:''}
+      </div>`;
+    }
+    return `<div class="card" style="margin-bottom:14px">
+      <h3>⏸️ Pausar mi Plan</h3>
+      <p style="font-size:.78rem;color:var(--text3);margin:6px 0 10px">¿Necesitás pausar tu cuota por un tiempo? Enviá tu solicitud con el motivo y las fechas — administración/recepción la revisará y, si la aprueba, se aplicará automáticamente.</p>
+      ${ultima&&ultima.estado==='rechazada'?`<div style="font-size:.72rem;color:var(--red);margin-bottom:8px">Tu última solicitud (del ${ultima.fechaInicio} al ${ultima.fechaFin}) fue rechazada. Podés enviar una nueva si lo necesitás.</div>`:''}
+      <button class="btn btnOutline" onclick="openSolicitarPausa()">⏸️ Solicitar pausa de mi plan</button>
+    </div>`;
+  })()}
+
   <!-- Historial completo -->
   <div class="card">
     <h3>Historial de movimientos</h3>
@@ -6167,6 +6198,92 @@ views.miPlan = () => {
     </table>`:'<p style="font-size:.78rem;color:var(--text3)">Sin movimientos registrados aún.</p>'}
   </div>`;
 };
+
+// ── Solicitud de pausa de plan (socio) ──
+function openSolicitarPausa(){
+  const u=currentUser.data;
+  if(!u)return;
+  if(pausaSolicitudes.find(s=>s.userId===u.id&&s.estado==='pendiente')){alert('Ya tenés una solicitud de pausa pendiente de revisión.');return;}
+  openModal(`
+<h3 style="margin-bottom:10px">⏸️ Pausar mi Plan</h3>
+<p style="font-size:.78rem;color:var(--text3);margin-bottom:10px">Tu solicitud será revisada por administración/recepción. Si es aprobada, la pausa se aplicará automáticamente con las fechas indicadas.</p>
+<div class="formGroup"><label>Motivo *</label><textarea id="pzMotivo" rows="3" placeholder="Contanos el motivo de tu pausa..." style="resize:vertical"></textarea></div>
+<div class="formGroup" style="display:flex;gap:10px">
+  <div style="flex:1"><label>Desde *</label><input id="pzDesde" type="date"/></div>
+  <div style="flex:1"><label>Hasta *</label><input id="pzHasta" type="date"/></div>
+</div>
+<div class="formGroup"><label>Comprobante (opcional, ej. certificado médico)</label>
+  <input id="pzFile" type="file" accept="image/*" onchange="cpPreviewFotos(this,'pzFotoPreview')"/>
+  <div id="pzFotoPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
+</div>
+<div class="modalActions">
+  <button class="btn btnGhost" onclick="closeModal()">Cancelar</button>
+  <button class="btn" onclick="enviarSolicitudPausa()">⏸️ Enviar solicitud</button>
+</div>`);
+}
+async function enviarSolicitudPausa(){
+  const u=currentUser.data;
+  if(!u)return;
+  const motivo=document.getElementById('pzMotivo')?.value.trim()||'';
+  const desde=document.getElementById('pzDesde')?.value||'';
+  const hasta=document.getElementById('pzHasta')?.value||'';
+  if(!motivo){alert('Indicá el motivo de la pausa');return;}
+  if(!desde||!hasta){alert('Indicá las fechas de inicio y fin');return;}
+  if(hasta<desde){alert('La fecha de fin debe ser posterior a la de inicio');return;}
+  const fotoInput=document.getElementById('pzFile');
+  let comprobante=null;
+  if(fotoInput?.dataset.fotos){try{comprobante=(JSON.parse(fotoInput.dataset.fotos)||[])[0]||null;}catch(e){}}
+  else if(fotoInput?.files?.length){const fotos=await cpReadFilesAsDataURLs(fotoInput.files);comprobante=fotos[0]||null;}
+  pausaSolicitudes.push({id:Date.now(),userId:u.id,userName:u.name,motivo,fechaInicio:desde,fechaFin:hasta,comprobante,estado:'pendiente',fechaSolicitud:new Date().toISOString().slice(0,10)});
+  savePausas();
+  staffAccounts.filter(s=>s.role==='admin'||s.role==='reception').forEach(s=>{
+    pushUserNotif(s.id,{type:'pausa',titulo:`⏸️ Solicitud de pausa: ${u.name}`,mensaje:`${u.name} solicitó pausar su plan del ${desde} al ${hasta}. Motivo: ${motivo}`});
+  });
+  logAction('Solicitud de pausa de plan',`${u.name} solicitó pausar del ${desde} al ${hasta} — ${motivo}`);
+  saveDB();
+  closeModal();
+  navigate('miPlan');
+  alert('✅ Tu solicitud fue enviada. Administración/Recepción la revisará pronto.');
+}
+
+// ── Auditoría de pausas (admin/recepción) ──
+function verComprobantePausa(id){
+  const sol=pausaSolicitudes.find(x=>x.id===id);
+  if(!sol||!sol.comprobante)return;
+  openModal(`<h3 style="margin-bottom:10px">📎 Comprobante — ${sol.userName}</h3>
+  <img src="${sol.comprobante}" style="width:100%;border-radius:6px;border:1px solid var(--border2)"/>
+  <div class="modalActions"><button class="btn btnGhost" onclick="closeModal()">Cerrar</button></div>`);
+}
+function resolverPausa(id,aceptar){
+  const sol=pausaSolicitudes.find(x=>x.id===id);
+  if(!sol)return;
+  const u=users.find(x=>x.id===sol.userId);
+  if(aceptar){
+    if(!confirm(`¿Aceptar la pausa de ${sol.userName} del ${sol.fechaInicio} al ${sol.fechaFin}? Se aplicará automáticamente.`))return;
+    if(u){
+      u.frozen=true;
+      u.status='frozen';
+      u.freezeFrom=sol.fechaInicio;
+      u.freezeUntil=sol.fechaFin;
+      u.freezeMotivo=sol.motivo;
+    }
+    sol.estado='aceptada';
+    sol.resueltoPor=currentUser.name||currentUser.email;
+    sol.fechaResolucion=new Date().toISOString().slice(0,10);
+    if(u)pushUserNotif(u.id,{type:'pausa',titulo:'✅ Pausa de plan aprobada',mensaje:`Tu solicitud de pausa del ${sol.fechaInicio} al ${sol.fechaFin} fue aprobada y aplicada.`});
+    logAction('Pausa de plan aprobada',`${sol.userName} — del ${sol.fechaInicio} al ${sol.fechaFin} (${sol.motivo})`);
+  } else {
+    if(!confirm(`¿Rechazar la solicitud de pausa de ${sol.userName}?`))return;
+    sol.estado='rechazada';
+    sol.resueltoPor=currentUser.name||currentUser.email;
+    sol.fechaResolucion=new Date().toISOString().slice(0,10);
+    if(u)pushUserNotif(u.id,{type:'pausa',titulo:'❌ Pausa de plan rechazada',mensaje:`Tu solicitud de pausa del ${sol.fechaInicio} al ${sol.fechaFin} fue rechazada. Conversá con recepción para más información.`});
+    logAction('Pausa de plan rechazada',`${sol.userName}`);
+  }
+  savePausas();
+  saveDB();
+  navigate('panelSocios');
+}
 
 // ═══════════════════════════════════════════════════════════
 // COBRODIARIO: banner de cuentas pendientes
@@ -7103,20 +7220,29 @@ function deletePlan(key){
 // FIX: CONGELAMIENTO CON FECHA DE REACTIVACIÓN AUTOMÁTICA
 // ═══════════════════════════════════════════════════════════
 // Patch congelados view to add reactivation date
+function checkReactivacionesCongelados(){
+  const hoy = new Date().toISOString().slice(0,10);
+  let reactivados = 0;
+  users.filter(u=>u.frozen&&u.freezeUntil&&u.freezeUntil<=hoy).forEach(u=>{
+    u.frozen=false;u.status='active';u.freezeUntil=null;u.freezeFrom=null;u.freezeMotivo=null;
+    userNotifications.push({id:Date.now()+u.id,userId:u.id,tipo:'reactivacion',titulo:'¡Tu cuenta fue reactivada! 🎉',mensaje:'Tu período de pausa terminó. Ya podés volver a entrenar.',fecha:hoy,leida:false});
+    reactivados++;
+  });
+  if(reactivados>0){saveDB();}
+  return reactivados;
+}
 const _safeCongelados = views.congelados;
 if(_safeCongelados){
   views.congelados = () => {
-    let base = _safeCongelados();
-    // Check if any frozen users should be reactivated
-    const hoy = new Date().toISOString().slice(0,10);
-    let reactivados = 0;
-    users.filter(u=>u.frozen&&u.freezeUntil&&u.freezeUntil<=hoy).forEach(u=>{
-      u.frozen=false;u.status='active';u.freezeUntil=null;
-      userNotifications.push({id:Date.now()+u.id,userId:u.id,tipo:'reactivacion',titulo:'¡Tu cuenta fue reactivada! 🎉',mensaje:'Tu período de congelamiento terminó. Ya podés volver a entrenar.',fecha:hoy,leida:false});
-      reactivados++;
-    });
-    if(reactivados>0){saveDB();}
-    return base;
+    checkReactivacionesCongelados();
+    return _safeCongelados();
+  };
+}
+const _safePanelSocios = views.panelSocios;
+if(_safePanelSocios){
+  views.panelSocios = () => {
+    checkReactivacionesCongelados();
+    return _safePanelSocios();
   };
 }
 
