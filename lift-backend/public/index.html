@@ -972,6 +972,7 @@ body>*{position:relative;z-index:1}
 </style>
 </head>
 <body>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
 <div id="loginScreen">
   <!-- Panel izquierdo: branding -->
@@ -3044,6 +3045,103 @@ function startQRRotation(view){if(_qrTimer){clearInterval(_qrTimer);_qrTimer=nul
   }
   tick();
   _qrTimer=setInterval(tick,1000);}
+
+// ── ESCÁNER DE QR DE ACCESO (cámara) ──
+let _qrScanStream=null;
+let _qrScanRAF=null;
+let _qrScanLastUser=null;
+let _qrScanLastTime=0;
+async function abrirEscanerQR(){
+  openModal(`
+<h3 style="margin-bottom:10px">📷 Escanear QR de acceso</h3>
+<p style="font-size:.78rem;color:var(--text3);margin-bottom:10px">Pedile al socio que abra "Mi Credencial QR" y acercá la cámara al código.</p>
+<div style="position:relative;background:#000;border-radius:6px;overflow:hidden;min-height:220px">
+  <video id="qrScanVideo" style="width:100%;display:block" playsinline muted autoplay></video>
+  <div style="position:absolute;inset:14px;border:3px solid rgba(229,8,126,.5);border-radius:6px;pointer-events:none"></div>
+</div>
+<div id="qrScanMsg" style="margin-top:10px;font-size:.85rem;min-height:24px;text-align:center;font-weight:700"></div>
+<div class="modalActions">
+  <button class="btn btnGhost" onclick="cerrarEscanerQR()">Cerrar</button>
+</div>`);
+  try{
+    _qrScanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    const video=document.getElementById('qrScanVideo');
+    if(!video){cerrarEscanerQR();return;}
+    video.srcObject=_qrScanStream;
+    await video.play();
+    qrScanLoop();
+  }catch(e){
+    const msg=document.getElementById('qrScanMsg');
+    if(msg) msg.innerHTML=`<span style="color:var(--red)">No se pudo acceder a la cámara: ${e.message}</span>`;
+  }
+}
+function cerrarEscanerQR(){
+  if(_qrScanRAF){cancelAnimationFrame(_qrScanRAF);_qrScanRAF=null;}
+  if(_qrScanStream){_qrScanStream.getTracks().forEach(t=>t.stop());_qrScanStream=null;}
+  closeModal();
+  if(window._qrScanNeedsRefresh==='acceso'){navigate('acceso');}
+  else if(window._qrScanNeedsRefresh==='kiosk'){renderKiosk();}
+  window._qrScanNeedsRefresh=null;
+}
+async function qrScanLoop(){
+  const video=document.getElementById('qrScanVideo');
+  if(!video){cerrarEscanerQR();return;} // modal cerrado
+  const msg=document.getElementById('qrScanMsg');
+  let code=null;
+  try{
+    if('BarcodeDetector' in window){
+      if(!window._qrDetector) window._qrDetector=new BarcodeDetector({formats:['qr_code']});
+      const codes=await window._qrDetector.detect(video);
+      if(codes.length) code=codes[0].rawValue;
+    } else if(window.jsQR && video.videoWidth>0){
+      const canvas=window._qrScanCanvas||(window._qrScanCanvas=document.createElement('canvas'));
+      canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(video,0,0,canvas.width,canvas.height);
+      const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+      const result=jsQR(imgData.data,canvas.width,canvas.height);
+      if(result) code=result.data;
+    } else if(!('BarcodeDetector' in window) && !window.jsQR){
+      if(msg) msg.innerHTML='<span style="color:var(--orange)">Tu navegador no soporta lectura de QR. Usá el PIN.</span>';
+    }
+  }catch(e){}
+  if(code) procesarCodigoQR(code);
+  _qrScanRAF=requestAnimationFrame(qrScanLoop);
+}
+function procesarCodigoQR(code){
+  const msg=document.getElementById('qrScanMsg');
+  const parts=String(code).split('|');
+  if(parts[0]!=='LIFT'||parts.length<5||parts[1]==='STAFF'){
+    if(msg)msg.innerHTML='<span style="color:var(--red)">QR no reconocido</span>';
+    return;
+  }
+  const userId=+parts[1];
+  const slot=+parts[4];
+  const curSlot=getTOTPSlot();
+  if(!Number.isFinite(slot)||Math.abs(curSlot-slot)>1){
+    if(msg)msg.innerHTML='<span style="color:var(--orange)">QR expirado, pedile al socio que actualice su pantalla</span>';
+    return;
+  }
+  const now=Date.now();
+  if(_qrScanLastUser===userId && now-_qrScanLastTime<5000) return;
+  const u=users.find(x=>x.id===userId);
+  if(!u){
+    if(msg)msg.innerHTML='<span style="color:var(--red)">Socio no encontrado</span>';
+    return;
+  }
+  _qrScanLastUser=userId; _qrScanLastTime=now;
+  const hoy=new Date().toISOString().slice(0,10);
+  const abierta=accessLog.find(e=>e.userId===u.id&&e.date===hoy&&e.type==='entry'&&!e.exitTime);
+  if(abierta){
+    registrarSalida(u.id);
+    if(msg)msg.innerHTML=`<span style="color:#30d158">✓ ¡Hasta luego, ${u.name.split(' ')[0]}!</span>`;
+  } else {
+    registrarEntrada(u.id);
+    if(msg)msg.innerHTML=`<span style="color:#30d158">✓ ¡Bienvenido, ${u.name.split(' ')[0]}! 💪</span>`;
+  }
+  // Si la vista de acceso está detrás del modal, refrescarla al cerrar para actualizar contadores/log
+  window._qrScanNeedsRefresh = document.getElementById('accessSearchResult')?'acceso':(document.getElementById('kioskInput')?'kiosk':null);
+}
 function drawQR(){const u=currentUser.data;if(!u)return;startQRRotation('miQR');}
 function toggleDay(el){const ex=el.nextElementSibling;ex.style.display=ex.style.display==='none'?'block':'none';}
 function openModal(html){document.getElementById('modalContent').innerHTML=html;document.getElementById('modalOverlay').classList.add('open');}
@@ -6550,7 +6648,10 @@ views.acceso = () => {
   return `
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
       <div class="pageTitle" style="margin-bottom:0">Control de Acceso 🔐</div>
-      <button class="btn btnAccent btnSm" onclick="toggleKioskMode()">📟 Modo quiosco</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btnAccent btnSm" onclick="abrirEscanerQR()">📷 Escanear QR</button>
+        <button class="btn btnAccent btnSm" onclick="toggleKioskMode()">📟 Modo quiosco</button>
+      </div>
     </div>
   <div class="statsGrid" style="margin-bottom:14px">
     <div class="statCard"><div class="num" style="color:var(--green)">${dentroAhora.length}</div><div class="lbl">En el gym ahora</div></div>
@@ -7286,6 +7387,7 @@ function renderKiosk(){
       </div>
       <div id="kioskMsg" style="font-size:.82rem;min-height:24px;color:#666"></div>
     </div>
+    <button onclick="abrirEscanerQR()" style="margin-top:20px;padding:12px 24px;background:#e5087e;border:none;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;border-radius:4px;letter-spacing:.05em">📷 Escanear QR</button>
     <div style="margin-top:24px;display:flex;gap:16px;align-items:center">
       <div style="font-size:.75rem;color:#444">🟢 ${dentroAhora} personas en el gym</div>
       <button onclick="toggleKioskMode()" style="padding:6px 14px;background:transparent;border:1px solid #333;color:#555;font-size:.7rem;cursor:pointer;border-radius:2px">Salir modo quiosco</button>
