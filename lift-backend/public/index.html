@@ -1613,8 +1613,6 @@ const receptionNav=[
   ]},
   {group:'👥  Socios',gid:'r-socios',items:[
     {id:'panelSocios',label:'Panel de Socios'},
-  ]},
-  {group:'🛍️  Shop',gid:'r-shop',items:[
     {id:'adminShop',label:'Shop'},
   ]},
   {group:'🔐  Acceso & Seguridad',gid:'r-acceso',items:[
@@ -1622,7 +1620,7 @@ const receptionNav=[
     {id:'pinAcceso',label:'PINs de socios'},
   ]},
   {group:'📅  Agenda & Clases',gid:'r-agenda',items:[
-    {id:'agenda',label:'Agenda del día'},
+    {id:'agenda',label:'Agenda & Clases'},
   ]},
   {group:'🏋️  Gimnasio',gid:'r-gym',items:[
     {id:'maquinas',label:'Máquinas'},
@@ -2534,7 +2532,7 @@ ${lista.map(m=>{
       <div style="display:flex;gap:5px;flex-wrap:wrap">
         <button class="btn btnSm btnInfo" onclick="viewMachine(${m.id})" style="font-size:.7rem">👁 Ver</button>
         <button class="btn btnSm btnGhost" onclick="showMachineQR(${m.id})" style="font-size:.7rem">📱 QR</button>
-        ${canReport&&(m.status||'disponible')==='disponible'?`<button class="btn btnSm" onclick="reportarMaquina(${m.id})" style="background:rgba(255,159,10,.1);color:var(--orange);border:1px solid rgba(255,159,10,.3);font-size:.7rem">⚠️ Reportar</button>`:''}
+        ${canReport?`<button class="btn btnSm" onclick="reportarMaquina(${m.id})" style="background:rgba(255,159,10,.1);color:var(--orange);border:1px solid rgba(255,159,10,.3);font-size:.7rem">⚠️ Reportar</button>`:''}
         ${canEdit?`<button class="btn btnSm btnGhost" onclick="editMachine(${m.id})" style="font-size:.7rem">✏️</button><button class="btn btnSm btnDanger" onclick="deleteMachine(${m.id})" style="font-size:.7rem">✕</button>`:''}
         ${canEdit&&m.status&&m.status!=='disponible'?`<button class="btn btnSm" onclick="cambiarEstadoMaquina(${m.id},'disponible')" style="background:rgba(48,209,88,.1);color:var(--green);border:1px solid rgba(48,209,88,.3);font-size:.7rem">✅ Disponible</button>`:''}
       </div>
@@ -3450,37 +3448,46 @@ function reportarMaquina(id){
   openModal(`
 <h3 style="margin-bottom:10px">⚠️ Reportar avería — ${m.name}</h3>
 <div class="formGroup"><label>Descripción del problema *</label><textarea id="reportDesc" rows="3" placeholder="Describí qué está fallando..." style="resize:vertical"></textarea></div>
-<div class="formGroup"><label>Urgencia</label>
-  <select id="reportUrg">
-    <option value="baja">Baja — Puede seguir usándose con cuidado</option>
-    <option value="media" selected>Media — Requiere revisión pronto</option>
-    <option value="alta">Alta — Fuera de servicio inmediato</option>
+<div class="formGroup"><label>Estado de la máquina *</label>
+  <select id="reportEstado">
+    <option value="reportada">⚠️ Reportada — sigue en uso, con observación</option>
+    <option value="reparacion">🔧 En reparación — temporalmente fuera de uso</option>
+    <option value="fuera">❌ Rota / Fuera de servicio</option>
   </select>
+</div>
+<div class="formGroup"><label>Foto del problema (opcional)</label>
+  <input id="reportFoto" type="file" accept="image/*" onchange="cpPreviewFotos(this,'reportFotoPreview')"/>
+  <div id="reportFotoPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
 </div>
 <div class="modalActions">
   <button class="btn btnGhost" onclick="closeModal()">Cancelar</button>
   <button class="btn" style="background:var(--orange);color:#fff;border:none" onclick="confirmarReporteMaquina(${id})">⚠️ Enviar reporte</button>
 </div>`);
 }
-function confirmarReporteMaquina(id){
+async function confirmarReporteMaquina(id){
   const m=machines.find(x=>x.id===id);
   const desc=document.getElementById('reportDesc')?.value||'';
-  const urg=document.getElementById('reportUrg')?.value||'media';
+  const estado=document.getElementById('reportEstado')?.value||'reportada';
   if(!desc.trim()){alert('Describí el problema');return;}
-  // Cambiar estado según urgencia
-  m.status=urg==='alta'?'fuera':'reportada';
+  const fotoInput=document.getElementById('reportFoto');
+  let foto=null;
+  if(fotoInput?.dataset.fotos){try{foto=(JSON.parse(fotoInput.dataset.fotos)||[])[0]||null;}catch(e){}}
+  else if(fotoInput?.files?.length){const fotos=await cpReadFilesAsDataURLs(fotoInput.files);foto=fotos[0]||null;}
+  // Asignar el estado elegido por recepción/staff
+  m.status=estado;
   if(!m.reportes)m.reportes=[];
-  m.reportes.push({id:Date.now(),fecha:new Date().toISOString().slice(0,10),hora:new Date().toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'}),reportadoPor:currentUser.name||currentUser.email,rol:currentUser.role,descripcion:desc,urgencia:urg,estado:'pendiente'});
+  const ESTADO_LBL={reportada:'Reportada',reparacion:'En reparación',fuera:'Rota / Fuera de servicio'};
+  m.reportes.push({id:Date.now(),fecha:new Date().toISOString().slice(0,10),hora:new Date().toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'}),reportadoPor:currentUser.name||currentUser.email,rol:currentUser.role,descripcion:desc,estadoAsignado:estado,foto,estado:'pendiente'});
   saveDB();
-  // Notificar a admin y recepción
-  [...staffAccounts.filter(s=>s.role==='admin'||s.role==='reception')].forEach(s=>{
-    pushUserNotif(s.id,{type:'maquina',titulo:`⚠️ Avería reportada: ${m.name}`,mensaje:`${currentUser.name} reportó: "${desc}" — Urgencia: ${urg}`});
+  // Notificar a administración
+  [...staffAccounts.filter(s=>s.role==='admin')].forEach(s=>{
+    pushUserNotif(s.id,{type:'maquina',titulo:`⚠️ Avería reportada: ${m.name}`,mensaje:`${currentUser.name} (${currentUser.role}) reportó: "${desc}" — Estado: ${ESTADO_LBL[estado]}`});
   });
-  logAction('Avería reportada',`${m.name} — ${desc} (${urg})`);
+  logAction('Avería reportada',`${m.name} — ${desc} (${ESTADO_LBL[estado]})`);
   saveDB();
   closeModal();
   navigate('maquinas');
-  alert(`✅ Reporte enviado. La máquina quedó marcada como "${m.status==='fuera'?'Fuera de servicio':'Reportada'}".`);
+  alert(`✅ Reporte enviado. La máquina quedó marcada como "${ESTADO_LBL[estado]}".`);
 }
 function viewMachine(id){
   const m=machines.find(x=>x.id===id);
@@ -3488,6 +3495,7 @@ function viewMachine(id){
   const ytId=(m.videoUrl||'').match(/(?:v=|youtu\.be\/)([^&\s]+)/)?.[1]||'';
   const st={disponible:{label:'Disponible',color:'var(--green)',icon:'✅'},reportada:{label:'Reportada',color:'var(--orange)',icon:'⚠️'},reparacion:{label:'En reparación',color:'var(--blue)',icon:'🔧'},fuera:{label:'Fuera de servicio',color:'var(--red)',icon:'❌'}}[m.status||'disponible']||{label:'Disponible',color:'var(--green)',icon:'✅'};
   const canEdit=currentUser.role==='admin';
+  const canReport=['admin','reception','trainer','nutritionist','user','cafeteria'].includes(currentUser.role);
   const reportes=(m.reportes||[]).slice().reverse();
   openModal(`
 <div style="max-height:75vh;overflow-y:auto">
@@ -3503,12 +3511,12 @@ function viewMachine(id){
   ${(m.muscles||[]).length?`<div style="margin-bottom:12px"><div style="font-size:.62rem;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">💪 Grupos musculares</div><div style="display:flex;flex-wrap:wrap;gap:5px">${m.muscles.map(mu=>`<span style="background:rgba(229,8,126,.1);color:var(--accent);border:1px solid rgba(229,8,126,.25);padding:2px 9px;border-radius:2px;font-size:.7rem">${mu}</span>`).join('')}</div></div>`:''}
   ${m.usage?`<div class="card" style="padding:10px;margin-bottom:12px"><div style="font-size:.62rem;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📋 Instrucciones</div><p style="font-size:.76rem;line-height:1.7;white-space:pre-line;color:var(--text2)">${m.usage}</p></div>`:''}
   ${ytId?`<div class="card" style="padding:10px;margin-bottom:12px"><div style="font-size:.62rem;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">🎥 Video de uso</div><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:2px"><iframe src="https://www.youtube.com/embed/${ytId}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen></iframe></div></div>`:m.videoUrl?`<a href="${m.videoUrl}" target="_blank" class="btn" style="margin-bottom:12px;display:inline-block;font-size:.75rem">🎥 Ver video</a>`:''}
-  ${reportes.length?`<div class="card" style="padding:10px;margin-bottom:12px"><div style="font-size:.62rem;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">⚠️ Historial de reportes (${reportes.length})</div>${reportes.slice(0,5).map(r=>`<div style="padding:7px 0;border-bottom:1px solid #1a1a1a;font-size:.72rem"><div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">${r.descripcion}</span><span style="color:${r.urgencia==='alta'?'var(--red)':r.urgencia==='media'?'var(--orange)':'var(--text3)'};font-size:.65rem">${r.urgencia}</span></div><div style="font-size:.65rem;color:var(--text3);margin-top:2px">${r.fecha} · ${r.reportadoPor} (${r.rol})</div></div>`).join('')}</div>`:''}
+  ${reportes.length?`<div class="card" style="padding:10px;margin-bottom:12px"><div style="font-size:.62rem;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">⚠️ Historial de reportes (${reportes.length})</div>${reportes.slice(0,5).map(r=>{const estLbl={reportada:'Reportada',reparacion:'En reparación',fuera:'Fuera de servicio'}[r.estadoAsignado||r.urgencia]||r.urgencia||'';const estColor={reportada:'var(--orange)',reparacion:'var(--blue)',fuera:'var(--red)'}[r.estadoAsignado]||'var(--text3)';return`<div style="padding:7px 0;border-bottom:1px solid #1a1a1a;font-size:.72rem"><div style="display:flex;justify-content:space-between;gap:8px"><span style="color:var(--text2)">${r.descripcion}</span><span style="color:${estColor};font-size:.65rem;white-space:nowrap">${estLbl}</span></div><div style="font-size:.65rem;color:var(--text3);margin-top:2px">${r.fecha} ${r.hora||''} · ${r.reportadoPor} (${r.rol})</div>${r.foto?`<img src="${r.foto}" style="max-width:120px;max-height:120px;object-fit:cover;border-radius:4px;margin-top:6px;border:1px solid var(--border2)"/>`:''}</div>`;}).join('')}</div>`:''}
 </div>
 <div class="modalActions">
   <button class="btn btnGhost btnSm" onclick="showMachineQR(${m.id})">📱 QR</button>
   ${canEdit?`<button class="btn btnGhost btnSm" onclick="closeModal();editMachine(${m.id})">✏️ Editar</button>`:''}
-  ${(m.status||'disponible')==='disponible'?`<button class="btn btnSm" onclick="closeModal();reportarMaquina(${m.id})" style="background:rgba(255,159,10,.1);color:var(--orange);border:1px solid rgba(255,159,10,.3)">⚠️ Reportar avería</button>`:''}
+  ${canReport?`<button class="btn btnSm" onclick="closeModal();reportarMaquina(${m.id})" style="background:rgba(255,159,10,.1);color:var(--orange);border:1px solid rgba(255,159,10,.3)">⚠️ Reportar avería</button>`:''}
   ${canEdit&&m.status&&m.status!=='disponible'?`<button class="btn btnSm" onclick="closeModal();cambiarEstadoMaquina(${m.id},'disponible')" style="background:rgba(48,209,88,.1);color:var(--green);border:1px solid rgba(48,209,88,.3)">✅ Marcar disponible</button>`:''}
   <button class="btn btnAccent" onclick="closeModal()">Cerrar</button>
 </div>`);
